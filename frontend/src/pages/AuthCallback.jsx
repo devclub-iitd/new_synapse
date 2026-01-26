@@ -21,7 +21,7 @@ const AuthCallback = () => {
 
   const handleLogin = async (code) => {
     try {
-      const res = await api.post('/auth/login/microsoft', { code });
+      const res = await api.post('auth/login/microsoft', { code });
       login(res.data.access_token);
       toast.success(`Welcome back, ${res.data.user.name}!`);
       navigate('/');

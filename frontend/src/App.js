@@ -37,7 +37,23 @@ const ProtectedRoute = ({ children }) => {
 
   return children;
 };
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
 
+  if (loading) {
+    return (
+      <div className="vh-100 d-flex justify-content-center align-items-center bg-dark">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (!user || !user.is_superuser) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
 const AppLayout = () => {
   const { showLoginModal, closeLoginModal } = useAuth(); 
 
@@ -92,7 +108,7 @@ const AppLayout = () => {
               
               <Route
                 path="/admin"
-                element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>}
+                element={<AdminRoute><AdminDashboard /></AdminRoute>}
               />
 
               {/* Fallback */}

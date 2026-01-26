@@ -7,6 +7,8 @@ from app.core.security import create_access_token
 from app.schemas.token import Token
 from app.schemas.auth import LoginRequest
 from app.schemas.user import UserOut  
+import logging
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/login/microsoft", response_model=Token)
@@ -16,10 +18,17 @@ async def login_microsoft(
 ):
     # 1. Validate Code with Azure
     ms_user = await validate_microsoft_code(login_data.code)
-    email = ms_user["email"].lower()
+    email = ms_user["email"].lower().strip()
+    logger.error({
+    	"email": ms_user.get("email"),
+    	"preferred_username": ms_user.get("preferred_username"),
+    	"upn": ms_user.get("upn"),
+	"tid": ms_user.get("tid"),
+    })
     
     # 2. Check Domain
-    if not email.endswith("iitd.ac.in"):
+    if not (email.endswith("@csciitd.onmicrosoft.com") or email.endswith("@iitd.onmicrosoft.com") or email.endswith("@iitd.ac.in")):
+
         raise HTTPException(status_code=400, detail="Only @iitd.ac.in emails allowed")
 
     # 3. Check DB

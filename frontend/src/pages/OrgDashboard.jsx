@@ -110,7 +110,7 @@ const OrgDashboard = () => {
     const formData = new FormData();
     
     formData.append('name', newEvent.name);
-    formData.append('date', newEvent.date);
+formData.append('date', new Date(newEvent.date).toISOString());
     formData.append('venue', newEvent.venue);
     formData.append('description', newEvent.description);
     formData.append('tags', JSON.stringify(newEvent.tags.split(',').map(t => t.trim()).filter(Boolean)));
@@ -135,8 +135,13 @@ const OrgDashboard = () => {
       setActiveTab('events');
       fetchData();
     } catch (err) {
-      toast.error("Failed to create event");
-    }
+  const msg =
+    err?.response?.data?.detail ||
+    err?.response?.data?.message ||
+    "Failed to create event";
+
+  toast.error(msg);
+}
   };
 
   const handleAddMember = async (e) => {

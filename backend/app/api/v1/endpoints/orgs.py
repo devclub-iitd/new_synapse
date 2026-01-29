@@ -1,22 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form, Response
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Response
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.user import User
 from app.models.event import Event
 from app.models.auth_role import AuthRole
-from app.models.registration import Registration
-from app.models.enums import RoleName, OrgType
 from app.schemas.event import EventOut
 from app.schemas.user import TeamMemberCreate
 from app.core.config import settings
 from app.services.exports import generate_event_registration_csv
-import shutil
-import os
 import json
 from datetime import datetime
 from app.services.cloudinary import cloudinary
 import cloudinary.uploader
 import uuid
+from datetime import datetime, timedelta, timezone
+
+
 router = APIRouter()
 
 # ------------------------------------------------------------------
@@ -146,9 +145,39 @@ def create_org_event(
         tags_list = json.loads(tags)
         schema_list = json.loads(custom_form_schema)
         audience_dict = json.loads(target_audience)
+
+        # Parse ISO date
         date_obj = datetime.fromisoformat(date)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid data format: {str(e)}")
+
+        # Make timezone-aware (UTC)
+        if date_obj.tzinfo is None:
+            date_obj = date_obj.replace(tzinfo=timezone.utc)
+
+        now = datetime.now(timezone.utc)
+
+        if date_obj <= now:
+            raise HTTPException(
+                status_code=400,
+                detail="Event date must be in the future"
+            )
+
+        if date_obj < now + timedelta(minutes=5):
+            raise HTTPException(
+                status_code=400,
+                detail="Event must be scheduled at least 5 minutes in advance"
+            )
+
+        if date_obj > now + timedelta(days=365):
+            raise HTTPException(
+                status_code=400,
+                detail="Event date cannot be more than 1 year in the future"
+            )
+
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON in request")
+
 
     # 3. Create Event
     event = Event(

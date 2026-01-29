@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
 
+    CLOUDINARY_CLOUD_NAME:str
+    CLOUDINARY_API_KEY:str
+    CLOUDINARY_API_SECRET:str
+
     # Microsoft OAuth
     MS_CLIENT_ID: str
     MS_CLIENT_SECRET: str

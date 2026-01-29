@@ -5,7 +5,7 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
-import EventRegistrationModal from "../components/Forms/EventRegistrationModal"; 
+import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
 
 const EventDetail = () => {
   const { eventId } = useParams();
@@ -14,7 +14,7 @@ const EventDetail = () => {
 
   const [event, setEvent] = useState(null);
   const [error, setError] = useState("");
-  
+
   // State for the registration modal
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
@@ -45,7 +45,7 @@ const EventDetail = () => {
   const handleRegistrationSuccess = () => {
     setIsRegisterModalOpen(false);
     // Refresh event data to update button to "Registered"
-    fetchEvent(); 
+    fetchEvent();
   };
 
   if (error) return <div className="text-center mt-5 text-danger">{error}</div>;
@@ -53,8 +53,8 @@ const EventDetail = () => {
 
   return (
     <div className="container py-5">
-      <button 
-        onClick={() => navigate(-1)} 
+      <button
+        onClick={() => navigate(-1)}
         className="btn btn-link text-secondary text-decoration-none mb-4 ps-0"
       >
         <ArrowLeft size={18} className="me-2" /> Back
@@ -63,10 +63,10 @@ const EventDetail = () => {
       <div className="row">
         {/* Left Column: Image */}
         <div className="col-md-5 mb-4">
-          <img 
-            src={event.image_url ? `http://localhost:8000/uploads/${event.image_url}` : "https://via.placeholder.com/600x400"} 
-            className="img-fluid rounded-4 shadow-lg w-100 object-fit-cover" 
-            alt={event.name} 
+          <img
+            src={event.image_url || "https://via.placeholder.com/300x150"}
+            className="img-fluid rounded-4 shadow-lg w-100 object-fit-cover"
+            alt={event.name}
             style={{ height: '350px' }}
           />
         </div>
@@ -115,11 +115,10 @@ const EventDetail = () => {
           {/* Actions */}
           <div className="d-flex gap-3 mt-4">
             <button
-              className={`btn px-5 py-3 fw-bold flex-grow-1 d-flex align-items-center justify-content-center gap-2 ${
-                event.is_registered ? "btn-registered" : "btn-purple"
-              }`}
+              className={`btn px-5 py-3 fw-bold flex-grow-1 d-flex align-items-center justify-content-center gap-2 ${event.is_registered ? "btn-registered" : "btn-purple"
+                }`}
               disabled={event.is_registered}
-              onClick={handleRegisterClick} 
+              onClick={handleRegisterClick}
             >
               {event.is_registered ? <><Check size={20} /> Registered</> : "Register Now"}
             </button>

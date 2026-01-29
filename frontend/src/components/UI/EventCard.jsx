@@ -17,11 +17,8 @@ const EventCard = ({ event, onRegisterClick }) => {
         onClick={goToDetail}
       >
         <img
-          src={
-            event.image_url
-              ? `http://localhost:8000/uploads/${event.image_url}`
-              : "https://via.placeholder.com/300x150"
-          }
+          src={event.image_url || "https://via.placeholder.com/300x150"}
+
           className="card-img-top rounded-4 mb-3"
           alt="event"
         />
@@ -47,9 +44,8 @@ const EventCard = ({ event, onRegisterClick }) => {
 
           {/* IMPORTANT: stopPropagation prevents navigation */}
           <button
-            className={`btn w-100 d-flex align-items-center justify-content-center gap-2 ${
-              isRegistered ? "btn-registered" : "btn-purple"
-            }`}
+            className={`btn w-100 d-flex align-items-center justify-content-center gap-2 ${isRegistered ? "btn-registered" : "btn-purple"
+              }`}
             disabled={isRegistered}
             onClick={(e) => {
               e.stopPropagation();

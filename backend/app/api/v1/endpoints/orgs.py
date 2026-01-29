@@ -14,7 +14,9 @@ import shutil
 import os
 import json
 from datetime import datetime
-
+from app.services.cloudinary import cloudinary
+import cloudinary.uploader
+import uuid
 router = APIRouter()
 
 # ------------------------------------------------------------------
@@ -129,15 +131,15 @@ def create_org_event(
     role: AuthRole = Depends(get_org_role_by_id)
 ):
     # 1. Handle File Upload
-    filename = None
+    image_url = None
     if photo:
-        os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
-        import uuid
-        ext = photo.filename.split('.')[-1]
-        filename = f"{uuid.uuid4()}.{ext}"
-        file_path = os.path.join(settings.UPLOAD_FOLDER, filename)
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(photo.file, buffer)
+        result = cloudinary.uploader.upload(
+            photo.file,
+            folder="events",
+            public_id=str(uuid.uuid4()),
+            resource_type="image"
+        )
+        image_url = result["secure_url"]
 
     # 2. Parse JSON fields
     try:
@@ -154,7 +156,7 @@ def create_org_event(
         description=description,
         date=date_obj,
         venue=venue,
-        image_url=filename,
+        image_url=image_url,
         tags=tags_list,
         custom_form_schema=schema_list,
         target_audience=audience_dict,

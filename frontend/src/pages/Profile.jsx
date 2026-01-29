@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Loader from '../components/UI/Loader';
 import toast from 'react-hot-toast';
 import { Camera, Edit3, Save, X, GraduationCap, MapPin, Calendar, Heart } from 'lucide-react';
-
 // Import the constants you defined in constants.js
 import { DEPARTMENTS, HOSTELS, YEARS } from '../utils/constants';
 
@@ -26,6 +25,19 @@ const Profile = () => {
     photo_url: user?.photo_url || ""
   });
 
+useEffect(() => {
+  if (user) {
+    setForm({
+      hostel: user.hostel || "",
+      department: user.department || "",
+      current_year: user.current_year || "",
+      interests: user.interests || [],
+      photo_url: user.photo_url || ""
+    });
+  }
+}, [user]);
+
+
   if (!user) return <Loader />;
 
   const toggleInterest = (interest) => {
@@ -36,32 +48,35 @@ const Profile = () => {
         : [...prev.interests, interest]
     }));
   };
+const handlePhotoChange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  setForm(prev => ({
+    ...prev,
+    photo_file: file,
+    photo_url: URL.createObjectURL(file) // preview only
+  }));
+};
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      // NOTE: For 2MB+ images, this may cause storage errors. 
-      // Consider adding compression here in the future.
-      setForm({ ...form, photo_url: ev.target.result });
-    };
-    reader.readAsDataURL(file);
-  };
+const saveProfile = async () => {
+  const fd = new FormData();
 
-  const saveProfile = async () => {
-    try {
-      const res = await api.put('/user/profile', form);
-      // This call relies on setUser being exported in AuthContext.js
-      setUser(res.data); 
-      toast.success("Profile updated successfully!");
-      setEditMode(false);
-    } catch (err) {
-      console.error("Profile Save Error:", err);
-      toast.error("Failed to update profile");
-    }
-  };
+  fd.append("hostel", form.hostel);
+  fd.append("department", form.department);
+  fd.append("current_year", form.current_year);
+  fd.append("interests", JSON.stringify(form.interests));
+
+  if (form.photo_file) {
+    fd.append("photo", form.photo_file);
+  }
+
+  const res = await api.put("/user/profile", fd);
+
+  setUser(res.data);
+  setEditMode(false);
+};
+
 
   const cancelEdit = () => {
     setForm({

@@ -1,26 +1,51 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.user import User
-from app.schemas.user import UserOut, UserUpdate
+from app.schemas.user import UserOut
 from app.schemas.event import EventOut
-from app.models.registration import Registration
 import uuid
+from fastapi import Form, File, UploadFile
+import json
+from app.services.cloudinary import cloudinary
 
 router = APIRouter()
 
 @router.put("/profile", response_model=UserOut)
 def update_profile(
-    user_in: UserUpdate,
+    hostel: str = Form(None),
+    department: str = Form(None),
+    current_year: int = Form(None),
+    interests: str = Form(None),  # JSON string
+    photo: UploadFile = File(None),
+
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
-    for field, value in user_in.dict(exclude_unset=True).items():
-        setattr(current_user, field, value)
+    # 1. Upload photo to Cloudinary
+    if photo:
+        result = cloudinary.uploader.upload(
+            photo.file,
+            folder="profiles",
+            public_id=str(uuid.uuid4()),
+            resource_type="image"
+        )
+        current_user.photo_url = result["secure_url"]
+
+    # 2. Update normal fields
+    if hostel is not None:
+        current_user.hostel = hostel
+    if department is not None:
+        current_user.department = department
+    if current_year is not None:
+        current_user.current_year = current_year
+    if interests is not None:
+        current_user.interests = json.loads(interests)
 
     db.commit()
     db.refresh(current_user)
     return current_user
+
 
 
 @router.get("/calendar", response_model=list[EventOut])

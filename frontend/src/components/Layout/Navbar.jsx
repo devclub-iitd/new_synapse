@@ -21,16 +21,24 @@ const Navbar = () => {
             <div className="text-secondary small">{user.entry_number}</div>
           </div>
           <div
-            className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-            style={{
-              width: '40px',
-              height: '40px',
-              background: '#7c3aed',
-              color: 'white'
-            }}
+            className="rounded-circle overflow-hidden"
+            style={{ width: '40px', height: '40px', background: '#7c3aed' }}
           >
-            {user.name.charAt(0)}
+            {user.photo_url ? (
+              <img
+                src={user.photo_url}
+                alt="profile"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <div
+                className="d-flex align-items-center justify-content-center fw-bold text-white h-100"
+              >
+                {user.name.charAt(0)}
+              </div>
+            )}
           </div>
+
         </div>
       ) : (
         <button className="btn btn-purple" onClick={() => setIsLoginOpen(true)}>

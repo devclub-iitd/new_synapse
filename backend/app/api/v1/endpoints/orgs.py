@@ -191,7 +191,7 @@ def create_org_event(
         target_audience=audience_dict,
         is_private=is_private,
         
-        # ✅ FIX: Pass string directly
+        # FIX: Pass string directly
         org_name=role.org_name, 
         org_type=role.org_type,
         
@@ -202,6 +202,112 @@ def create_org_event(
     db.commit()
     db.refresh(event)
     return event
+
+
+
+@router.delete("/{org_id}/events/{event_id}", status_code=204)
+def delete_event(
+    event_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+    role: AuthRole = Depends(get_org_role_by_id)
+):
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    db.delete(event)
+    db.commit()
+
+
+@router.put("/{org_id}/events/{event_id}", response_model=EventOut)
+def update_event(
+    event_id: int,
+    name: str = Form(None),
+    description: str = Form(None),
+    date: str = Form(None),
+    venue: str = Form(None),
+    tags: str = Form(None),
+    custom_form_schema: str = Form(None),
+    target_audience: str = Form(None),
+    is_private: bool = Form(None),
+    photo: UploadFile = File(None),
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+    role: AuthRole = Depends(get_org_role_by_id)
+):
+    event = db.query(Event).filter(Event.id == event_id).first()
+
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    # Handle photo update
+    if photo:
+        result = cloudinary.uploader.upload(
+            photo.file,
+            folder="events",
+            public_id=str(uuid.uuid4()),
+            resource_type="image"
+        )
+        event.image_url = result["secure_url"]
+
+    # Parse & validate date (if provided)
+    if date:
+        try:
+            date_obj = datetime.fromisoformat(date)
+
+            if date_obj.tzinfo is None:
+                date_obj = date_obj.replace(tzinfo=timezone.utc)
+
+            now = datetime.now(timezone.utc)
+
+            if date_obj <= now:
+                raise HTTPException(status_code=400, detail="Event date must be in the future")
+
+            if date_obj < now + timedelta(minutes=5):
+                raise HTTPException(status_code=400, detail="Event must be scheduled at least 5 minutes in advance")
+
+            if date_obj > now + timedelta(days=365):
+                raise HTTPException(status_code=400, detail="Event date cannot be more than 1 year in the future")
+
+            event.date = date_obj
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format")
+
+    # Update simple fields
+    if name is not None:
+        event.name = name
+    if description is not None:
+        event.description = description
+    if venue is not None:
+        event.venue = venue
+    if is_private is not None:
+        event.is_private = is_private
+
+    # JSON fields
+    if tags:
+        event.tags = json.loads(tags)
+    if custom_form_schema:
+        event.custom_form_schema = json.loads(custom_form_schema)
+    if target_audience:
+        event.target_audience = json.loads(target_audience)
+
+    db.commit()
+    db.refresh(event)
+    return event
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # ------------------------------------------------------------------
 # 📥 DATA EXPORTS & REGISTRATIONS

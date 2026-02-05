@@ -1044,3 +1044,122 @@ body {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%237c3aed' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
   background-size: 12px;
 }
+
+/* ===== SIDEBAR BRAND ===== */
+
+/* .sidebar-brand {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 16px;
+}
+
+.sidebar-logo {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.35));
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: rgba(255, 255, 255, 0.9);
+} */
+
+/* Sidebar Brand Refinement */
+
+/* Sidebar Layout */
+.sidebar {
+  background-color: #111222;
+  min-height: 100vh;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Standalone Logo Styling */
+.sidebar-brand-minimal {
+  display: flex;
+  flex-direction: column; /* Stacks logo on top of text */
+  justify-content: center; /* Centers horizontally */
+  align-items: center;
+  padding-top: 10px;
+}
+
+.sidebar-logo-standalone {
+  width: 120px; /* Professional scale for a centered icon */
+  height: 120px;
+  object-fit: contain;
+  /* Soft glow using the brand purple */
+  filter: drop-shadow(0 0 15px rgba(124, 58, 237, 0.3));
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sidebar-logo-standalone:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.6));
+}
+
+/* Nav Link Polish */
+.nav-link {
+  color: #94a3b8 !important;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 12px 16px !important;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: white !important;
+}
+
+.active-link {
+  background: rgba(124, 58, 237, 0.12) !important;
+  color: #a5a6f6 !important;
+}
+
+/* Minimal Logout */
+.logout-btn-minimal {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  color: #ef4444;
+
+}
+
+.logout-btn-minimal:hover {
+  background: rgba(220, 53, 69, 0.1);
+  border-color: rgba(220, 53, 69, 0.4);
+}
+
+.sidebar-brand-text {
+  font-size: 1.5rem; /* Clean and readable */
+  font-weight: 800;
+  letter-spacing: 4px; /* Modern luxury/tech spacing */
+  text-transform: uppercase;
+  
+  /* Silver to Slate-Blue Gradient (Avoids "childish" all-purple look) */
+  background: linear-gradient(180deg, #FFFFFF 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  font-family: 'Inter', sans-serif;
+  margin-top: 8px;
+}
+
+.sidebar-brand-minimal:hover .sidebar-logo-standalone {
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.5));
+}
+
+.sidebar-brand-minimal:hover .sidebar-brand-text {
+  background: linear-gradient(180deg, #FFFFFF 0%, #a5a6f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: all 0.3s ease;
+}

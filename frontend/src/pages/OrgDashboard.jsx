@@ -116,6 +116,14 @@ const OrgDashboard = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]); // ✅ Dependency Added
+  
+  useEffect(() => {
+  // Select all by default ONLY when creating (not editing)
+  if (!editingEventId && activeTab === 'create') {
+    setTargetDepts(DEPARTMENTS);
+    setTargetHostels(HOSTELS);
+  }
+}, [activeTab, editingEventId]);
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();

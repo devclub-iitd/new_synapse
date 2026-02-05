@@ -1,29 +1,28 @@
 // src/utils/constants.js
 
 export const DEPARTMENTS = [
-  "Computer Science and Engineering", "Electrical Engineering", "Mechanical Engineering", 
-  "Civil Engineering", "Chemical Engineering", "Biochemical Engineering and Biotechnology",
-  "Physics", "Chemistry", "Mathematics", "Textile and Fibre Engineering"
+  "Applied Mechanics",
+  "Biochemical Engineering and Biotechnology",
+  "Chemical Engineering",
+  "Chemistry",
+  "Civil Engineering",
+  "Computer Science and Engineering",
+  "Design",
+  "Electrical Engineering",
+  "Energy Science and Engineering",
+  "Humanities and Social Sciences",
+  "Management Studies",
+  "Materials Science and Engineering",
+  "Mathematics",
+  "Mechanical Engineering",
+  "Physics",
+  "Textile and Fibre Engineering"
 ];
 
+
 export const HOSTELS = [
-  "Aravali",
-  "Dronagiri",
-  "Girnar",
-  "Himadri",
-  "Jwalamukhi",
-  "Kailash",
-  "Karakoram",
-  "Kumaon",
-  "Nalanda",
-  "Nilgiri",
-  "Satpura",
-  "Sahyadri",
-  "Saptagiri",
-  "Shivalik",
-  "Udaigiri",
-  "Vindhyachal",
-  "Zanskar"
+  "Aravali", "Girnar", "Himadri", "Jwalamukhi", "Kailash", "Karakoram", 
+  "Kumaon", "Nilgiri", "Satpura", "Shivalik", "Udaigiri", "Vindhyachal", "Zanskar", "Dayscholar"
 ];
 
 

@@ -50,23 +50,17 @@ const LoginModal = ({ isOpen, onClose }) => {
               </label>
               <select className="select-custom">
                 <option>Student</option>
-                <option>Admin</option>
               </select>
             </div>
 
             <div className="microsoft-btn-container">
-              <button
-                className="btn-microsoft-login"
-                onClick={handleMicrosoftLogin}
-              >
-                <img
-                  src="https://authjs.dev/img/providers/microsoft.svg"
-                  alt="Microsoft"
-                  className="ms-logo"
-                />
-                <span>Sign in with Microsoft</span>
-              </button>
-            </div>
+  <button
+    className="btn-microsoft-login"
+    onClick={handleMicrosoftLogin}
+  >
+    Sign in with Microsoft
+  </button>
+</div>
           </div>
         </div>
       </div>

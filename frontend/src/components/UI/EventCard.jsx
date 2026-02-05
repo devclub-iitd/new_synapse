@@ -4,7 +4,13 @@ import { useNavigate } from 'react-router-dom';
 
 const EventCard = ({ event, onRegisterClick }) => {
   const navigate = useNavigate();
+
   const isRegistered = event.is_registered;
+
+  const hasDeadline = !!event.registration_deadline;
+  const deadlinePassed = hasDeadline
+    ? new Date(event.registration_deadline) < new Date()
+    : false;
 
   const goToDetail = () => {
     navigate(`/events/${event.id}`);
@@ -18,7 +24,6 @@ const EventCard = ({ event, onRegisterClick }) => {
       >
         <img
           src={event.image_url || "https://via.placeholder.com/300x150"}
-
           className="card-img-top rounded-4 mb-3"
           alt="event"
         />
@@ -42,18 +47,36 @@ const EventCard = ({ event, onRegisterClick }) => {
             {event.venue}
           </div>
 
-          {/* IMPORTANT: stopPropagation prevents navigation */}
+          {/* ✅ Deadline (only if backend provides it) */}
+          {hasDeadline && (
+            <p className="small text-secondary mb-2">
+              Register by:{" "}
+              <strong>
+                {new Date(event.registration_deadline).toLocaleDateString()}
+              </strong>
+            </p>
+          )}
+
           <button
-            className={`btn w-100 d-flex align-items-center justify-content-center gap-2 ${isRegistered ? "btn-registered" : "btn-purple"
-              }`}
-            disabled={isRegistered}
+            className={`btn w-100 d-flex align-items-center justify-content-center gap-2 ${
+              isRegistered || deadlinePassed
+                ? "btn-registered"
+                : "btn-purple"
+            }`}
+            disabled={isRegistered || deadlinePassed}
             onClick={(e) => {
               e.stopPropagation();
-              onRegisterClick(event);
+              if (!deadlinePassed) onRegisterClick(event);
             }}
           >
-            {isRegistered ? "Registered" : "Register"}
-            {!isRegistered && <ExternalLink size={16} />}
+            {isRegistered
+              ? "Registered"
+              : deadlinePassed
+              ? "Registration Closed"
+              : "Register"}
+            {!isRegistered && !deadlinePassed && (
+              <ExternalLink size={16} />
+            )}
           </button>
         </div>
       </div>

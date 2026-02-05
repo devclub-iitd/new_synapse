@@ -69,8 +69,15 @@ const OrgDashboard = () => {
   const [loading, setLoading] = useState(true);
   
   const [newEvent, setNewEvent] = useState({ 
-    name: '', date: '', venue: '', description: '', tags: '', isPrivate: false 
-  });
+  name: '',
+  date: '',
+  registration_deadline: '',
+  venue: '',
+  description: '',
+  tags: '',
+  isPrivate: false
+});
+
 
   const [targetDepts, setTargetDepts] = useState([]);
   const [targetHostels, setTargetHostels] = useState([]);
@@ -111,6 +118,10 @@ const OrgDashboard = () => {
     
     formData.append('name', newEvent.name);
 formData.append('date', new Date(newEvent.date).toISOString());
+formData.append(
+  'registration_deadline',
+  new Date(newEvent.registration_deadline).toISOString()
+);
     formData.append('venue', newEvent.venue);
     formData.append('description', newEvent.description);
     formData.append('tags', JSON.stringify(newEvent.tags.split(',').map(t => t.trim()).filter(Boolean)));
@@ -129,8 +140,15 @@ formData.append('date', new Date(newEvent.date).toISOString());
       await api.post(`/org/${orgId}/events`, formData);
       toast.success("Event Created Successfully!");
       
-      setNewEvent({ name: '', date: '', venue: '', description: '', tags: '', isPrivate: false });
-      setTargetDepts([]); setTargetHostels([]); setTargetYears([]);
+setNewEvent({
+  name: '',
+  date: '',
+  registration_deadline: '',
+  venue: '',
+  description: '',
+  tags: '',
+  isPrivate: false
+});      setTargetDepts([]); setTargetHostels([]); setTargetYears([]);
       setFormSchema([]);
       setActiveTab('events');
       fetchData();
@@ -369,6 +387,27 @@ formData.append('date', new Date(newEvent.date).toISOString());
                 <input type="text" className="form-control bg-dark text-white border-secondary" required 
                   value={newEvent.venue} onChange={e => setNewEvent({...newEvent, venue: e.target.value})} />
               </div>
+              <div className="col-md-6">
+  <label className="text-secondary small">
+    Registration Deadline
+  </label>
+  <input
+    type="datetime-local"
+    className="form-control bg-dark text-white border-secondary"
+    required
+    value={newEvent.registration_deadline}
+    max={newEvent.date || undefined}
+    onChange={e =>
+      setNewEvent({
+        ...newEvent,
+        registration_deadline: e.target.value
+      })
+    }
+  />
+  <small className="text-muted">
+    Registrations will close automatically after this time
+  </small>
+</div>
               <div className="col-12">
                 <label className="text-secondary small">Description</label>
                 <textarea className="form-control bg-dark text-white border-secondary" rows="3" required 

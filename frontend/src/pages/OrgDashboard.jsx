@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/axios';
-import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X } from 'lucide-react';
+import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit } from 'lucide-react';
 import DynamicFormBuilder from '../components/Forms/DynamicFormBuilder';
 import DemographicsChart from '../components/Charts/DemographicsChart';
 import Loader from '../components/UI/Loader';
@@ -22,6 +22,9 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
   const removeOption = (valueToRemove) => {
     onChange(selected.filter(item => item !== valueToRemove));
   };
+
+  
+
 
   return (
     <div className="mb-3">
@@ -67,6 +70,8 @@ const OrgDashboard = () => {
   const [events, setEvents] = useState([]);
   const [team, setTeam] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingEventId, setEditingEventId] = useState(null);
+
   
   const [newEvent, setNewEvent] = useState({ 
   name: '',
@@ -137,30 +142,50 @@ formData.append(
     formData.append('target_audience', JSON.stringify(audience));
 
     try {
-      await api.post(`/org/${orgId}/events`, formData);
-      toast.success("Event Created Successfully!");
-      
-setNewEvent({
-  name: '',
-  date: '',
-  registration_deadline: '',
-  venue: '',
-  description: '',
-  tags: '',
-  isPrivate: false
-});      setTargetDepts([]); setTargetHostels([]); setTargetYears([]);
-      setFormSchema([]);
-      setActiveTab('events');
-      fetchData();
-    } catch (err) {
+  if (editingEventId) {
+    // 🔄 UPDATE EXISTING EVENT
+    await api.put(`/org/${orgId}/events/${editingEventId}`, formData);
+    toast.success("Event updated successfully!");
+
+    // ✅ exit edit mode ONLY
+    setEditingEventId(null);
+
+  } else {
+    // 🆕 CREATE NEW EVENT
+    await api.post(`/org/${orgId}/events`, formData);
+    toast.success("Event created successfully!");
+
+    // ✅ reset ONLY for create
+    setNewEvent({
+      name: '',
+      date: '',
+      registration_deadline: '',
+      venue: '',
+      description: '',
+      tags: '',
+      isPrivate: false
+    });
+
+    setTargetDepts([]);
+    setTargetHostels([]);
+    setTargetYears([]);
+    setFormSchema([]);
+    setImageFile(null);
+  }
+
+  setActiveTab('events');
+  fetchData();
+
+} catch (err) {
   const msg =
     err?.response?.data?.detail ||
     err?.response?.data?.message ||
-    "Failed to create event";
+    "Failed to save event";
 
   toast.error(msg);
 }
   };
+
 
   const handleAddMember = async (e) => {
     e.preventDefault();
@@ -184,6 +209,39 @@ setNewEvent({
       toast.error("Failed to remove member");
     }
   };
+
+  // ✅ EDIT EVENT (frontend only: navigates to Create tab with prefilled data)
+const handleEditEvent = (ev) => {
+  setEditingEventId(ev.id);
+  setNewEvent({
+    name: ev.name,
+    date: ev.date?.slice(0, 16) || '',
+    registration_deadline: ev.registration_deadline?.slice(0, 16) || '',
+    venue: ev.venue || '',
+    description: ev.description || '',
+    tags: (ev.tags || []).join(', '),
+    isPrivate: ev.is_private || false
+  });
+
+  setTargetDepts(ev.target_audience?.depts || []);
+  setTargetHostels(ev.target_audience?.hostels || []);
+  setTargetYears((ev.target_audience?.years || []).map(String));
+  setFormSchema(ev.custom_form_schema || []);
+
+  setActiveTab('create');
+};
+
+// ✅ DELETE EVENT
+const handleDeleteEvent = async (eventId) => {
+  if (!window.confirm("Are you sure you want to delete this event?")) return;
+  try {
+    await api.delete(`/org/${orgId}/events/${eventId}`);
+    toast.success("Event deleted");
+    fetchData();
+  } catch (err) {
+    toast.error("Failed to delete event");
+  }
+};
 
   if (loading) return <Loader />;
 
@@ -209,9 +267,16 @@ setNewEvent({
           <button className={`btn ${activeTab === 'team' ? 'btn-purple' : 'btn-outline-secondary'}`} onClick={() => setActiveTab('team')}>
             <Users size={18} className="me-2"/> Team
           </button>
-          <button className={`btn ${activeTab === 'create' ? 'btn-purple' : 'btn-outline-secondary'}`} onClick={() => setActiveTab('create')}>
-            <Plus size={18} className="me-2"/> Create
-          </button>
+          <button
+  className={`btn ${activeTab === 'create' ? 'btn-purple' : 'btn-outline-secondary'}`}
+  onClick={() => {
+    setEditingEventId(null);   // 🔑 EXIT EDIT MODE
+    setActiveTab('create');
+  }}
+>
+  <Plus size={18} className="me-2"/> Create
+</button>
+
         </div>
       </div>
 
@@ -265,11 +330,30 @@ setNewEvent({
                     <td>{ev.name}</td>
                     <td>{new Date(ev.date).toLocaleDateString()}</td>
                     <td>{ev.is_private ? <span className="badge bg-secondary"><Lock size={12}/> Private</span> : <span className="badge bg-success"><Globe size={12}/> Public</span>}</td>
-                    <td>
-                      <button className="btn btn-sm btn-outline-success">
-                         <Download size={14} /> CSV
-                      </button>
-                    </td>
+                    <td className="d-flex gap-2">
+  <button className="btn btn-sm btn-outline-success">
+    <Download size={14} /> CSV
+  </button>
+
+  {isHead && (
+    <>
+      <button
+        className="btn btn-sm btn-outline-primary"
+        onClick={() => handleEditEvent(ev)}
+      >
+        <Edit size={14} />
+      </button>
+
+      <button
+        className="btn btn-sm btn-outline-danger"
+        onClick={() => handleDeleteEvent(ev.id)}
+      >
+        <Trash2 size={14} />
+      </button>
+    </>
+  )}
+</td>
+
                   </tr>
                 ))}
               </tbody>
@@ -474,7 +558,10 @@ setNewEvent({
 
             <DynamicFormBuilder schema={formSchema} setSchema={setFormSchema} />
 
-            <button type="submit" className="btn btn-purple w-100 mt-4 py-2 fw-bold">Publish Event</button>
+            <button type="submit" className="btn btn-purple w-100 mt-4 py-2 fw-bold">
+  {editingEventId ? "Update Event" : "Publish Event"}
+</button>
+
           </form>
         </div>
       )}

@@ -231,6 +231,31 @@ const handleEditEvent = (ev) => {
   setActiveTab('create');
 };
 
+const handleDownloadCSV = async (eventId) => {
+  try {
+    const response = await api.get(
+      `/org/${orgId}/events/${eventId}/csv`,
+      { responseType: 'blob' }
+    );
+
+    const blob = new Blob([response.data], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `event_${eventId}_registrations.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    toast.error("Failed to download CSV");
+  }
+};
+
+
 // ✅ DELETE EVENT
 const handleDeleteEvent = async (eventId) => {
   if (!window.confirm("Are you sure you want to delete this event?")) return;
@@ -331,9 +356,13 @@ const handleDeleteEvent = async (eventId) => {
                     <td>{new Date(ev.date).toLocaleDateString()}</td>
                     <td>{ev.is_private ? <span className="badge bg-secondary"><Lock size={12}/> Private</span> : <span className="badge bg-success"><Globe size={12}/> Public</span>}</td>
                     <td className="d-flex gap-2">
-  <button className="btn btn-sm btn-outline-success">
-    <Download size={14} /> CSV
-  </button>
+  <button
+  className="btn btn-sm btn-outline-success"
+  onClick={() => handleDownloadCSV(ev.id)}
+>
+  <Download size={14} /> CSV
+</button>
+
 
   {isHead && (
     <>

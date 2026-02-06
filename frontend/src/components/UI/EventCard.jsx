@@ -58,26 +58,27 @@ const EventCard = ({ event, onRegisterClick }) => {
           )}
 
           <button
-            className={`btn w-100 d-flex align-items-center justify-content-center gap-2 ${
-              isRegistered || deadlinePassed
-                ? "btn-registered"
-                : "btn-purple"
-            }`}
-            disabled={isRegistered || deadlinePassed}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!deadlinePassed) onRegisterClick(event);
-            }}
-          >
-            {isRegistered
-              ? "Registered"
-              : deadlinePassed
-              ? "Registration Closed"
-              : "Register"}
-            {!isRegistered && !deadlinePassed && (
-              <ExternalLink size={16} />
-            )}
-          </button>
+  className={`btn w-100 d-flex align-items-center justify-content-center gap-2 ${
+    isRegistered || deadlinePassed
+      ? "btn-registered"
+      : "btn-purple"
+  }`}
+  disabled={isRegistered || deadlinePassed}
+  onClick={(e) => {
+    e.stopPropagation();
+    if (!isRegistered && !deadlinePassed) {
+      onRegisterClick(event);
+    }
+  }}
+>
+  {isRegistered
+    ? "Registered"
+    : deadlinePassed
+    ? "Registration Closed"
+    : "Register"}
+  {!isRegistered && !deadlinePassed && <ExternalLink size={16} />}
+</button>
+
         </div>
       </div>
     </div>

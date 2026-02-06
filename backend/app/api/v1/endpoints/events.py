@@ -182,3 +182,22 @@ def register_for_event(
     db.commit()
 
     return {"status": "success", "msg": "Registered successfully"}
+
+@router.delete("/{event_id}/register")
+def deregister_from_event(
+    event_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    registration = db.query(Registration).filter(
+        Registration.user_id == current_user.id,
+        Registration.event_id == event_id
+    ).first()
+
+    if not registration:
+        raise HTTPException(status_code=404, detail="Not registered for this event")
+
+    db.delete(registration)
+    db.commit()
+
+    return {"status": "success", "msg": "Deregistered successfully"}

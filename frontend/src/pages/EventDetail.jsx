@@ -37,13 +37,28 @@ const EventDetail = () => {
     }
   };
 
-  const handleRegisterClick = () => {
-    if (!user) {
-      openLoginModal();
-      return;
+  const handleRegisterClick = async () => {
+  if (!user) {
+    openLoginModal();
+    return;
+  }
+
+  // 🔄 If already registered → DEREGISTER
+  if (event.is_registered) {
+    try {
+      await api.delete(`/events/${eventId}/register`);
+      toast.success("Deregistered successfully");
+      fetchEvent(); // refresh event state
+    } catch (err) {
+      toast.error("Failed to deregister");
     }
-    setIsRegisterModalOpen(true);
-  };
+    return;
+  }
+
+  // 🆕 Otherwise → REGISTER
+  setIsRegisterModalOpen(true);
+};
+
 
   const handleRegistrationSuccess = () => {
     setIsRegisterModalOpen(false);
@@ -169,24 +184,22 @@ const EventDetail = () => {
           </div>
 
           {/* ACTION */}
-          <button
-            className={`btn px-5 py-3 fw-bold w-100 d-flex align-items-center justify-content-center gap-2 ${
-              event.is_registered || deadlinePassed
-                ? "btn-registered"
-                : "btn-purple"
-            }`}
-            disabled={event.is_registered || deadlinePassed}
-            onClick={handleRegisterClick}
-          >
+         <button
+  className={`btn px-5 py-3 fw-bold w-100 d-flex align-items-center justify-content-center gap-2 ${
+    event.is_registered ? "btn-registered" : "btn-purple"
+  }`}
+  disabled={deadlinePassed}
+  onClick={handleRegisterClick}
+>
+
             {event.is_registered ? (
-              <>
-                <Check size={20} /> Registered
-              </>
-            ) : deadlinePassed ? (
-              "Registration Closed"
-            ) : (
-              "Register Now"
-            )}
+  "Deregister"
+) : deadlinePassed ? (
+  "Registration Closed"
+) : (
+  "Register Now"
+)}
+
           </button>
         </div>
       </div>

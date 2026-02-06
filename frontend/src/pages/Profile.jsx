@@ -1,10 +1,9 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Loader from '../components/UI/Loader';
 import toast from 'react-hot-toast';
 import { Camera, Edit3, Save, X, GraduationCap, MapPin, Calendar, Heart } from 'lucide-react';
-// Import the constants you defined in constants.js
 import { DEPARTMENTS, HOSTELS, YEARS } from '../utils/constants';
 
 const ALL_INTERESTS = [
@@ -16,27 +15,29 @@ const Profile = () => {
   const { user, setUser } = useAuth();
   const [editMode, setEditMode] = useState(false);
 
-  // Form state tracking local changes
   const [form, setForm] = useState({
     hostel: user?.hostel || "",
     department: user?.department || "",
     current_year: user?.current_year || "",
     interests: user?.interests || [],
-    photo_url: user?.photo_url || ""
+    photo_url: user?.photo_url || "",
+    photo_file: null,
+    remove_photo: false
   });
 
-useEffect(() => {
-  if (user) {
-    setForm({
-      hostel: user.hostel || "",
-      department: user.department || "",
-      current_year: user.current_year || "",
-      interests: user.interests || [],
-      photo_url: user.photo_url || ""
-    });
-  }
-}, [user]);
-
+  useEffect(() => {
+    if (user) {
+      setForm({
+        hostel: user.hostel || "",
+        department: user.department || "",
+        current_year: user.current_year || "",
+        interests: user.interests || [],
+        photo_url: user.photo_url || "",
+        photo_file: null,
+        remove_photo: false
+      });
+    }
+  }, [user]);
 
   if (!user) return <Loader />;
 
@@ -48,43 +49,46 @@ useEffect(() => {
         : [...prev.interests, interest]
     }));
   };
-const handlePhotoChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
 
-  setForm(prev => ({
-    ...prev,
-    photo_file: file,
-    photo_url: URL.createObjectURL(file) // preview only
-  }));
-};
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setForm(prev => ({
+      ...prev,
+      photo_file: file,
+      photo_url: URL.createObjectURL(file),
+      remove_photo: false
+    }));
+  };
 
-const saveProfile = async () => {
-  const fd = new FormData();
+  const saveProfile = async () => {
+    try {
+      const fd = new FormData();
+      fd.append("hostel", form.hostel);
+      fd.append("department", form.department);
+      fd.append("current_year", form.current_year);
+      fd.append("interests", JSON.stringify(form.interests));
+      if (form.remove_photo) fd.append("remove_photo", "true");
+      if (form.photo_file) fd.append("photo", form.photo_file);
 
-  fd.append("hostel", form.hostel);
-  fd.append("department", form.department);
-  fd.append("current_year", form.current_year);
-  fd.append("interests", JSON.stringify(form.interests));
-
-  if (form.photo_file) {
-    fd.append("photo", form.photo_file);
-  }
-
-  const res = await api.put("/user/profile", fd);
-
-  setUser(res.data);
-  setEditMode(false);
-};
-
+      const res = await api.put("/user/profile", fd);
+      setUser(res.data);
+      setEditMode(false);
+      toast.success("Profile updated!");
+    } catch (err) {
+      toast.error("Failed to update profile");
+    }
+  };
 
   const cancelEdit = () => {
     setForm({
-      hostel: user.hostel,
-      department: user.department,
-      current_year: user.current_year,
-      interests: user.interests,
-      photo_url: user.photo_url
+      hostel: user.hostel || "",
+      department: user.department || "",
+      current_year: user.current_year || "",
+      interests: user.interests || [],
+      photo_url: user.photo_url || "",
+      photo_file: null,
+      remove_photo: false
     });
     setEditMode(false);
   };
@@ -95,18 +99,39 @@ const saveProfile = async () => {
       {/* 1. HERO IDENTITY SECTION */}
       <div className="profile-hero-card mb-4 p-4 p-md-5">
         <div className="d-flex flex-column flex-md-row align-items-center gap-4">
-          <div className="position-relative">
-            <div className="profile-avatar-large shadow-lg">
+          
+          {/* AVATAR CONTAINER */}
+          <div className="position-relative" style={{ width: '120px', height: '120px' }}>
+            <div className="profile-avatar-large shadow-lg w-100 h-100 overflow-hidden d-flex align-items-center justify-content-center">
               {form.photo_url ? (
-                <img src={form.photo_url} alt="profile" className="w-100 h-100 object-fit-cover rounded-inherit" />
+                <img src={form.photo_url} alt="profile" className="w-100 h-100 object-fit-cover" />
               ) : (
-                user.name.charAt(0)
+                <span className="fs-1 fw-bold text-white">{user.name.charAt(0)}</span>
               )}
             </div>
+
             {editMode && (
-              <button className="avatar-edit-fab shadow" onClick={() => document.getElementById("photoInput").click()}>
-                <Camera size={18} />
-              </button>
+              <>
+                {/* Upload Button overlay */}
+                <button 
+                  className="avatar-edit-fab shadow border-0" 
+                  onClick={() => document.getElementById("photoInput").click()}
+                  style={{ position: 'absolute', bottom: '0', right: '0', zIndex: 2 }}
+                >
+                  <Camera size={18} />
+                </button>
+
+                {/* Remove Button overlay - Small X top right */}
+                {form.photo_url && (
+                  <button
+                    className="btn btn-danger btn-sm rounded-circle p-1 shadow"
+                    style={{ position: 'absolute', top: '-5px', right: '-5px', zIndex: 3, width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => setForm(prev => ({ ...prev, photo_url: "", photo_file: null, remove_photo: true }))}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </>
             )}
             <input type="file" hidden id="photoInput" accept="image/*" onChange={handlePhotoChange} />
           </div>
@@ -139,8 +164,7 @@ const saveProfile = async () => {
       </div>
 
       <div className="row g-4">
-        
-        {/* 2. ACADEMIC DETAILS WITH DROPDOWNS */}
+        {/* 2. ACADEMIC DETAILS */}
         <div className="col-lg-5">
           <div className="profile-glass-card h-100 p-4">
             <h5 className="section-title mb-4 d-flex align-items-center gap-2">
@@ -209,7 +233,7 @@ const saveProfile = async () => {
           </div>
         </div>
 
-        {/* 3. INTERESTS SELECTION SECTION */}
+        {/* 3. INTERESTS SELECTION */}
         <div className="col-lg-7">
           <div className="profile-glass-card h-100 p-4">
             <h5 className="section-title mb-4 d-flex align-items-center gap-2">
@@ -243,7 +267,6 @@ const saveProfile = async () => {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

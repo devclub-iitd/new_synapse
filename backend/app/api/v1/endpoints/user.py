@@ -16,14 +16,19 @@ def update_profile(
     hostel: str = Form(None),
     department: str = Form(None),
     current_year: int = Form(None),
-    interests: str = Form(None),  # JSON string
+    interests: str = Form(None),
     photo: UploadFile = File(None),
+    remove_photo: bool = Form(False),  # ✅ ADD THIS
 
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
-    # 1. Upload photo to Cloudinary
-    if photo:
+    # 🔴 REMOVE PHOTO
+    if remove_photo:
+        current_user.photo_url = None
+
+    # 🟢 UPLOAD NEW PHOTO
+    elif photo:
         result = cloudinary.uploader.upload(
             photo.file,
             folder="profiles",
@@ -32,7 +37,7 @@ def update_profile(
         )
         current_user.photo_url = result["secure_url"]
 
-    # 2. Update normal fields
+    # NORMAL FIELDS
     if hostel is not None:
         current_user.hostel = hostel
     if department is not None:
@@ -45,6 +50,7 @@ def update_profile(
     db.commit()
     db.refresh(current_user)
     return current_user
+
 
 
 

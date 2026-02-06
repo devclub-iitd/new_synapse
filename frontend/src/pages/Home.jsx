@@ -59,40 +59,79 @@ const Home = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgType, selectedBoard, selectedItem, debouncedSearch, sortBy]);
 
+  // const fetchEvents = async (reset = false) => {
+  //   try {
+  //     reset ? setLoading(true) : setLoadingMore(true);
+  //     const params = {
+  //       skip: reset ? 0 : skip,
+  //       limit: LIMIT,
+  //       sort_by: sortBy,
+  //     };
+
+  //     if (orgType) params.org_type = orgType;
+  //     if (selectedBoard) params.board = selectedBoard;
+  //     if (selectedItem) params.item = selectedItem;
+  //     if (debouncedSearch) params.search = debouncedSearch;
+
+  //     const res = await api.get("/events", { params });
+
+  //     if (reset) {
+  //       setEvents(res.data);
+  //     } else {
+  //       setEvents((prev) => [...prev, ...res.data]);
+  //     }
+
+  //     if (res.data.length < LIMIT) {
+  //       setHasMore(false);
+  //     }
+
+  //     setSkip((prev) => prev + LIMIT);
+  //   } catch (err) {
+  //     console.error(err);
+  //   } finally {
+  //     setLoading(false);
+  //     setLoadingMore(false);
+  //   }
+  // };
+
   const fetchEvents = async (reset = false) => {
-    try {
-      reset ? setLoading(true) : setLoadingMore(true);
-      const params = {
-        skip: reset ? 0 : skip,
-        limit: LIMIT,
-        sort_by: sortBy,
-      };
+  try {
+    reset ? setLoading(true) : setLoadingMore(true);
 
-      if (orgType) params.org_type = orgType;
-      if (selectedBoard) params.board = selectedBoard;
-      if (selectedItem) params.item = selectedItem;
-      if (debouncedSearch) params.search = debouncedSearch;
+    const currentSkip = reset ? 0 : skip;
 
-      const res = await api.get("/events", { params });
+    const params = {
+      skip: currentSkip,
+      limit: LIMIT,
+      sort_by: sortBy,
+    };
 
-      if (reset) {
-        setEvents(res.data);
-      } else {
-        setEvents((prev) => [...prev, ...res.data]);
-      }
+    if (orgType) params.org_type = orgType;
+    if (selectedItem) params.item = selectedItem;
+    if (debouncedSearch) params.search = debouncedSearch;
 
-      if (res.data.length < LIMIT) {
-        setHasMore(false);
-      }
+    const res = await api.get("/events", { params });
 
-      setSkip((prev) => prev + LIMIT);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
+    if (reset) {
+      setEvents(res.data);
+    } else {
+      setEvents((prev) => [...prev, ...res.data]);
     }
-  };
+
+    // 🔑 deterministic skip update
+    setSkip(currentSkip + res.data.length);
+
+    if (res.data.length < LIMIT) {
+      setHasMore(false);
+    }
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+    setLoadingMore(false);
+  }
+};
+
 
   // ✅ FIX: OPEN MODAL INSTEAD OF DIRECT API CALL
   const handleRegisterClick = (event) => {
@@ -112,6 +151,10 @@ const Home = () => {
     // Refresh the list so the button turns to "Registered"
     // Passing 'false' to keep current list but we probably want to reload to update status
     // For simplicity, we can just reload the current view or re-fetch
+
+    setSkip(0);
+  setEvents([]);
+  setHasMore(true);
     fetchEvents(true); 
   };
 

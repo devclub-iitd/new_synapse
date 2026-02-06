@@ -131,10 +131,10 @@ const OrgDashboard = () => {
     
     formData.append('name', newEvent.name);
 formData.append('date', new Date(newEvent.date).toISOString());
-formData.append(
-  'registration_deadline',
-  new Date(newEvent.registration_deadline).toISOString()
-);
+// formData.append(
+//   'registration_deadline',
+//   new Date(newEvent.registration_deadline).toISOString()
+// );
     formData.append('venue', newEvent.venue);
     formData.append('description', newEvent.description);
     formData.append('tags', JSON.stringify(newEvent.tags.split(',').map(t => t.trim()).filter(Boolean)));
@@ -167,7 +167,7 @@ formData.append(
     setNewEvent({
       name: '',
       date: '',
-      registration_deadline: '',
+      // registration_deadline: '',
       venue: '',
       description: '',
       tags: '',
@@ -508,7 +508,7 @@ const handleDeleteEvent = async (eventId) => {
                 <input type="text" className="form-control bg-dark text-white border-secondary" required 
                   value={newEvent.venue} onChange={e => setNewEvent({...newEvent, venue: e.target.value})} />
               </div>
-              <div className="col-md-6">
+              {/* <div className="col-md-6">
   <label className="text-secondary small">
     Registration Deadline
   </label>
@@ -528,7 +528,7 @@ const handleDeleteEvent = async (eventId) => {
   <small className="text-muted">
     Registrations will close automatically after this time
   </small>
-</div>
+</div> */}
               <div className="col-12">
                 <label className="text-secondary small">Description</label>
                 <textarea className="form-control bg-dark text-white border-secondary" rows="3" required 

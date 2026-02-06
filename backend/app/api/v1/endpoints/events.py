@@ -8,6 +8,7 @@ from app.models.registration import Registration
 from app.schemas.event import EventOut, EventDetail
 from app.services.recommender import get_event_recommendations
 from app.models.enums import OrgType # Import the Enum
+from sqlalchemy import func
 
 router = APIRouter()
 
@@ -30,51 +31,96 @@ def normalize_org_type(org_type: str) -> str:
     return mapping.get(org_type, org_type.lower())
 
 
+# @router.get("/", response_model=List[EventOut])
+# def get_events(
+#     db: Session = Depends(deps.get_db),
+#     current_user: Optional[User] = Depends(deps.get_current_user_optional),
+
+#     sort_by: str = Query("date", pattern="^(date|popularity)$"),
+
+#     # FILTER PARAMS
+#     org_type: Optional[str] = None,
+#     board: Optional[str] = None,   
+#     item: Optional[str] = None,
+#     search: Optional[str] = None,
+
+#     skip: int = 0,
+#     limit: int = 20
+# ):
+#     query = db.query(Event)
+
+#     # 1️⃣ ORG TYPE FILTER (Using the new robust normalizer)
+#     if org_type:
+#         clean_type = normalize_org_type(org_type)
+#         query = query.filter(Event.org_type == clean_type)
+
+#     # 2️⃣ FINAL ITEM FILTER → org_name (e.g. "DevClub" -> "devclub")
+#     if item:
+#         query = query.filter(Event.org_name == item.lower())
+
+#     # 3️⃣ SEARCH
+#     if search:
+#         query = query.filter(Event.name.ilike(f"%{search}%"))
+
+#     # 4️⃣ SORT
+#     if sort_by == "date":
+#         query = query.order_by(Event.date.asc())
+
+#     events = query.offset(skip).limit(limit).all()
+
+#     # 5️⃣ REGISTRATION STATUS
+#     if current_user:
+#         registered_ids = {r.event_id for r in current_user.registrations}
+#         for e in events:
+#             e.is_registered = e.id in registered_ids
+#     else:
+#         for e in events:
+#             e.is_registered = False
+
+#     return events
+
 @router.get("/", response_model=List[EventOut])
 def get_events(
     db: Session = Depends(deps.get_db),
     current_user: Optional[User] = Depends(deps.get_current_user_optional),
-
     sort_by: str = Query("date", pattern="^(date|popularity)$"),
-
-    # FILTER PARAMS
     org_type: Optional[str] = None,
-    board: Optional[str] = None,   
     item: Optional[str] = None,
     search: Optional[str] = None,
-
     skip: int = 0,
     limit: int = 20
 ):
     query = db.query(Event)
 
-    # 1️⃣ ORG TYPE FILTER (Using the new robust normalizer)
+    # ✅ Public events only
+    query = query.filter(Event.is_private == False)
+
+    # ✅ Org type
     if org_type:
         clean_type = normalize_org_type(org_type)
-        query = query.filter(Event.org_type == clean_type)
+        query = query.filter(func.lower(Event.org_type) == clean_type)
 
-    # 2️⃣ FINAL ITEM FILTER → org_name (e.g. "DevClub" -> "devclub")
+    # ✅ Org name
     if item:
-        query = query.filter(Event.org_name == item.lower())
+        query = query.filter(func.lower(Event.org_name) == item.lower())
 
-    # 3️⃣ SEARCH
+    # ✅ Search
     if search:
         query = query.filter(Event.name.ilike(f"%{search}%"))
 
-    # 4️⃣ SORT
+    # ✅ Sort
     if sort_by == "date":
         query = query.order_by(Event.date.asc())
 
     events = query.offset(skip).limit(limit).all()
 
-    # 5️⃣ REGISTRATION STATUS
+    # Registration status
+    registered_ids = set()
     if current_user:
         registered_ids = {r.event_id for r in current_user.registrations}
-        for e in events:
-            e.is_registered = e.id in registered_ids
-    else:
-        for e in events:
-            e.is_registered = False
+
+    for e in events:
+        e.is_registered = e.id in registered_ids
 
     return events
 

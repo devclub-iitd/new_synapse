@@ -35,9 +35,7 @@ const EventRegistrationModal = ({ isOpen, onClose, eventId, onSuccess }) => {
     e.preventDefault();
     try {
       setLoading(true);
-      await api.post(`/events/${eventId}/register`, {
-        custom_answers: answers
-      });
+      await api.post(`/events/${eventId}/register`, answers);
       toast.success("Successfully Registered!");
       onSuccess(); // Refresh parent list
       onClose();
@@ -70,20 +68,24 @@ const EventRegistrationModal = ({ isOpen, onClose, eventId, onSuccess }) => {
                 <label className="form-label text-secondary small text-uppercase">{field.label}</label>
                 
                 {field.type === 'text' && (
-                  <input 
-                    type="text" 
-                    className="form-control bg-dark text-white border-secondary"
-                    required 
-                    onChange={e => handleInputChange(field.label, e.target.value)}
-                  />
+                 <input
+  type="text"
+  className="form-control bg-dark text-white border-secondary"
+  required
+  value={answers[field.label] || ""}
+  onChange={e => handleInputChange(field.label, e.target.value)}
+/>
+
                 )}
 
                 {field.type === 'radio' && field.options && (
-                  <select 
-                    className="form-select bg-dark text-white border-secondary"
-                    required
-                    onChange={e => handleInputChange(field.label, e.target.value)}
-                  >
+                  <select
+  className="form-select bg-dark text-white border-secondary"
+  required
+  value={answers[field.label] || ""}
+  onChange={e => handleInputChange(field.label, e.target.value)}
+>
+
                     <option value="">Select option...</option>
                     {field.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                   </select>

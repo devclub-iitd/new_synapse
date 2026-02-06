@@ -7,20 +7,20 @@ from app.models.user import User
 from app.models.registration import Registration
 from app.schemas.event import EventOut, EventDetail
 from app.services.recommender import get_event_recommendations
-from app.models.enums import OrgType # Import the Enum
-from sqlalchemy import func
-from datetime import datetime, timezone
+from sqlalchemy import func, case
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter()
+
 
 def normalize_org_type(org_type: str) -> str:
     """
     Frontend sends: Clubs / Fests / Departments
-    DB stores:      club / fest / department (Lowercase)
+    DB stores:      club / fest / department (lowercase)
     """
     if not org_type:
         return None
-        
+
     mapping = {
         "Clubs": "club",
         "Fests": "fest",
@@ -28,58 +28,12 @@ def normalize_org_type(org_type: str) -> str:
         "Boards": "board",
         "Societies": "society"
     }
-    # Return mapped value or fallback to lowercase
     return mapping.get(org_type, org_type.lower())
 
 
-# @router.get("/", response_model=List[EventOut])
-# def get_events(
-#     db: Session = Depends(deps.get_db),
-#     current_user: Optional[User] = Depends(deps.get_current_user_optional),
-
-#     sort_by: str = Query("date", pattern="^(date|popularity)$"),
-
-#     # FILTER PARAMS
-#     org_type: Optional[str] = None,
-#     board: Optional[str] = None,   
-#     item: Optional[str] = None,
-#     search: Optional[str] = None,
-
-#     skip: int = 0,
-#     limit: int = 20
-# ):
-#     query = db.query(Event)
-
-#     # 1️⃣ ORG TYPE FILTER (Using the new robust normalizer)
-#     if org_type:
-#         clean_type = normalize_org_type(org_type)
-#         query = query.filter(Event.org_type == clean_type)
-
-#     # 2️⃣ FINAL ITEM FILTER → org_name (e.g. "DevClub" -> "devclub")
-#     if item:
-#         query = query.filter(Event.org_name == item.lower())
-
-#     # 3️⃣ SEARCH
-#     if search:
-#         query = query.filter(Event.name.ilike(f"%{search}%"))
-
-#     # 4️⃣ SORT
-#     if sort_by == "date":
-#         query = query.order_by(Event.date.asc())
-
-#     events = query.offset(skip).limit(limit).all()
-
-#     # 5️⃣ REGISTRATION STATUS
-#     if current_user:
-#         registered_ids = {r.event_id for r in current_user.registrations}
-#         for e in events:
-#             e.is_registered = e.id in registered_ids
-#     else:
-#         for e in events:
-#             e.is_registered = False
-
-#     return events
-
+# ============================================================
+# EVENTS FEED
+# ============================================================
 @router.get("/", response_model=List[EventOut])
 def get_events(
     db: Session = Depends(deps.get_db),
@@ -91,18 +45,23 @@ def get_events(
     skip: int = 0,
     limit: int = 20
 ):
+    now = datetime.now(timezone.utc)
+    six_months_ago = now - timedelta(days=180)
+
     query = db.query(Event)
 
-    # ✅ Public events only
+    # ✅ Only public events
     query = query.filter(Event.is_private == False)
 
-    # ✅ Org type
+    # ❌ Hide events older than 6 months
+    query = query.filter(Event.date >= six_months_ago)
+
+    # ✅ Org type filter
     if org_type:
         clean_type = normalize_org_type(org_type)
-        # query = query.filter(func.lower(Event.org_type) == clean_type)
         query = query.filter(Event.org_type == clean_type)
 
-    # ✅ Org name
+    # ✅ Org name filter
     if item:
         query = query.filter(func.lower(Event.org_name) == item.lower())
 
@@ -110,13 +69,21 @@ def get_events(
     if search:
         query = query.filter(Event.name.ilike(f"%{search}%"))
 
-    # ✅ Sort
-    if sort_by == "date":
-        query = query.order_by(Event.date.asc())
+    # ✅ SORTING LOGIC
+    # 1️⃣ Upcoming events first
+    # 2️⃣ Past events later
+    # 3️⃣ Sorted by date inside each group
+    query = query.order_by(
+        case(
+            (Event.date >= now, 0),  # upcoming → priority 0
+            else_=1                  # past → priority 1
+        ),
+        Event.date.asc()
+    )
 
     events = query.offset(skip).limit(limit).all()
 
-    # Registration status
+    # ✅ Registration status
     registered_ids = set()
     if current_user:
         registered_ids = {r.event_id for r in current_user.registrations}
@@ -126,6 +93,10 @@ def get_events(
 
     return events
 
+
+# ============================================================
+# RECOMMENDATIONS
+# ============================================================
 @router.get("/recommendations", response_model=List[EventOut])
 def get_recommendations(
     db: Session = Depends(deps.get_db),
@@ -134,6 +105,9 @@ def get_recommendations(
     return get_event_recommendations(db, current_user.id)
 
 
+# ============================================================
+# EVENT DETAIL
+# ============================================================
 @router.get("/{event_id}", response_model=EventDetail)
 def get_event_detail(
     event_id: int,
@@ -154,8 +128,9 @@ def get_event_detail(
     return event
 
 
-from datetime import datetime, timezone
-
+# ============================================================
+# REGISTER FOR EVENT
+# ============================================================
 @router.post("/{event_id}/register")
 def register_for_event(
     event_id: int,
@@ -199,6 +174,10 @@ def register_for_event(
 
     return {"status": "success", "msg": "Registered successfully"}
 
+
+# ============================================================
+# DEREGISTER
+# ============================================================
 @router.delete("/{event_id}/register")
 def deregister_from_event(
     event_id: int,

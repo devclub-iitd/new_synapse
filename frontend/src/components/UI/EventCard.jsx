@@ -6,6 +6,8 @@ const EventCard = ({ event, onRegisterClick }) => {
   const navigate = useNavigate();
 
   const isRegistered = event.is_registered;
+  const eventPassed = new Date(event.date) < new Date();
+
 
   const hasDeadline = !!event.registration_deadline;
   const deadlinePassed = hasDeadline
@@ -59,25 +61,30 @@ const EventCard = ({ event, onRegisterClick }) => {
 
           <button
   className={`btn w-100 d-flex align-items-center justify-content-center gap-2 ${
-    isRegistered || deadlinePassed
+    eventPassed || isRegistered || deadlinePassed
       ? "btn-registered"
       : "btn-purple"
   }`}
-  disabled={isRegistered || deadlinePassed}
+  disabled={eventPassed || isRegistered || deadlinePassed}
   onClick={(e) => {
     e.stopPropagation();
-    if (!isRegistered && !deadlinePassed) {
+    if (!eventPassed && !isRegistered && !deadlinePassed) {
       onRegisterClick(event);
     }
   }}
 >
-  {isRegistered
+  {eventPassed
+    ? "Event Over"
+    : isRegistered
     ? "Registered"
     : deadlinePassed
     ? "Registration Closed"
     : "Register"}
-  {!isRegistered && !deadlinePassed && <ExternalLink size={16} />}
+  {!eventPassed && !isRegistered && !deadlinePassed && (
+    <ExternalLink size={16} />
+  )}
 </button>
+
 
         </div>
       </div>

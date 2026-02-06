@@ -43,21 +43,28 @@ const EventDetail = () => {
     return;
   }
 
-  // 🔄 If already registered → DEREGISTER
+  // ❌ Block past events completely
+  if (eventPassed || deadlinePassed) {
+    toast.error("Registrations are closed for this event");
+    return;
+  }
+
+  // 🔄 Deregister
   if (event.is_registered) {
     try {
       await api.delete(`/events/${eventId}/register`);
       toast.success("Deregistered successfully");
-      fetchEvent(); // refresh event state
+      fetchEvent();
     } catch (err) {
       toast.error("Failed to deregister");
     }
     return;
   }
 
-  // 🆕 Otherwise → REGISTER
+  // 🆕 Register
   setIsRegisterModalOpen(true);
 };
+
 
 
   const handleRegistrationSuccess = () => {
@@ -85,6 +92,9 @@ const EventDetail = () => {
   const deadlinePassed = hasDeadline
     ? new Date(event.registration_deadline) < new Date()
     : false;
+
+    const eventPassed = new Date(event.date) < new Date();
+
 
   return (
     <div className="container py-5">
@@ -186,19 +196,23 @@ const EventDetail = () => {
           {/* ACTION */}
          <button
   className={`btn px-5 py-3 fw-bold w-100 d-flex align-items-center justify-content-center gap-2 ${
-    event.is_registered ? "btn-registered" : "btn-purple"
+    eventPassed || deadlinePassed || event.is_registered
+      ? "btn-registered"
+      : "btn-purple"
   }`}
-  disabled={deadlinePassed}
+  disabled={eventPassed || deadlinePassed}
   onClick={handleRegisterClick}
 >
 
-            {event.is_registered ? (
-  "Deregister"
-) : deadlinePassed ? (
-  "Registration Closed"
-) : (
-  "Register Now"
-)}
+
+            {eventPassed
+  ? "Event Over"
+  : event.is_registered
+  ? "Deregister"
+  : deadlinePassed
+  ? "Registration Closed"
+  : "Register Now"}
+
 
           </button>
         </div>

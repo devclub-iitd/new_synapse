@@ -9,6 +9,7 @@ from app.schemas.event import EventOut, EventDetail
 from app.services.recommender import get_event_recommendations
 from app.models.enums import OrgType # Import the Enum
 from sqlalchemy import func
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -153,6 +154,8 @@ def get_event_detail(
     return event
 
 
+from datetime import datetime, timezone
+
 @router.post("/{event_id}/register")
 def register_for_event(
     event_id: int,
@@ -163,6 +166,19 @@ def register_for_event(
     event = db.query(Event).filter(Event.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
+
+    # 🚫 BLOCK PAST EVENTS
+    now = datetime.now(timezone.utc)
+
+    event_date = event.date
+    if event_date.tzinfo is None:
+        event_date = event_date.replace(tzinfo=timezone.utc)
+
+    if event_date < now:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot register for past events"
+        )
 
     existing = db.query(Registration).filter(
         Registration.user_id == current_user.id,

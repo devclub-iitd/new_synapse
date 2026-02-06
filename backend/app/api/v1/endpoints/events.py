@@ -98,7 +98,8 @@ def get_events(
     # ✅ Org type
     if org_type:
         clean_type = normalize_org_type(org_type)
-        query = query.filter(func.lower(Event.org_type) == clean_type)
+        # query = query.filter(func.lower(Event.org_type) == clean_type)
+        query = query.filter(Event.org_type == clean_type)
 
     # ✅ Org name
     if item:

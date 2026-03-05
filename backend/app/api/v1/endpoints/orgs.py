@@ -94,6 +94,7 @@ def get_org_dashboard(
     return {
         "org_name": role.org_name,
         "your_role": role.role_name,
+        "org_banner":role.org_banner,
         "total_events": total_events,
         "total_registrations": total_regs,
         "dept_analytics": dept_counts 
@@ -130,7 +131,7 @@ def create_org_event(
     role: AuthRole = Depends(get_org_role_by_id)
 ):
     # 1. Handle File Upload
-    image_url = None
+    image_url = role.org_banner
     if photo:
         result = cloudinary.uploader.upload(
             photo.file,
@@ -139,6 +140,7 @@ def create_org_event(
             resource_type="image"
         )
         image_url = result["secure_url"]
+        
 
     # 2. Parse JSON fields
     try:
@@ -474,3 +476,33 @@ def remove_team_member(
     db.commit()
     
     return {"msg": "Member removed"}
+
+
+
+@router.post("/{org_id}/banner")
+def upload_org_banner(
+    org_id: int,
+    banner: UploadFile = File(...),
+    db: Session = Depends(deps.get_db),
+    role: AuthRole = Depends(get_org_role_by_id)
+):
+    if banner.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
+        raise HTTPException(status_code=400, detail="Only JPG/PNG allowed")
+
+    org_file_name = role.org_name.lower().replace(" ", "_")
+
+    result = cloudinary.uploader.upload(
+        banner.file,
+        folder="org_banners",
+        public_id=org_file_name,
+        format="jpg",   # force jpg
+        resource_type="image"
+    )
+
+    role.org_banner=result["secure_url"]
+    db.add(role)
+    db.commit()
+    db.refresh(role)
+    return {"banner_url": result["secure_url"]}
+
+

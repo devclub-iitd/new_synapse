@@ -21,6 +21,7 @@ class AuthRole(Base):
     org_name = Column(String, nullable=False, index=True)
     role_name = Column(String, nullable=False)
     org_type = Column(String, nullable=False, index=True)
+    org_banner=Column(String, default=None)
     user = relationship("User", back_populates="authorizations")
 
     __table_args__ = (

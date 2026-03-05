@@ -44,7 +44,7 @@ const LoginModal = ({ isOpen, onClose }) => {
 
   const handleMicrosoftLogin = () => {
     const CLIENT_ID = process.env.REACT_APP_MS_CLIENT_ID;
-    const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI;
+    const REDIRECT_URI = "http://localhost:3000/auth/callback";
     const TENANT_ID = "624d5c4b-45c5-4122-8cd0-44f0f84e945d";
 
     const targetUrl =

@@ -8,6 +8,7 @@ import Loader from '../components/UI/Loader';
 import toast from 'react-hot-toast';
 
 import { DEPARTMENTS, HOSTELS, YEARS, HEAD_ROLES, TEAM_ROLES } from '../utils/constants';
+import OrgBanner from '../components/UI/OrgBanner';
 
 // --- HELPER COMPONENT: MultiSelect ---
 const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
@@ -16,21 +17,21 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
     if (value && !selected.includes(value)) {
       onChange([...selected, value]);
     }
-    e.target.value = ""; 
+    e.target.value = "";
   };
 
   const removeOption = (valueToRemove) => {
     onChange(selected.filter(item => item !== valueToRemove));
   };
 
-  
+
 
 
   return (
     <div className="mb-3">
       <label className="text-secondary small mb-2">{label}</label>
-      <select 
-        className="form-select bg-dark text-white border-secondary mb-2" 
+      <select
+        className="form-select bg-dark text-white border-secondary mb-2"
         onChange={handleSelect}
         defaultValue=""
       >
@@ -41,15 +42,15 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
           </option>
         ))}
       </select>
-      
+
       <div className="d-flex flex-wrap gap-2">
         {selected.length > 0 ? (
           selected.map(item => (
             <span key={item} className="badge bg-purple bg-opacity-25 text-white border border-secondary d-flex align-items-center gap-2 px-3 py-2">
               {item}
-              <X 
-                size={14} 
-                className="cursor-pointer text-secondary hover-text-white" 
+              <X
+                size={14}
+                className="cursor-pointer text-secondary hover-text-white"
                 onClick={() => removeOption(item)}
               />
             </span>
@@ -64,7 +65,7 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
 
 const OrgDashboard = () => {
   const { orgId } = useParams();
-  
+
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState(null);
   const [events, setEvents] = useState([]);
@@ -72,16 +73,16 @@ const OrgDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [editingEventId, setEditingEventId] = useState(null);
 
-  
-  const [newEvent, setNewEvent] = useState({ 
-  name: '',
-  date: '',
-  registration_deadline: '',
-  venue: '',
-  description: '',
-  tags: '',
-  isPrivate: false
-});
+
+  const [newEvent, setNewEvent] = useState({
+    name: '',
+    date: '',
+    registration_deadline: '',
+    venue: '',
+    description: '',
+    tags: '',
+    isPrivate: false
+  });
 
 
   const [targetDepts, setTargetDepts] = useState([]);
@@ -116,32 +117,32 @@ const OrgDashboard = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]); // ✅ Dependency Added
-  
+
   useEffect(() => {
-  // Select all by default ONLY when creating (not editing)
-  if (!editingEventId && activeTab === 'create') {
-    setTargetDepts(DEPARTMENTS);
-    setTargetHostels(HOSTELS);
-  }
-}, [activeTab, editingEventId]);
+    // Select all by default ONLY when creating (not editing)
+    if (!editingEventId && activeTab === 'create') {
+      setTargetDepts(DEPARTMENTS);
+      setTargetHostels(HOSTELS);
+    }
+  }, [activeTab, editingEventId]);
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    
+
     formData.append('name', newEvent.name);
-formData.append('date', new Date(newEvent.date).toISOString());
-// formData.append(
-//   'registration_deadline',
-//   new Date(newEvent.registration_deadline).toISOString()
-// );
+    formData.append('date', new Date(newEvent.date).toISOString());
+    // formData.append(
+    //   'registration_deadline',
+    //   new Date(newEvent.registration_deadline).toISOString()
+    // );
     formData.append('venue', newEvent.venue);
     formData.append('description', newEvent.description);
     formData.append('tags', JSON.stringify(newEvent.tags.split(',').map(t => t.trim()).filter(Boolean)));
     formData.append('custom_form_schema', JSON.stringify(formSchema));
     formData.append('is_private', newEvent.isPrivate);
     if (imageFile) formData.append('photo', imageFile);
-    
+
     const audience = {
       depts: targetDepts,
       hostels: targetHostels,
@@ -150,48 +151,48 @@ formData.append('date', new Date(newEvent.date).toISOString());
     formData.append('target_audience', JSON.stringify(audience));
 
     try {
-  if (editingEventId) {
-    // 🔄 UPDATE EXISTING EVENT
-    await api.put(`/org/${orgId}/events/${editingEventId}`, formData);
-    toast.success("Event updated successfully!");
+      if (editingEventId) {
+        // 🔄 UPDATE EXISTING EVENT
+        await api.put(`/org/${orgId}/events/${editingEventId}`, formData);
+        toast.success("Event updated successfully!");
 
-    // ✅ exit edit mode ONLY
-    setEditingEventId(null);
+        // ✅ exit edit mode ONLY
+        setEditingEventId(null);
 
-  } else {
-    // 🆕 CREATE NEW EVENT
-    await api.post(`/org/${orgId}/events`, formData);
-    toast.success("Event created successfully!");
+      } else {
+        // 🆕 CREATE NEW EVENT
+        await api.post(`/org/${orgId}/events`, formData);
+        toast.success("Event created successfully!");
 
-    // ✅ reset ONLY for create
-    setNewEvent({
-      name: '',
-      date: '',
-      // registration_deadline: '',
-      venue: '',
-      description: '',
-      tags: '',
-      isPrivate: false
-    });
+        // ✅ reset ONLY for create
+        setNewEvent({
+          name: '',
+          date: '',
+          // registration_deadline: '',
+          venue: '',
+          description: '',
+          tags: '',
+          isPrivate: false
+        });
 
-    setTargetDepts([]);
-    setTargetHostels([]);
-    setTargetYears([]);
-    setFormSchema([]);
-    setImageFile(null);
-  }
+        setTargetDepts([]);
+        setTargetHostels([]);
+        setTargetYears([]);
+        setFormSchema([]);
+        setImageFile(null);
+      }
 
-  setActiveTab('events');
-  fetchData();
+      setActiveTab('events');
+      fetchData();
 
-} catch (err) {
-  const msg =
-    err?.response?.data?.detail ||
-    err?.response?.data?.message ||
-    "Failed to save event";
+    } catch (err) {
+      const msg =
+        err?.response?.data?.detail ||
+        err?.response?.data?.message ||
+        "Failed to save event";
 
-  toast.error(msg);
-}
+      toast.error(msg);
+    }
   };
 
 
@@ -201,14 +202,14 @@ formData.append('date', new Date(newEvent.date).toISOString());
       await api.post(`/org/${orgId}/team`, newMember);
       toast.success(`${newMember.role} added successfully`);
       setNewMember({ email: '', role: 'coordinator' });
-      fetchData(); 
+      fetchData();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to add member");
     }
   };
 
   const handleRemoveMember = async (userId) => {
-    if(!window.confirm("Are you sure you want to remove this member?")) return;
+    if (!window.confirm("Are you sure you want to remove this member?")) return;
     try {
       await api.delete(`/org/${orgId}/team/${userId}`);
       toast.success("Member removed");
@@ -219,62 +220,62 @@ formData.append('date', new Date(newEvent.date).toISOString());
   };
 
   // ✅ EDIT EVENT (frontend only: navigates to Create tab with prefilled data)
-const handleEditEvent = (ev) => {
-  setEditingEventId(ev.id);
-  setNewEvent({
-    name: ev.name,
-    date: ev.date?.slice(0, 16) || '',
-    registration_deadline: ev.registration_deadline?.slice(0, 16) || '',
-    venue: ev.venue || '',
-    description: ev.description || '',
-    tags: (ev.tags || []).join(', '),
-    isPrivate: ev.is_private || false
-  });
+  const handleEditEvent = (ev) => {
+    setEditingEventId(ev.id);
+    setNewEvent({
+      name: ev.name,
+      date: ev.date?.slice(0, 16) || '',
+      registration_deadline: ev.registration_deadline?.slice(0, 16) || '',
+      venue: ev.venue || '',
+      description: ev.description || '',
+      tags: (ev.tags || []).join(', '),
+      isPrivate: ev.is_private || false
+    });
 
-  setTargetDepts(ev.target_audience?.depts || []);
-  setTargetHostels(ev.target_audience?.hostels || []);
-  setTargetYears((ev.target_audience?.years || []).map(String));
-  setFormSchema(ev.custom_form_schema || []);
+    setTargetDepts(ev.target_audience?.depts || []);
+    setTargetHostels(ev.target_audience?.hostels || []);
+    setTargetYears((ev.target_audience?.years || []).map(String));
+    setFormSchema(ev.custom_form_schema || []);
 
-  setActiveTab('create');
-};
+    setActiveTab('create');
+  };
 
-const handleDownloadCSV = async (eventId) => {
-  try {
-    const response = await api.get(
-      `/org/${orgId}/events/${eventId}/csv`,
-      { responseType: 'blob' }
-    );
+  const handleDownloadCSV = async (eventId) => {
+    try {
+      const response = await api.get(
+        `/org/${orgId}/events/${eventId}/csv`,
+        { responseType: 'blob' }
+      );
 
-    const blob = new Blob([response.data], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
 
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `event_${eventId}_registrations.csv`;
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `event_${eventId}_registrations.csv`;
 
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-    window.URL.revokeObjectURL(url);
-  } catch (err) {
-    toast.error("Failed to download CSV");
-  }
-};
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error("Failed to download CSV");
+    }
+  };
 
 
-// ✅ DELETE EVENT
-const handleDeleteEvent = async (eventId) => {
-  if (!window.confirm("Are you sure you want to delete this event?")) return;
-  try {
-    await api.delete(`/org/${orgId}/events/${eventId}`);
-    toast.success("Event deleted");
-    fetchData();
-  } catch (err) {
-    toast.error("Failed to delete event");
-  }
-};
+  // ✅ DELETE EVENT
+  const handleDeleteEvent = async (eventId) => {
+    if (!window.confirm("Are you sure you want to delete this event?")) return;
+    try {
+      await api.delete(`/org/${orgId}/events/${eventId}`);
+      toast.success("Event deleted");
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to delete event");
+    }
+  };
 
   if (loading) return <Loader />;
 
@@ -285,6 +286,7 @@ const handleDeleteEvent = async (eventId) => {
     <div className="container-fluid">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
+          <OrgBanner orgId={orgId} orgName={stats?.org_name}   bannerUrl={stats?.org_banner}/>
           <h2 className="text-white fw-bold">{stats?.org_name} Dashboard</h2>
           <p className="text-secondary mb-0">
             Role: <span className="badge bg-purple">{stats?.your_role}</span>
@@ -292,23 +294,23 @@ const handleDeleteEvent = async (eventId) => {
         </div>
         <div className="btn-group">
           <button className={`btn ${activeTab === 'dashboard' ? 'btn-purple' : 'btn-outline-secondary'}`} onClick={() => setActiveTab('dashboard')}>
-            <BarChart3 size={18} className="me-2"/> Overview
+            <BarChart3 size={18} className="me-2" /> Overview
           </button>
           <button className={`btn ${activeTab === 'events' ? 'btn-purple' : 'btn-outline-secondary'}`} onClick={() => setActiveTab('events')}>
-            <Eye size={18} className="me-2"/> Events
+            <Eye size={18} className="me-2" /> Events
           </button>
           <button className={`btn ${activeTab === 'team' ? 'btn-purple' : 'btn-outline-secondary'}`} onClick={() => setActiveTab('team')}>
-            <Users size={18} className="me-2"/> Team
+            <Users size={18} className="me-2" /> Team
           </button>
           <button
-  className={`btn ${activeTab === 'create' ? 'btn-purple' : 'btn-outline-secondary'}`}
-  onClick={() => {
-    setEditingEventId(null);   // 🔑 EXIT EDIT MODE
-    setActiveTab('create');
-  }}
->
-  <Plus size={18} className="me-2"/> Create
-</button>
+            className={`btn ${activeTab === 'create' ? 'btn-purple' : 'btn-outline-secondary'}`}
+            onClick={() => {
+              setEditingEventId(null);   // 🔑 EXIT EDIT MODE
+              setActiveTab('create');
+            }}
+          >
+            <Plus size={18} className="me-2" /> Create
+          </button>
 
         </div>
       </div>
@@ -321,7 +323,7 @@ const handleDeleteEvent = async (eventId) => {
                 <h3 className="text-white fw-bold mb-0">{stats?.total_events}</h3>
                 <p className="text-secondary mb-0">Total Events</p>
               </div>
-              <div className="bg-primary bg-opacity-25 p-3 rounded-circle text-primary"><Calendar size={32}/></div>
+              <div className="bg-primary bg-opacity-25 p-3 rounded-circle text-primary"><Calendar size={32} /></div>
             </div>
           </div>
           <div className="col-md-6">
@@ -330,7 +332,7 @@ const handleDeleteEvent = async (eventId) => {
                 <h3 className="text-white fw-bold mb-0">{stats?.total_registrations}</h3>
                 <p className="text-secondary mb-0">Total Registrations</p>
               </div>
-              <div className="bg-success bg-opacity-25 p-3 rounded-circle text-success"><Users size={32}/></div>
+              <div className="bg-success bg-opacity-25 p-3 rounded-circle text-success"><Users size={32} /></div>
             </div>
           </div>
           <div className="col-12 mt-4">
@@ -362,34 +364,34 @@ const handleDeleteEvent = async (eventId) => {
                   <tr key={ev.id}>
                     <td>{ev.name}</td>
                     <td>{new Date(ev.date).toLocaleDateString()}</td>
-                    <td>{ev.is_private ? <span className="badge bg-secondary"><Lock size={12}/> Private</span> : <span className="badge bg-success"><Globe size={12}/> Public</span>}</td>
+                    <td>{ev.is_private ? <span className="badge bg-secondary"><Lock size={12} /> Private</span> : <span className="badge bg-success"><Globe size={12} /> Public</span>}</td>
                     <td className="d-flex gap-2">
-  <button
-  className="btn btn-sm btn-outline-success"
-  onClick={() => handleDownloadCSV(ev.id)}
->
-  <Download size={14} /> CSV
-</button>
+                      <button
+                        className="btn btn-sm btn-outline-success"
+                        onClick={() => handleDownloadCSV(ev.id)}
+                      >
+                        <Download size={14} /> CSV
+                      </button>
 
 
-  {isHead && (
-    <>
-      <button
-        className="btn btn-sm btn-outline-primary"
-        onClick={() => handleEditEvent(ev)}
-      >
-        <Edit size={14} />
-      </button>
+                      {isHead && (
+                        <>
+                          <button
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => handleEditEvent(ev)}
+                          >
+                            <Edit size={14} />
+                          </button>
 
-      <button
-        className="btn btn-sm btn-outline-danger"
-        onClick={() => handleDeleteEvent(ev.id)}
-      >
-        <Trash2 size={14} />
-      </button>
-    </>
-  )}
-</td>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => handleDeleteEvent(ev.id)}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </>
+                      )}
+                    </td>
 
                   </tr>
                 ))}
@@ -404,25 +406,25 @@ const handleDeleteEvent = async (eventId) => {
           {isHead && (
             <div className="col-md-4">
               <div className="glass-card p-4 h-100">
-                <h5 className="text-white mb-3"><UserPlus size={18}/> Add Member</h5>
+                <h5 className="text-white mb-3"><UserPlus size={18} /> Add Member</h5>
                 <form onSubmit={handleAddMember}>
                   <div className="mb-3">
                     <label className="small text-secondary">IITD Email</label>
-                    <input 
-                      type="email" 
+                    <input
+                      type="email"
                       className="form-control bg-dark text-white border-secondary"
                       placeholder="e.g. cs1230001@iitd.ac.in"
                       value={newMember.email}
-                      onChange={e => setNewMember({...newMember, email: e.target.value})}
+                      onChange={e => setNewMember({ ...newMember, email: e.target.value })}
                       required
                     />
                   </div>
                   <div className="mb-3">
                     <label className="small text-secondary">Role</label>
-                    <select 
+                    <select
                       className="form-select bg-dark text-white border-secondary"
                       value={newMember.role}
-                      onChange={e => setNewMember({...newMember, role: e.target.value})}
+                      onChange={e => setNewMember({ ...newMember, role: e.target.value })}
                     >
                       {/* ✅ FIXED: Now using TEAM_ROLES constant */}
                       {TEAM_ROLES.map(role => (
@@ -462,8 +464,8 @@ const handleDeleteEvent = async (eventId) => {
                         {isHead && (
                           <td>
                             {!HEAD_ROLES.includes(member.role.toLowerCase()) && (
-                              <button 
-                                className="btn btn-sm btn-outline-danger" 
+                              <button
+                                className="btn btn-sm btn-outline-danger"
                                 onClick={() => handleRemoveMember(member.user_id)}
                               >
                                 <Trash2 size={14} />
@@ -485,28 +487,28 @@ const handleDeleteEvent = async (eventId) => {
         <div className="glass-card p-4 rounded-4 mx-auto" style={{ maxWidth: '800px' }}>
           <h4 className="text-white fw-bold mb-4">Create New Event</h4>
           <form onSubmit={handleCreateEvent}>
-             {/* ... (Event form fields omitted for brevity, logic is same) ... */}
-             {/* You can copy the form fields from the previous file or ask me if you need the full form block again */}
-             
-             {/* Simplified Check - Full Form Logic handled above in handleCreateEvent */}
-             <p className="text-muted small">Event Form Fields loaded...</p>
-             
-             {/* Just ensure MultiSelect and inputs use the state variables defined at top */}
-              <div className="row g-3">
+            {/* ... (Event form fields omitted for brevity, logic is same) ... */}
+            {/* You can copy the form fields from the previous file or ask me if you need the full form block again */}
+
+            {/* Simplified Check - Full Form Logic handled above in handleCreateEvent */}
+            <p className="text-muted small">Event Form Fields loaded...</p>
+
+            {/* Just ensure MultiSelect and inputs use the state variables defined at top */}
+            <div className="row g-3">
               <div className="col-12">
                 <label className="text-secondary small">Event Name</label>
-                <input type="text" className="form-control bg-dark text-white border-secondary" required 
-                  value={newEvent.name} onChange={e => setNewEvent({...newEvent, name: e.target.value})} />
+                <input type="text" className="form-control bg-dark text-white border-secondary" required
+                  value={newEvent.name} onChange={e => setNewEvent({ ...newEvent, name: e.target.value })} />
               </div>
               <div className="col-md-6">
                 <label className="text-secondary small">Date & Time</label>
-                <input type="datetime-local" className="form-control bg-dark text-white border-secondary" required 
-                  value={newEvent.date} onChange={e => setNewEvent({...newEvent, date: e.target.value})} />
+                <input type="datetime-local" className="form-control bg-dark text-white border-secondary" required
+                  value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} />
               </div>
               <div className="col-md-6">
                 <label className="text-secondary small">Venue</label>
-                <input type="text" className="form-control bg-dark text-white border-secondary" required 
-                  value={newEvent.venue} onChange={e => setNewEvent({...newEvent, venue: e.target.value})} />
+                <input type="text" className="form-control bg-dark text-white border-secondary" required
+                  value={newEvent.venue} onChange={e => setNewEvent({ ...newEvent, venue: e.target.value })} />
               </div>
               {/* <div className="col-md-6">
   <label className="text-secondary small">
@@ -531,16 +533,16 @@ const handleDeleteEvent = async (eventId) => {
 </div> */}
               <div className="col-12">
                 <label className="text-secondary small">Description</label>
-                <textarea className="form-control bg-dark text-white border-secondary" rows="3" required 
-                  value={newEvent.description} onChange={e => setNewEvent({...newEvent, description: e.target.value})} />
+                <textarea className="form-control bg-dark text-white border-secondary" rows="3" required
+                  value={newEvent.description} onChange={e => setNewEvent({ ...newEvent, description: e.target.value })} />
               </div>
-              
+
               <div className="col-12 border-top border-secondary pt-3 mt-3">
                 <h6 className="text-white mb-3">Audience Targeting</h6>
               </div>
 
               <div className="col-md-6">
-                <MultiSelect 
+                <MultiSelect
                   label="Target Departments"
                   options={DEPARTMENTS}
                   selected={targetDepts}
@@ -550,7 +552,7 @@ const handleDeleteEvent = async (eventId) => {
               </div>
 
               <div className="col-md-6">
-                <MultiSelect 
+                <MultiSelect
                   label="Target Hostels"
                   options={HOSTELS}
                   selected={targetHostels}
@@ -560,9 +562,9 @@ const handleDeleteEvent = async (eventId) => {
               </div>
 
               <div className="col-md-6">
-                <MultiSelect 
+                <MultiSelect
                   label="Target Years"
-                  options={YEARS.map(String)} 
+                  options={YEARS.map(String)}
                   selected={targetYears}
                   onChange={setTargetYears}
                   placeholder="Select years..."
@@ -571,8 +573,8 @@ const handleDeleteEvent = async (eventId) => {
 
               <div className="col-md-6 d-flex align-items-center">
                 <div className="form-check form-switch mt-3">
-                  <input className="form-check-input" type="checkbox" id="privateSwitch" 
-                    checked={newEvent.isPrivate} onChange={e => setNewEvent({...newEvent, isPrivate: e.target.checked})} />
+                  <input className="form-check-input" type="checkbox" id="privateSwitch"
+                    checked={newEvent.isPrivate} onChange={e => setNewEvent({ ...newEvent, isPrivate: e.target.checked })} />
                   <label className="form-check-label text-white" htmlFor="privateSwitch">Member-Only (Hidden from feed)</label>
                 </div>
               </div>
@@ -589,15 +591,15 @@ const handleDeleteEvent = async (eventId) => {
               <div className="col-md-6">
                 <label className="text-secondary small">Tags (comma separated)</label>
                 <input type="text" className="form-control bg-dark text-white border-secondary" placeholder="Tech, Fun"
-                  value={newEvent.tags} onChange={e => setNewEvent({...newEvent, tags: e.target.value})} />
+                  value={newEvent.tags} onChange={e => setNewEvent({ ...newEvent, tags: e.target.value })} />
               </div>
             </div>
 
             <DynamicFormBuilder schema={formSchema} setSchema={setFormSchema} />
 
             <button type="submit" className="btn btn-purple w-100 mt-4 py-2 fw-bold">
-  {editingEventId ? "Update Event" : "Publish Event"}
-</button>
+              {editingEventId ? "Update Event" : "Publish Event"}
+            </button>
 
           </form>
         </div>

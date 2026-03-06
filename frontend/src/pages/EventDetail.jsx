@@ -11,6 +11,7 @@ import {
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import { formatDateTime, isPast } from '../utils/dateUtils';
 
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
 
@@ -38,32 +39,32 @@ const EventDetail = () => {
   };
 
   const handleRegisterClick = async () => {
-  if (!user) {
-    openLoginModal();
-    return;
-  }
-
-  // ❌ Block past events completely
-  if (eventPassed || deadlinePassed) {
-    toast.error("Registrations are closed for this event");
-    return;
-  }
-
-  // 🔄 Deregister
-  if (event.is_registered) {
-    try {
-      await api.delete(`/events/${eventId}/register`);
-      toast.success("Deregistered successfully");
-      fetchEvent();
-    } catch (err) {
-      toast.error("Failed to deregister");
+    if (!user) {
+      openLoginModal();
+      return;
     }
-    return;
-  }
 
-  // 🆕 Register
-  setIsRegisterModalOpen(true);
-};
+    // ❌ Block past events completely
+    if (eventPassed || deadlinePassed) {
+      toast.error("Registrations are closed for this event");
+      return;
+    }
+
+    // 🔄 Deregister
+    if (event.is_registered) {
+      try {
+        await api.delete(`/events/${eventId}/register`);
+        toast.success("Deregistered successfully");
+        fetchEvent();
+      } catch (err) {
+        toast.error("Failed to deregister");
+      }
+      return;
+    }
+
+    // 🆕 Register
+    setIsRegisterModalOpen(true);
+  };
 
 
 
@@ -90,10 +91,10 @@ const EventDetail = () => {
   // ✅ SAFE DEADLINE HANDLING
   const hasDeadline = !!event.registration_deadline;
   const deadlinePassed = hasDeadline
-    ? new Date(event.registration_deadline) < new Date()
+    ? isPast(event.registration_deadline)
     : false;
 
-    const eventPassed = new Date(event.date) < new Date();
+  const eventPassed = isPast(event.date);
 
 
   return (
@@ -123,7 +124,7 @@ const EventDetail = () => {
             {event.org_name}
           </span>
 
-          <h1 className="fw-bold mb-3" style={{color: 'var(--text-primary)', fontSize: '2rem', letterSpacing: '-0.5px'}}>
+          <h1 className="fw-bold mb-3" style={{ color: 'var(--text-primary)', fontSize: '2rem', letterSpacing: '-0.5px' }}>
             {event.name}
           </h1>
 
@@ -135,11 +136,11 @@ const EventDetail = () => {
                   <Calendar size={20} />
                 </div>
                 <div>
-                  <small className="d-block text-uppercase fw-bold" style={{color: 'var(--text-muted)', fontSize: '0.7rem', letterSpacing: '0.5px'}}>
+                  <small className="d-block text-uppercase fw-bold" style={{ color: 'var(--text-muted)', fontSize: '0.7rem', letterSpacing: '0.5px' }}>
                     Date & Time
                   </small>
-                  <span style={{color: 'var(--text-primary)', fontWeight: 500}}>
-                    {new Date(event.date).toLocaleString()}
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                    {formatDateTime(event.date)}
                   </span>
                 </div>
               </div>
@@ -151,10 +152,10 @@ const EventDetail = () => {
                   <MapPin size={20} />
                 </div>
                 <div>
-                  <small className="d-block text-uppercase fw-bold" style={{color: 'var(--text-muted)', fontSize: '0.7rem', letterSpacing: '0.5px'}}>
+                  <small className="d-block text-uppercase fw-bold" style={{ color: 'var(--text-muted)', fontSize: '0.7rem', letterSpacing: '0.5px' }}>
                     Venue
                   </small>
-                  <span style={{color: 'var(--text-primary)', fontWeight: 500}}>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
                     {event.venue}
                   </span>
                 </div>
@@ -169,11 +170,11 @@ const EventDetail = () => {
                     <Clock size={20} />
                   </div>
                   <div>
-                    <small className="d-block text-uppercase fw-bold" style={{color: 'var(--text-muted)', fontSize: '0.7rem', letterSpacing: '0.5px'}}>
+                    <small className="d-block text-uppercase fw-bold" style={{ color: 'var(--text-muted)', fontSize: '0.7rem', letterSpacing: '0.5px' }}>
                       Registration Deadline
                     </small>
-                    <span style={{color: 'var(--text-primary)', fontWeight: 500}}>
-                      {new Date(event.registration_deadline).toLocaleString()}
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                      {formatDateTime(event.registration_deadline)}
                     </span>
                   </div>
                 </div>
@@ -182,7 +183,7 @@ const EventDetail = () => {
           </div>
 
           {/* ABOUT */}
-          <div className="section-title mb-3 d-flex align-items-center gap-2" style={{color: 'var(--text-primary)'}}>
+          <div className="section-title mb-3 d-flex align-items-center gap-2" style={{ color: 'var(--text-primary)' }}>
             <Info size={18} className="text-purple" /> About Event
           </div>
 
@@ -191,22 +192,21 @@ const EventDetail = () => {
           </div>
 
           {/* ACTION */}
-         <button
-  className={`btn btn-register-lg ${
-    eventPassed || deadlinePassed || event.is_registered
-      ? "btn-registered"
-      : "btn-purple"
-  }`}
-  disabled={eventPassed || deadlinePassed}
-  onClick={handleRegisterClick}
->
+          <button
+            className={`btn btn-register-lg ${eventPassed || deadlinePassed || event.is_registered
+                ? "btn-registered"
+                : "btn-purple"
+              }`}
+            disabled={eventPassed || deadlinePassed}
+            onClick={handleRegisterClick}
+          >
             {eventPassed
-  ? "Event Over"
-  : event.is_registered
-  ? "Deregister"
-  : deadlinePassed
-  ? "Registration Closed"
-  : "Register Now"}
+              ? "Event Over"
+              : event.is_registered
+                ? "Deregister"
+                : deadlinePassed
+                  ? "Registration Closed"
+                  : "Register Now"}
           </button>
         </div>
       </div>

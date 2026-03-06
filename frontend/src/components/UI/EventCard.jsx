@@ -1,17 +1,18 @@
 import React from 'react';
 import { Calendar, MapPin, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { formatDate, isPast } from '../../utils/dateUtils';
 
 const EventCard = ({ event, onRegisterClick }) => {
   const navigate = useNavigate();
 
   const isRegistered = event.is_registered;
-  const eventPassed = new Date(event.date) < new Date();
+  const eventPassed = isPast(event.date);
 
 
   const hasDeadline = !!event.registration_deadline;
   const deadlinePassed = hasDeadline
-    ? new Date(event.registration_deadline) < new Date()
+    ? isPast(event.registration_deadline)
     : false;
 
   const goToDetail = () => {
@@ -35,13 +36,13 @@ const EventCard = ({ event, onRegisterClick }) => {
             {event.org_name}
           </div>
 
-          <h5 className="card-title fw-bold" style={{color: 'var(--text-primary)'}}>
+          <h5 className="card-title fw-bold" style={{ color: 'var(--text-primary)' }}>
             {event.name}
           </h5>
 
           <div className="card-meta-row">
             <Calendar size={14} />
-            {new Date(event.date).toLocaleDateString()}
+            {formatDate(event.date)}
           </div>
 
           <div className="card-meta-row mb-3">
@@ -51,39 +52,38 @@ const EventCard = ({ event, onRegisterClick }) => {
 
           {/* Deadline (only if backend provides it) */}
           {hasDeadline && (
-            <p className="small mb-2" style={{color: 'var(--text-muted)'}}>
+            <p className="small mb-2" style={{ color: 'var(--text-muted)' }}>
               Register by:{" "}
-              <strong style={{color: 'var(--text-secondary)'}}>
-                {new Date(event.registration_deadline).toLocaleDateString()}
+              <strong style={{ color: 'var(--text-secondary)' }}>
+                {formatDate(event.registration_deadline)}
               </strong>
             </p>
           )}
 
           <button
-  className={`btn w-100 d-flex align-items-center justify-content-center gap-2 ${
-    eventPassed || isRegistered || deadlinePassed
-      ? "btn-registered"
-      : "btn-purple"
-  }`}
-  disabled={eventPassed || isRegistered || deadlinePassed}
-  onClick={(e) => {
-    e.stopPropagation();
-    if (!eventPassed && !isRegistered && !deadlinePassed) {
-      onRegisterClick(event);
-    }
-  }}
->
-  {eventPassed
-    ? "Event Over"
-    : isRegistered
-    ? "Registered"
-    : deadlinePassed
-    ? "Registration Closed"
-    : "Register"}
-  {!eventPassed && !isRegistered && !deadlinePassed && (
-    <ExternalLink size={16} />
-  )}
-</button>
+            className={`btn w-100 d-flex align-items-center justify-content-center gap-2 ${eventPassed || isRegistered || deadlinePassed
+                ? "btn-registered"
+                : "btn-purple"
+              }`}
+            disabled={eventPassed || isRegistered || deadlinePassed}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!eventPassed && !isRegistered && !deadlinePassed) {
+                onRegisterClick(event);
+              }
+            }}
+          >
+            {eventPassed
+              ? "Event Over"
+              : isRegistered
+                ? "Registered"
+                : deadlinePassed
+                  ? "Registration Closed"
+                  : "Register"}
+            {!eventPassed && !isRegistered && !deadlinePassed && (
+              <ExternalLink size={16} />
+            )}
+          </button>
 
 
         </div>

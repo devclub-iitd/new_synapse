@@ -9,6 +9,7 @@ from app.schemas.event import EventOut, EventDetail
 from app.services.recommender import get_event_recommendations
 from sqlalchemy import func, case, String
 from datetime import datetime, timedelta, timezone
+from app.core.timezone import IST, now_ist
 
 router = APIRouter()
 
@@ -86,7 +87,7 @@ def get_events(
     skip: int = 0,
     limit: int = 20
 ):
-    now = datetime.now(timezone.utc)
+    now = now_ist()
 
     query = db.query(Event)
     if current_user and current_user.authorizations:
@@ -196,11 +197,11 @@ def register_for_event(
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    now = datetime.now(timezone.utc)
+    now = now_ist()
 
     event_date = event.date
     if event_date.tzinfo is None:
-        event_date = event_date.replace(tzinfo=timezone.utc)
+        event_date = event_date.replace(tzinfo=IST)
 
     if event_date < now:
         raise HTTPException(
@@ -212,7 +213,7 @@ def register_for_event(
     if event.registration_deadline:
         deadline = event.registration_deadline
         if deadline.tzinfo is None:
-            deadline = deadline.replace(tzinfo=timezone.utc)
+            deadline = deadline.replace(tzinfo=IST)
         if deadline < now:
             raise HTTPException(
                 status_code=400,

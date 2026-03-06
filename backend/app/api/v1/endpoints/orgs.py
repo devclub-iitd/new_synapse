@@ -14,6 +14,7 @@ from app.services.cloudinary import cloudinary
 import cloudinary.uploader
 import uuid
 from datetime import datetime, timedelta, timezone
+from app.core.timezone import IST, now_ist
 
 
 router = APIRouter()
@@ -154,9 +155,9 @@ def create_org_event(
 
         # Make timezone-aware (UTC)
         if date_obj.tzinfo is None:
-            date_obj = date_obj.replace(tzinfo=timezone.utc)
+            date_obj = date_obj.replace(tzinfo=IST)
 
-        now = datetime.now(timezone.utc)
+        now = now_ist()
 
         if date_obj <= now:
             raise HTTPException(status_code=400, detail="Event date must be in the future")
@@ -172,7 +173,7 @@ def create_org_event(
         if registration_deadline:
             deadline_obj = datetime.fromisoformat(registration_deadline)
             if deadline_obj.tzinfo is None:
-                deadline_obj = deadline_obj.replace(tzinfo=timezone.utc)
+                deadline_obj = deadline_obj.replace(tzinfo=IST)
             if deadline_obj <= now:
                 raise HTTPException(status_code=400, detail="Registration deadline must be in the future")
             if deadline_obj >= date_obj:
@@ -260,9 +261,9 @@ def update_event(
             date_obj = datetime.fromisoformat(date)
 
             if date_obj.tzinfo is None:
-                date_obj = date_obj.replace(tzinfo=timezone.utc)
+                date_obj = date_obj.replace(tzinfo=IST)
 
-            now = datetime.now(timezone.utc)
+            now = now_ist()
 
             if date_obj <= now:
                 raise HTTPException(status_code=400, detail="Event date must be in the future")
@@ -296,9 +297,9 @@ def update_event(
             try:
                 dl_obj = datetime.fromisoformat(registration_deadline)
                 if dl_obj.tzinfo is None:
-                    dl_obj = dl_obj.replace(tzinfo=timezone.utc)
-                now = datetime.now(timezone.utc)
-                event_date = event.date if event.date.tzinfo else event.date.replace(tzinfo=timezone.utc)
+                    dl_obj = dl_obj.replace(tzinfo=IST)
+                now = now_ist()
+                event_date = event.date if event.date.tzinfo else event.date.replace(tzinfo=IST)
                 if dl_obj <= now:
                     raise HTTPException(status_code=400, detail="Registration deadline must be in the future")
                 if dl_obj >= event_date:

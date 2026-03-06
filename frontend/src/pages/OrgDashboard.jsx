@@ -5,6 +5,7 @@ import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, U
 import DynamicFormBuilder from '../components/Forms/DynamicFormBuilder';
 import DemographicsChart from '../components/Charts/DemographicsChart';
 import Loader from '../components/UI/Loader';
+import { formatDate } from '../utils/dateUtils';
 import toast from 'react-hot-toast';
 
 import { DEPARTMENTS, HOSTELS, YEARS, HEAD_ROLES, TEAM_ROLES } from '../utils/constants';
@@ -54,7 +55,7 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
             </span>
           ))
         ) : (
-          <small style={{color: 'var(--text-muted)', fontStyle: 'italic'}}>Open to everyone</small>
+          <small style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Open to everyone</small>
         )}
       </div>
     </div>
@@ -163,7 +164,7 @@ const RegistrationsModal = ({ event, orgId, onClose }) => {
             }}>
               <span style={{ color: 'var(--text-secondary)' }}>Event Date</span>
               <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                {new Date(event.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                {formatDate(event.date)}
               </span>
             </div>
           </div>
@@ -383,9 +384,9 @@ const OrgDashboard = () => {
       <div className="org-header">
         <div className="org-header-top">
           <div>
-            <OrgBanner orgId={orgId} orgName={stats?.org_name} bannerUrl={stats?.org_banner}/>
-            <h2 className="fw-bold mt-2" style={{color: 'var(--text-primary)'}}>{stats?.org_name} Dashboard</h2>
-            <p style={{color: 'var(--text-secondary)'}}>
+            <OrgBanner orgId={orgId} orgName={stats?.org_name} bannerUrl={stats?.org_banner} />
+            <h2 className="fw-bold mt-2" style={{ color: 'var(--text-primary)' }}>{stats?.org_name} Dashboard</h2>
+            <p style={{ color: 'var(--text-secondary)' }}>
               Role: <span className="badge bg-purple">{stats?.your_role}</span>
             </p>
           </div>
@@ -434,7 +435,7 @@ const OrgDashboard = () => {
           </div>
           <div className="col-12 mt-4">
             <div className="glass-card p-4">
-              <h5 className="fw-bold mb-3" style={{color: 'var(--text-primary)'}}>Quick Analytics</h5>
+              <h5 className="fw-bold mb-3" style={{ color: 'var(--text-primary)' }}>Quick Analytics</h5>
               <div className="row g-4">
                 <div className="col-md-6" style={{ height: '300px' }}>
                   <DemographicsChart type="doughnut" title="Audience by Dept" data={stats?.dept_analytics || {}} />
@@ -447,7 +448,7 @@ const OrgDashboard = () => {
 
       {activeTab === 'events' && (
         <div className="glass-card p-4">
-          <h5 className="fw-bold mb-4" style={{color: 'var(--text-primary)'}}>Your Events</h5>
+          <h5 className="fw-bold mb-4" style={{ color: 'var(--text-primary)' }}>Your Events</h5>
           <div className="modern-table-wrapper">
             <table className="modern-table">
               <thead>
@@ -462,7 +463,7 @@ const OrgDashboard = () => {
                 {events.map(ev => (
                   <tr key={ev.id}>
                     <td className="fw-semibold">{ev.name}</td>
-                    <td style={{color: 'var(--text-secondary)'}}>{new Date(ev.date).toLocaleDateString()}</td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{formatDate(ev.date)}</td>
                     <td>{ev.is_private ? <span className="badge-visibility private"><Lock size={12} /> Private</span> : <span className="badge-visibility public"><Globe size={12} /> Public</span>}</td>
                     <td>
                       <div className="d-flex gap-2">
@@ -515,7 +516,7 @@ const OrgDashboard = () => {
           {isHead && (
             <div className="col-md-4">
               <div className="glass-card p-4 h-100">
-                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{color: 'var(--text-primary)'}}>
+                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                   <UserPlus size={18} className="text-purple" /> Add Member
                 </h5>
                 <form onSubmit={handleAddMember}>
@@ -550,7 +551,7 @@ const OrgDashboard = () => {
 
           <div className={isHead ? "col-md-8" : "col-12"}>
             <div className="glass-card p-4">
-              <h5 className="fw-bold mb-4" style={{color: 'var(--text-primary)'}}>Team Members</h5>
+              <h5 className="fw-bold mb-4" style={{ color: 'var(--text-primary)' }}>Team Members</h5>
               <div className="modern-table-wrapper">
                 <table className="modern-table">
                   <thead>
@@ -570,7 +571,7 @@ const OrgDashboard = () => {
                             <span className="fw-semibold">{member.name}</span>
                           </div>
                         </td>
-                        <td style={{color: 'var(--text-secondary)'}}>{member.email}</td>
+                        <td style={{ color: 'var(--text-secondary)' }}>{member.email}</td>
                         <td>
                           <span className={`badge ${HEAD_ROLES.includes(member.role) ? 'bg-danger' : 'bg-info text-dark'}`}>
                             {member.role}
@@ -600,7 +601,7 @@ const OrgDashboard = () => {
 
       {activeTab === 'create' && (
         <div className="glass-form-card">
-          <h4 className="fw-bold mb-4" style={{color: 'var(--text-primary)'}}>
+          <h4 className="fw-bold mb-4" style={{ color: 'var(--text-primary)' }}>
             {editingEventId ? "Edit Event" : "Create New Event"}
           </h4>
           <form onSubmit={handleCreateEvent}>
@@ -618,7 +619,7 @@ const OrgDashboard = () => {
                   value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} />
               </div>
               <div className="col-md-6">
-                <label className="form-label-modern">Registration Deadline <span style={{color:'var(--text-muted)', fontSize:'0.8rem'}}>(optional)</span></label>
+                <label className="form-label-modern">Registration Deadline <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>(optional)</span></label>
                 <input type="datetime-local" className="form-control modern-input"
                   value={newEvent.registration_deadline} onChange={e => setNewEvent({ ...newEvent, registration_deadline: e.target.value })} />
               </div>
@@ -673,7 +674,7 @@ const OrgDashboard = () => {
                 <div className="form-check form-switch mt-3">
                   <input className="form-check-input" type="checkbox" id="privateSwitch"
                     checked={newEvent.isPrivate} onChange={e => setNewEvent({ ...newEvent, isPrivate: e.target.checked })} />
-                  <label className="form-check-label" style={{color: 'var(--text-primary)'}} htmlFor="privateSwitch">Member-Only (Hidden from feed)</label>
+                  <label className="form-check-label" style={{ color: 'var(--text-primary)' }} htmlFor="privateSwitch">Member-Only (Hidden from feed)</label>
                 </div>
               </div>
 

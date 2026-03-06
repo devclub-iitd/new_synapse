@@ -8,6 +8,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import api from '../api/axios';
 import Loader from '../components/UI/Loader';
 import { Star, MessageSquare, Calendar as CalendarIcon, Download } from 'lucide-react';
+import { formatDate } from '../utils/dateUtils';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const StudentDashboard = () => {
     try {
       setLoading(true);
       const calRes = await api.get('/user/calendar');
-      
+
       const formattedEvents = calRes.data.map(event => ({
         title: event.name,
         start: event.date,
@@ -37,7 +38,7 @@ const StudentDashboard = () => {
       const recRes = await api.get('/events/recommendations');
       setRecommendations(recRes.data);
 
-      const feedbackRes = await api.get('/user/feedback-pending'); 
+      const feedbackRes = await api.get('/user/feedback-pending');
       setFeedbackNeeded(feedbackRes.data);
 
     } catch (err) {
@@ -72,96 +73,96 @@ const StudentDashboard = () => {
   if (loading) return <Loader />;
 
   return (
-  <div className="container-fluid student-dashboard">
-    <div className="row g-4">
+    <div className="container-fluid student-dashboard">
+      <div className="row g-4">
 
-      {/* LEFT: CALENDAR */}
-      <div className="col-lg-8">
-        <div className="widget-card h-100">
-          <div className="d-flex align-items-center justify-content-between mb-2">
-            <div className="dashboard-section-title" style={{marginBottom: 0}}>
-              <CalendarIcon size={20} /> Your Calendar
+        {/* LEFT: CALENDAR */}
+        <div className="col-lg-8">
+          <div className="widget-card h-100">
+            <div className="d-flex align-items-center justify-content-between mb-2">
+              <div className="dashboard-section-title" style={{ marginBottom: 0 }}>
+                <CalendarIcon size={20} /> Your Calendar
+              </div>
+              <button className="btn-ics-download" onClick={downloadICS} title="Download .ics file">
+                <Download size={15} /> Export .ics
+              </button>
             </div>
-            <button className="btn-ics-download" onClick={downloadICS} title="Download .ics file">
-              <Download size={15} /> Export .ics
-            </button>
+
+            <div className="calendar-shell">
+              <FullCalendar
+                plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
+                initialView="dayGridMonth"
+                headerToolbar={{
+                  left: 'prev,next today',
+                  center: 'title',
+                  right: 'dayGridMonth,listWeek'
+                }}
+                events={calendarEvents}
+                height="520px"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT: SIDE WIDGETS */}
+        <div className="col-lg-4 d-flex flex-column gap-4">
+
+          {/* RECOMMENDATIONS */}
+          <div className="widget-card">
+            <h5 className="section-heading-sm mb-3">
+              <Star size={18} className="text-warning" /> Recommended For You
+            </h5>
+
+            {recommendations.length > 0 ? (
+              <div className="recommendation-list">
+                {recommendations.slice(0, 3).map(event => (
+                  <div
+                    key={event.id}
+                    className="recommendation-item"
+                    onClick={() => navigate(`/events/${event.id}`)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <h6 className="mb-1 fw-semibold">{event.name}</h6>
+                    <span className="text-secondary small">
+                      {formatDate(event.date)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-placeholder" style={{ border: 'none', padding: '32px 16px' }}>
+                <Star size={28} style={{ opacity: 0.2 }} />
+                <p>No recommendations yet. Add interests in your profile!</p>
+              </div>
+            )}
           </div>
 
-          <div className="calendar-shell">
-            <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,listWeek'
-              }}
-              events={calendarEvents}
-              height="520px"
-            />
+          {/* FEEDBACK */}
+          <div className="widget-card">
+            <h5 className="section-heading-sm mb-3">
+              <MessageSquare size={18} className="text-info" /> Feedback Needed
+            </h5>
+
+            {feedbackNeeded.length > 0 ? (
+              <div className="feedback-list">
+                {feedbackNeeded.map(event => (
+                  <div key={event.id} className="feedback-item">
+                    {event.name}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-placeholder" style={{ border: 'none', padding: '32px 16px' }}>
+                <MessageSquare size={28} style={{ opacity: 0.2 }} />
+                <p>You're all caught up!</p>
+              </div>
+            )}
           </div>
+
         </div>
-      </div>
-
-      {/* RIGHT: SIDE WIDGETS */}
-      <div className="col-lg-4 d-flex flex-column gap-4">
-
-        {/* RECOMMENDATIONS */}
-        <div className="widget-card">
-          <h5 className="section-heading-sm mb-3">
-            <Star size={18} className="text-warning" /> Recommended For You
-          </h5>
-
-          {recommendations.length > 0 ? (
-            <div className="recommendation-list">
-              {recommendations.slice(0, 3).map(event => (
-                <div
-                  key={event.id}
-                  className="recommendation-item"
-                  onClick={() => navigate(`/events/${event.id}`)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <h6 className="mb-1 fw-semibold">{event.name}</h6>
-                  <span className="text-secondary small">
-                    {new Date(event.date).toLocaleDateString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-placeholder" style={{border: 'none', padding: '32px 16px'}}>
-              <Star size={28} style={{opacity: 0.2}} />
-              <p>No recommendations yet. Add interests in your profile!</p>
-            </div>
-          )}
-        </div>
-
-        {/* FEEDBACK */}
-        <div className="widget-card">
-          <h5 className="section-heading-sm mb-3">
-            <MessageSquare size={18} className="text-info" /> Feedback Needed
-          </h5>
-
-          {feedbackNeeded.length > 0 ? (
-            <div className="feedback-list">
-              {feedbackNeeded.map(event => (
-                <div key={event.id} className="feedback-item">
-                  {event.name}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-placeholder" style={{border: 'none', padding: '32px 16px'}}>
-              <MessageSquare size={28} style={{opacity: 0.2}} />
-              <p>You're all caught up!</p>
-            </div>
-          )}
-        </div>
-
       </div>
     </div>
-  </div>
-);
+  );
 
 };
 

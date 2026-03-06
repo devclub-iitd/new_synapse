@@ -31,12 +31,12 @@ const FeedbackCard = ({ eventId, eventName, onFeedbackSubmitted }) => {
       
       <div className="d-flex align-items-center justify-content-between">
         <div className="d-flex gap-1">
-          {[...Array(10)].map((_, index) => {
+          {[...Array(5)].map((_, index) => {
             const starValue = index + 1;
             return (
               <Star
                 key={index}
-                size={18}
+                size={24}
                 className="cursor-pointer transition-colors"
                 fill={starValue <= (hover || rating) ? "#fbbf24" : "none"}
                 color={starValue <= (hover || rating) ? "#fbbf24" : "#666"}
@@ -58,7 +58,7 @@ const FeedbackCard = ({ eventId, eventName, onFeedbackSubmitted }) => {
         </button>
       </div>
       <div className="text-end mt-1">
-        <span className="text-muted small" style={{ fontSize: '0.7rem' }}>{rating}/10</span>
+        <span className="text-muted small" style={{ fontSize: '0.7rem' }}>{rating}/5</span>
       </div>
     </div>
   );

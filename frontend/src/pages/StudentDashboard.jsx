@@ -9,6 +9,7 @@ import api from '../api/axios';
 import Loader from '../components/UI/Loader';
 import { Star, MessageSquare, Calendar as CalendarIcon, Download } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
+import FeedbackCard from '../components/Events/FeedbackCard';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -146,9 +147,12 @@ const StudentDashboard = () => {
             {feedbackNeeded.length > 0 ? (
               <div className="feedback-list">
                 {feedbackNeeded.map(event => (
-                  <div key={event.id} className="feedback-item">
-                    {event.name}
-                  </div>
+                  <FeedbackCard
+                    key={event.id}
+                    eventId={event.id}
+                    eventName={event.name}
+                    onFeedbackSubmitted={fetchDashboardData}
+                  />
                 ))}
               </div>
             ) : (

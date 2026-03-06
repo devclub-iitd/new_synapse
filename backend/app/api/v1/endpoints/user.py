@@ -10,6 +10,9 @@ import json
 from app.services.cloudinary import cloudinary
 from app.models.enums import HostelName
 
+from app.models.registration import Registration
+from datetime import datetime, timezone
+
 router = APIRouter()
 
 @router.put("/profile", response_model=UserOut)
@@ -60,3 +63,31 @@ def get_my_calendar(
     # SQLAlchemy relationship magic
     return [reg.event for reg in current_user.registrations]
 
+
+@router.get("/feedback-pending", response_model=list[EventOut])
+def get_feedback_pending(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    """Get past events the user registered for but hasn't rated yet."""
+    now = datetime.now(timezone.utc)
+
+    pending = (
+        db.query(Registration)
+        .filter(
+            Registration.user_id == current_user.id,
+            Registration.feedback_rating.is_(None)
+        )
+        .all()
+    )
+
+    # Only show events whose date has already passed
+    result = []
+    for reg in pending:
+        event_date = reg.event.date
+        if event_date.tzinfo is None:
+            event_date = event_date.replace(tzinfo=timezone.utc)
+        if event_date < now:
+            result.append(reg.event)
+
+    return result

@@ -266,3 +266,35 @@ def deregister_from_event(
     db.commit()
 
     return {"status": "success", "msg": "Deregistered successfully"}
+
+
+# ============================================================
+# FEEDBACK
+# ============================================================
+@router.post("/{event_id}/feedback")
+def submit_feedback(
+    event_id: int,
+    body: dict,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    """Submit a 1-10 rating for an event the user registered for."""
+    rating = body.get("rating")
+    if not rating or not isinstance(rating, int) or rating < 1 or rating > 10:
+        raise HTTPException(status_code=422, detail="Rating must be an integer between 1 and 10")
+
+    registration = db.query(Registration).filter(
+        Registration.user_id == current_user.id,
+        Registration.event_id == event_id
+    ).first()
+
+    if not registration:
+        raise HTTPException(status_code=404, detail="You are not registered for this event")
+
+    if registration.feedback_rating:
+        raise HTTPException(status_code=400, detail="You have already submitted feedback for this event")
+
+    registration.feedback_rating = rating
+    db.commit()
+
+    return {"status": "success", "msg": "Feedback submitted"}

@@ -707,7 +707,7 @@ body {
   animation: slideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.login-brand-side {
+/* .login-brand-side {
   flex: 0 0 50% !important;
   max-width: 50% !important;
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.65), rgba(15, 17, 24, 0.95));
@@ -715,6 +715,70 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+} */
+
+/* =====================================================
+   PASTE THIS INTO App.css — REPLACE .login-brand-side
+   ===================================================== */
+
+.login-brand-side {
+  flex: 0 0 50% !important;
+  max-width: 50% !important;
+
+  /* Chalkboard image with purple brand overlay */
+  background:
+    linear-gradient(135deg, rgba(124, 58, 237, 0.72) 0%, rgba(15, 17, 24, 0.88) 100%),
+    url('http://localhost:8000/static/asset/main_bg.png') center / cover no-repeat;
+
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Chalk-dust grain texture on top */
+.login-brand-side::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.06;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* Make sure brand content sits above the overlay */
+.login-brand-side .brand-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Slightly enlarge the welcome text to fill the richer background */
+.login-brand-side h1 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin-bottom: 14px;
+  line-height: 1.15;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.login-brand-side p {
+  font-size: 1rem;
+  line-height: 1.65;
+  opacity: 0.85;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+}
+
+.synapse-logo {
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  opacity: 0.8;
+  margin-bottom: 18px;
+  text-transform: uppercase;
+  font-weight: 700;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .login-form-side {

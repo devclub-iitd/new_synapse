@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/axios';
-import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit } from 'lucide-react';
+import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck } from 'lucide-react';
 import DynamicFormBuilder from '../components/Forms/DynamicFormBuilder';
 import DemographicsChart from '../components/Charts/DemographicsChart';
 import Loader from '../components/UI/Loader';
@@ -23,9 +23,6 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
   const removeOption = (valueToRemove) => {
     onChange(selected.filter(item => item !== valueToRemove));
   };
-
-
-
 
   return (
     <div className="mb-3">
@@ -57,7 +54,119 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
             </span>
           ))
         ) : (
-          <small style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Open to everyone</small>
+          <small style={{color: 'var(--text-muted)', fontStyle: 'italic'}}>Open to everyone</small>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// --- HELPER COMPONENT: Registrations Popup Modal ---
+const RegistrationsModal = ({ event, orgId, onClose }) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const res = await api.get(`/org/${orgId}/events/${event.id}/registrations`);
+        setData({ count: res.data.length });
+      } catch (err) {
+        toast.error("Failed to load registration count");
+        onClose();
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCount();
+  }, [event.id, orgId, onClose]);
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center'
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--bg-card, #1a1a2e)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '16px',
+          padding: '2rem',
+          minWidth: '320px',
+          maxWidth: '420px',
+          width: '90%',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+          <div>
+            <h5 style={{ color: 'var(--text-primary)', fontWeight: 700, margin: 0 }}>
+              Registrations
+            </h5>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '4px 0 0' }}>
+              {event.name}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '8px',
+              color: 'var(--text-secondary)', cursor: 'pointer', padding: '6px 8px',
+              display: 'flex', alignItems: 'center'
+            }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-secondary)' }}>
+            <div className="spinner-border spinner-border-sm" role="status" />
+            <p style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>Loading...</p>
+          </div>
+        ) : (
+          <div>
+            {/* Big Count Display */}
+            <div style={{
+              background: 'rgba(139, 92, 246, 0.15)',
+              border: '1px solid rgba(139, 92, 246, 0.3)',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              textAlign: 'center',
+              marginBottom: '1rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '6px' }}>
+                <UserCheck size={24} style={{ color: '#8b5cf6' }} />
+                <span style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>
+                  {data?.count ?? 0}
+                </span>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
+                Total Registrations
+              </p>
+            </div>
+
+            {/* Event date info */}
+            <div style={{
+              display: 'flex', justifyContent: 'space-between',
+              padding: '0.75rem 1rem',
+              background: 'rgba(255,255,255,0.04)',
+              borderRadius: '8px',
+              fontSize: '0.85rem'
+            }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Event Date</span>
+              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                {new Date(event.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </span>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -74,6 +183,8 @@ const OrgDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [editingEventId, setEditingEventId] = useState(null);
 
+  // ✅ NEW: State for registrations popup
+  const [regModalEvent, setRegModalEvent] = useState(null);
 
   const [newEvent, setNewEvent] = useState({
     name: '',
@@ -85,7 +196,6 @@ const OrgDashboard = () => {
     isPrivate: false
   });
 
-
   const [targetDepts, setTargetDepts] = useState([]);
   const [targetHostels, setTargetHostels] = useState([]);
   const [targetYears, setTargetYears] = useState([]);
@@ -95,7 +205,6 @@ const OrgDashboard = () => {
 
   const [newMember, setNewMember] = useState({ email: '', role: 'coordinator' });
 
-  // ✅ FIXED: Wrapped in useCallback to satisfy linter
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -117,10 +226,9 @@ const OrgDashboard = () => {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // ✅ Dependency Added
+  }, [fetchData]);
 
   useEffect(() => {
-    // Select all by default ONLY when creating (not editing)
     if (!editingEventId && activeTab === 'create') {
       setTargetDepts(DEPARTMENTS);
       setTargetHostels(HOSTELS);
@@ -133,9 +241,6 @@ const OrgDashboard = () => {
 
     formData.append('name', newEvent.name);
     formData.append('date', new Date(newEvent.date).toISOString());
-    if (newEvent.registration_deadline) {
-      formData.append('registration_deadline', new Date(newEvent.registration_deadline).toISOString());
-    }
     formData.append('venue', newEvent.venue);
     formData.append('description', newEvent.description);
     formData.append('tags', JSON.stringify(newEvent.tags.split(',').map(t => t.trim()).filter(Boolean)));
@@ -152,29 +257,13 @@ const OrgDashboard = () => {
 
     try {
       if (editingEventId) {
-        // 🔄 UPDATE EXISTING EVENT
         await api.put(`/org/${orgId}/events/${editingEventId}`, formData);
         toast.success("Event updated successfully!");
-
-        // ✅ exit edit mode ONLY
         setEditingEventId(null);
-
       } else {
-        // 🆕 CREATE NEW EVENT
         await api.post(`/org/${orgId}/events`, formData);
         toast.success("Event created successfully!");
-
-        // ✅ reset ONLY for create
-        setNewEvent({
-          name: '',
-          date: '',
-          registration_deadline: '',
-          venue: '',
-          description: '',
-          tags: '',
-          isPrivate: false
-        });
-
+        setNewEvent({ name: '', date: '', venue: '', description: '', tags: '', isPrivate: false });
         setTargetDepts([]);
         setTargetHostels([]);
         setTargetYears([]);
@@ -190,11 +279,9 @@ const OrgDashboard = () => {
         err?.response?.data?.detail ||
         err?.response?.data?.message ||
         "Failed to save event";
-
       toast.error(msg);
     }
   };
-
 
   const handleAddMember = async (e) => {
     e.preventDefault();
@@ -219,7 +306,6 @@ const OrgDashboard = () => {
     }
   };
 
-  // ✅ EDIT EVENT (frontend only: navigates to Create tab with prefilled data)
   const handleEditEvent = (ev) => {
     setEditingEventId(ev.id);
     setNewEvent({
@@ -264,8 +350,6 @@ const OrgDashboard = () => {
     }
   };
 
-
-  // ✅ DELETE EVENT
   const handleDeleteEvent = async (eventId) => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
     try {
@@ -279,17 +363,26 @@ const OrgDashboard = () => {
 
   if (loading) return <Loader />;
 
-  // Permission Check
   const isHead = stats?.your_role && HEAD_ROLES.includes(stats.your_role.toLowerCase());
 
   return (
     <div className="container-fluid">
+
+      {/* ✅ NEW: Registrations Modal */}
+      {regModalEvent && (
+        <RegistrationsModal
+          event={regModalEvent}
+          orgId={orgId}
+          onClose={() => setRegModalEvent(null)}
+        />
+      )}
+
       <div className="org-header">
         <div className="org-header-top">
           <div>
-            <OrgBanner orgId={orgId} orgName={stats?.org_name} bannerUrl={stats?.org_banner} />
-            <h2 className="fw-bold mt-2" style={{ color: 'var(--text-primary)' }}>{stats?.org_name} Dashboard</h2>
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <OrgBanner orgId={orgId} orgName={stats?.org_name} bannerUrl={stats?.org_banner}/>
+            <h2 className="fw-bold mt-2" style={{color: 'var(--text-primary)'}}>{stats?.org_name} Dashboard</h2>
+            <p style={{color: 'var(--text-secondary)'}}>
               Role: <span className="badge bg-purple">{stats?.your_role}</span>
             </p>
           </div>
@@ -338,7 +431,7 @@ const OrgDashboard = () => {
           </div>
           <div className="col-12 mt-4">
             <div className="glass-card p-4">
-              <h5 className="fw-bold mb-3" style={{ color: 'var(--text-primary)' }}>Quick Analytics</h5>
+              <h5 className="fw-bold mb-3" style={{color: 'var(--text-primary)'}}>Quick Analytics</h5>
               <div className="row g-4">
                 <div className="col-md-6" style={{ height: '300px' }}>
                   <DemographicsChart type="doughnut" title="Audience by Dept" data={stats?.dept_analytics || {}} />
@@ -351,7 +444,7 @@ const OrgDashboard = () => {
 
       {activeTab === 'events' && (
         <div className="glass-card p-4">
-          <h5 className="fw-bold mb-4" style={{ color: 'var(--text-primary)' }}>Your Events</h5>
+          <h5 className="fw-bold mb-4" style={{color: 'var(--text-primary)'}}>Your Events</h5>
           <div className="modern-table-wrapper">
             <table className="modern-table">
               <thead>
@@ -366,13 +459,23 @@ const OrgDashboard = () => {
                 {events.map(ev => (
                   <tr key={ev.id}>
                     <td className="fw-semibold">{ev.name}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{new Date(ev.date).toLocaleDateString()}</td>
+                    <td style={{color: 'var(--text-secondary)'}}>{new Date(ev.date).toLocaleDateString()}</td>
                     <td>{ev.is_private ? <span className="badge-visibility private"><Lock size={12} /> Private</span> : <span className="badge-visibility public"><Globe size={12} /> Public</span>}</td>
                     <td>
                       <div className="d-flex gap-2">
+                        {/* ✅ NEW: Registrations count button */}
+                        <button
+                          className="btn-action primary"
+                          onClick={() => setRegModalEvent(ev)}
+                          title="View registrations count"
+                        >
+                          <Users size={14} /> Regs
+                        </button>
+
                         <button
                           className="btn-action success"
                           onClick={() => handleDownloadCSV(ev.id)}
+                          title="Download CSV"
                         >
                           <Download size={14} /> CSV
                         </button>
@@ -409,7 +512,7 @@ const OrgDashboard = () => {
           {isHead && (
             <div className="col-md-4">
               <div className="glass-card p-4 h-100">
-                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{color: 'var(--text-primary)'}}>
                   <UserPlus size={18} className="text-purple" /> Add Member
                 </h5>
                 <form onSubmit={handleAddMember}>
@@ -444,7 +547,7 @@ const OrgDashboard = () => {
 
           <div className={isHead ? "col-md-8" : "col-12"}>
             <div className="glass-card p-4">
-              <h5 className="fw-bold mb-4" style={{ color: 'var(--text-primary)' }}>Team Members</h5>
+              <h5 className="fw-bold mb-4" style={{color: 'var(--text-primary)'}}>Team Members</h5>
               <div className="modern-table-wrapper">
                 <table className="modern-table">
                   <thead>
@@ -464,7 +567,7 @@ const OrgDashboard = () => {
                             <span className="fw-semibold">{member.name}</span>
                           </div>
                         </td>
-                        <td style={{ color: 'var(--text-secondary)' }}>{member.email}</td>
+                        <td style={{color: 'var(--text-secondary)'}}>{member.email}</td>
                         <td>
                           <span className={`badge ${HEAD_ROLES.includes(member.role) ? 'bg-danger' : 'bg-info text-dark'}`}>
                             {member.role}
@@ -494,7 +597,7 @@ const OrgDashboard = () => {
 
       {activeTab === 'create' && (
         <div className="glass-form-card">
-          <h4 className="fw-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+          <h4 className="fw-bold mb-4" style={{color: 'var(--text-primary)'}}>
             {editingEventId ? "Edit Event" : "Create New Event"}
           </h4>
           <form onSubmit={handleCreateEvent}>
@@ -515,13 +618,6 @@ const OrgDashboard = () => {
                 <label className="form-label-modern">Venue</label>
                 <input type="text" className="form-control modern-input" required
                   value={newEvent.venue} onChange={e => setNewEvent({ ...newEvent, venue: e.target.value })} />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label-modern">Registration Deadline <span className="text-muted" style={{ fontSize: '0.75rem' }}>(optional)</span></label>
-                <input type="datetime-local" className="form-control modern-input"
-                  value={newEvent.registration_deadline}
-                  onChange={e => setNewEvent({ ...newEvent, registration_deadline: e.target.value })} />
-                <div className="form-text" style={{ fontSize: '0.72rem' }}>Must be before event date. Leave blank for no deadline.</div>
               </div>
               <div className="col-12">
                 <label className="form-label-modern">Description</label>
@@ -569,7 +665,7 @@ const OrgDashboard = () => {
                 <div className="form-check form-switch mt-3">
                   <input className="form-check-input" type="checkbox" id="privateSwitch"
                     checked={newEvent.isPrivate} onChange={e => setNewEvent({ ...newEvent, isPrivate: e.target.checked })} />
-                  <label className="form-check-label" style={{ color: 'var(--text-primary)' }} htmlFor="privateSwitch">Member-Only (Hidden from feed)</label>
+                  <label className="form-check-label" style={{color: 'var(--text-primary)'}} htmlFor="privateSwitch">Member-Only (Hidden from feed)</label>
                 </div>
               </div>
 

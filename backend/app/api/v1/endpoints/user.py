@@ -8,19 +8,16 @@ import uuid
 from fastapi import Form, File, UploadFile
 import json
 from app.services.cloudinary import cloudinary
-from app.models.enums import DepartmentName, HostelName
+from app.models.enums import HostelName
 
 router = APIRouter()
 
 @router.put("/profile", response_model=UserOut)
 def update_profile(
     hostel: str = Form(None),
-    department: str = Form(None),
-    current_year: int = Form(None),
     interests: str = Form(None),
     photo: UploadFile = File(None),
-    remove_photo: bool = Form(False),  # ✅ ADD THIS
-
+    remove_photo: bool = Form(False),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
@@ -38,19 +35,12 @@ def update_profile(
         )
         current_user.photo_url = result["secure_url"]
 
-    # NORMAL FIELDS
+    # User-editable fields
     if hostel is not None:
         try:
             current_user.hostel = HostelName(hostel)
         except ValueError:
             raise HTTPException(status_code=422, detail=f"Invalid hostel: '{hostel}'. Must be a valid IITD hostel name.")
-    if department is not None:
-        try:
-            current_user.department = DepartmentName(department)
-        except ValueError:
-            raise HTTPException(status_code=422, detail=f"Invalid department: '{department}'. Must be a valid IITD department name.")
-    if current_year is not None:
-        current_user.current_year = current_year
     if interests is not None:
         current_user.interests = json.loads(interests)
 

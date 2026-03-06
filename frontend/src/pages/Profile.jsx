@@ -3,11 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Loader from '../components/UI/Loader';
 import toast from 'react-hot-toast';
-import { Camera, Edit3, Save, X, GraduationCap, MapPin, Calendar, Heart } from 'lucide-react';
-import { DEPARTMENTS, HOSTELS, YEARS } from '../utils/constants';
+import { Camera, Edit3, Save, X, GraduationCap, MapPin, Calendar, Heart, Lock } from 'lucide-react';
+import { HOSTELS } from '../utils/constants';
 
 const ALL_INTERESTS = [
-  "AI", "Web Development", "Machine Learning", "Robotics", 
+  "AI", "Web Development", "Machine Learning", "Robotics",
   "Design", "Blockchain", "Competitive Programming", "Cyber Security"
 ];
 
@@ -17,8 +17,6 @@ const Profile = () => {
 
   const [form, setForm] = useState({
     hostel: user?.hostel || "",
-    department: user?.department || "",
-    current_year: user?.current_year || "",
     interests: user?.interests || [],
     photo_url: user?.photo_url || "",
     photo_file: null,
@@ -29,8 +27,6 @@ const Profile = () => {
     if (user) {
       setForm({
         hostel: user.hostel || "",
-        department: user.department || "",
-        current_year: user.current_year || "",
         interests: user.interests || [],
         photo_url: user.photo_url || "",
         photo_file: null,
@@ -65,8 +61,6 @@ const Profile = () => {
     try {
       const fd = new FormData();
       fd.append("hostel", form.hostel);
-      fd.append("department", form.department);
-      fd.append("current_year", form.current_year);
       fd.append("interests", JSON.stringify(form.interests));
       if (form.remove_photo) fd.append("remove_photo", "true");
       if (form.photo_file) fd.append("photo", form.photo_file);
@@ -83,8 +77,6 @@ const Profile = () => {
   const cancelEdit = () => {
     setForm({
       hostel: user.hostel || "",
-      department: user.department || "",
-      current_year: user.current_year || "",
       interests: user.interests || [],
       photo_url: user.photo_url || "",
       photo_file: null,
@@ -95,11 +87,11 @@ const Profile = () => {
 
   return (
     <div className="container-fluid profile-page py-4">
-      
+
       {/* 1. HERO IDENTITY SECTION */}
       <div className="profile-hero-v2 mb-4">
         <div className="d-flex flex-column flex-md-row align-items-center gap-4">
-          
+
           {/* AVATAR CONTAINER */}
           <div className="position-relative">
             <div className="profile-avatar-ring">
@@ -114,8 +106,8 @@ const Profile = () => {
 
             {editMode && (
               <>
-                <button 
-                  className="avatar-edit-fab shadow border-0" 
+                <button
+                  className="avatar-edit-fab shadow border-0"
                   onClick={() => document.getElementById("photoInput").click()}
                   style={{ position: 'absolute', bottom: '0', right: '0', zIndex: 2 }}
                 >
@@ -168,7 +160,7 @@ const Profile = () => {
             <h5 className="section-title mb-4 d-flex align-items-center gap-2">
               <GraduationCap size={20} className="text-purple" /> Academic Info
             </h5>
-            
+
             {!editMode ? (
               <div className="d-flex flex-column gap-3">
                 <div className="info-mini-card">
@@ -195,24 +187,25 @@ const Profile = () => {
               </div>
             ) : (
               <div className="d-flex flex-column gap-3">
+                {/* Department — auto-filled, read-only */}
                 <div>
-                  <label className="form-label-modern">Department</label>
-                  <select 
-                    className="form-select modern-input" 
-                    value={form.department} 
-                    onChange={e => setForm({ ...form, department: e.target.value })}
-                  >
-                    <option value="" disabled>Select your department</option>
-                    {DEPARTMENTS.map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </select>
+                  <label className="form-label-modern d-flex align-items-center gap-1">
+                    Department <Lock size={13} className="text-muted" />
+                  </label>
+                  <input
+                    className="form-control modern-input"
+                    value={user.department || "Not set"}
+                    readOnly
+                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', opacity: 0.7 }}
+                  />
+                  <div className="form-text" style={{ fontSize: '0.72rem' }}>Auto-filled from your entry number</div>
                 </div>
+                {/* Hostel — editable */}
                 <div>
                   <label className="form-label-modern">Hostel</label>
-                  <select 
-                    className="form-select modern-input" 
-                    value={form.hostel} 
+                  <select
+                    className="form-select modern-input"
+                    value={form.hostel}
                     onChange={e => setForm({ ...form, hostel: e.target.value })}
                   >
                     <option value="" disabled>Select your hostel</option>
@@ -221,18 +214,18 @@ const Profile = () => {
                     ))}
                   </select>
                 </div>
+                {/* Year — auto-filled, read-only */}
                 <div>
-                  <label className="form-label-modern">Current Year</label>
-                  <select 
-                    className="form-select modern-input" 
-                    value={form.current_year} 
-                    onChange={e => setForm({ ...form, current_year: e.target.value })}
-                  >
-                    <option value="" disabled>Select year</option>
-                    {YEARS.map(y => (
-                      <option key={y} value={y}>Year {y}</option>
-                    ))}
-                  </select>
+                  <label className="form-label-modern d-flex align-items-center gap-1">
+                    Current Year <Lock size={13} className="text-muted" />
+                  </label>
+                  <input
+                    className="form-control modern-input"
+                    value={user.current_year ? `Year ${user.current_year}` : "Not set"}
+                    readOnly
+                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', opacity: 0.7 }}
+                  />
+                  <div className="form-text" style={{ fontSize: '0.72rem' }}>Auto-calculated from admission year</div>
                 </div>
               </div>
             )}
@@ -264,9 +257,9 @@ const Profile = () => {
                   </button>
                 );
               })}
-              
+
               {!editMode && user.interests.length === 0 && (
-                <div className="text-center w-100 py-4 opacity-50 fst-italic" style={{color: 'var(--text-muted)'}}>
+                <div className="text-center w-100 py-4 opacity-50 fst-italic" style={{ color: 'var(--text-muted)' }}>
                   No interests selected. Click edit to add some!
                 </div>
               )}

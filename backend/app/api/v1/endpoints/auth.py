@@ -8,6 +8,7 @@ from app.schemas.token import Token
 from app.schemas.auth import LoginRequest
 from app.schemas.user import UserOut  
 import logging
+from app.utils.entry_number import parse_entry_number
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -38,14 +39,25 @@ async def login_microsoft(
         # Create new user
         # Extract entry number logic here if needed
         entry_number = email.split("@")[0].upper()         
+        # Auto-fill department and year from entry number
+        dept, year = parse_entry_number(entry_number)
         user = User(
             email=email,
             name=ms_user["name"],
-            entry_number=entry_number
+            entry_number=entry_number,
+            department=dept,
+            current_year=year
         )
         db.add(user)
         db.commit()
         db.refresh(user)
+    else:
+        # Refresh year on every login (it increments each academic year)
+        _, year = parse_entry_number(user.entry_number or "")
+        if year and user.current_year != year:
+            user.current_year = year
+            db.commit()
+            db.refresh(user)
         
     # 4. Create Local JWT
     access_token = create_access_token(subject=user.id)

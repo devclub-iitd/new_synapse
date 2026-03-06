@@ -7,6 +7,7 @@ class EventBase(BaseModel):
     name: str
     description: str
     date: datetime
+    registration_deadline: Optional[datetime] = None
     venue: str
     
     # ✅ STRICT VALIDATION: Must be a valid Enum value
@@ -28,7 +29,7 @@ class EventOut(EventBase):
     
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-
+    registration_deadline: Optional[datetime] = None
     target_audience: Optional[Dict[str, Any]] = {}
     
     class Config:

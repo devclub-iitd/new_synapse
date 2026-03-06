@@ -13,6 +13,7 @@ class Event(Base):
     name = Column(String, nullable=False, index=True)
     description = Column(Text, nullable=False)
     date = Column(DateTime, nullable=False, index=True)
+    registration_deadline = Column(DateTime, nullable=True)  # Optional; enforced during registration
     venue = Column(String, nullable=False)
     image_url = Column(String, nullable=True)
     

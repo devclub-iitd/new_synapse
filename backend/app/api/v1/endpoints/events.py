@@ -200,6 +200,17 @@ def register_for_event(
             detail="Cannot register for past events"
         )
 
+    # 🚫 BLOCK IF REGISTRATION DEADLINE PASSED
+    if event.registration_deadline:
+        deadline = event.registration_deadline
+        if deadline.tzinfo is None:
+            deadline = deadline.replace(tzinfo=timezone.utc)
+        if deadline < now:
+            raise HTTPException(
+                status_code=400,
+                detail="Registration deadline has passed for this event"
+            )
+
     # ✅ Target Audience Check
     if not check_user_eligibility(current_user, event):
         raise HTTPException(

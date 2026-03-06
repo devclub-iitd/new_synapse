@@ -120,10 +120,11 @@ def create_org_event(
     description: str = Form(...),
     date: str = Form(...),
     venue: str = Form(...),
-    tags: str = Form("[]"), 
+    tags: str = Form("[]"),
     custom_form_schema: str = Form("[]"),
-    target_audience: str = Form("{}"), 
+    target_audience: str = Form("{}"),
     is_private: bool = Form(False),
+    registration_deadline: str = Form(None),
     photo: UploadFile = File(None),
     
     db: Session = Depends(deps.get_db),
@@ -158,22 +159,24 @@ def create_org_event(
         now = datetime.now(timezone.utc)
 
         if date_obj <= now:
-            raise HTTPException(
-                status_code=400,
-                detail="Event date must be in the future"
-            )
+            raise HTTPException(status_code=400, detail="Event date must be in the future")
 
         if date_obj < now + timedelta(minutes=5):
-            raise HTTPException(
-                status_code=400,
-                detail="Event must be scheduled at least 5 minutes in advance"
-            )
+            raise HTTPException(status_code=400, detail="Event must be scheduled at least 5 minutes in advance")
 
         if date_obj > now + timedelta(days=365):
-            raise HTTPException(
-                status_code=400,
-                detail="Event date cannot be more than 1 year in the future"
-            )
+            raise HTTPException(status_code=400, detail="Event date cannot be more than 1 year in the future")
+
+        # Parse & validate registration deadline
+        deadline_obj = None
+        if registration_deadline:
+            deadline_obj = datetime.fromisoformat(registration_deadline)
+            if deadline_obj.tzinfo is None:
+                deadline_obj = deadline_obj.replace(tzinfo=timezone.utc)
+            if deadline_obj <= now:
+                raise HTTPException(status_code=400, detail="Registration deadline must be in the future")
+            if deadline_obj >= date_obj:
+                raise HTTPException(status_code=400, detail="Registration deadline must be before the event date")
 
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format")
@@ -186,17 +189,15 @@ def create_org_event(
         name=name,
         description=description,
         date=date_obj,
+        registration_deadline=deadline_obj,
         venue=venue,
         image_url=image_url,
         tags=tags_list,
         custom_form_schema=schema_list,
         target_audience=audience_dict,
         is_private=is_private,
-        
-        # FIX: Pass string directly
-        org_name=role.org_name, 
+        org_name=role.org_name,
         org_type=role.org_type,
-        
         event_manager_email=current_user.email
     )
     
@@ -232,6 +233,7 @@ def update_event(
     custom_form_schema: str = Form(None),
     target_audience: str = Form(None),
     is_private: bool = Form(None),
+    registration_deadline: str = Form(None),
     photo: UploadFile = File(None),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
@@ -284,6 +286,26 @@ def update_event(
         event.venue = venue
     if is_private is not None:
         event.is_private = is_private
+
+    # Update registration deadline
+    if registration_deadline is not None:
+        if registration_deadline == "":
+            # Allow clearing the deadline
+            event.registration_deadline = None
+        else:
+            try:
+                dl_obj = datetime.fromisoformat(registration_deadline)
+                if dl_obj.tzinfo is None:
+                    dl_obj = dl_obj.replace(tzinfo=timezone.utc)
+                now = datetime.now(timezone.utc)
+                event_date = event.date if event.date.tzinfo else event.date.replace(tzinfo=timezone.utc)
+                if dl_obj <= now:
+                    raise HTTPException(status_code=400, detail="Registration deadline must be in the future")
+                if dl_obj >= event_date:
+                    raise HTTPException(status_code=400, detail="Registration deadline must be before the event date")
+                event.registration_deadline = dl_obj
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid date format for registration_deadline")
 
     # JSON fields
     if tags:

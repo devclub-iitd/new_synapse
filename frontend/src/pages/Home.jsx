@@ -8,7 +8,6 @@ import { Filter, Search, ArrowUpDown } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
-// ✅ IMPORT THE REGISTRATION MODAL
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
 
 const LIMIT = 6;
@@ -23,7 +22,6 @@ const Home = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
-  // ✅ STATE FOR REGISTRATION MODAL
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState(null);
 
@@ -31,18 +29,14 @@ const Home = () => {
   const [selectedBoard, setSelectedBoard] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
 
-  // 🔍 SEARCH
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  // 🔁 SORT
   const [sortBy, setSortBy] = useState("date");
 
-  // 🔁 PAGINATION
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
-  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -50,7 +44,6 @@ const Home = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Reset pagination on filters/search/sort change
   useEffect(() => {
     setSkip(0);
     setEvents([]);
@@ -59,108 +52,64 @@ const Home = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgType, selectedBoard, selectedItem, debouncedSearch, sortBy]);
 
-  // const fetchEvents = async (reset = false) => {
-  //   try {
-  //     reset ? setLoading(true) : setLoadingMore(true);
-  //     const params = {
-  //       skip: reset ? 0 : skip,
-  //       limit: LIMIT,
-  //       sort_by: sortBy,
-  //     };
-
-  //     if (orgType) params.org_type = orgType;
-  //     if (selectedBoard) params.board = selectedBoard;
-  //     if (selectedItem) params.item = selectedItem;
-  //     if (debouncedSearch) params.search = debouncedSearch;
-
-  //     const res = await api.get("/events", { params });
-
-  //     if (reset) {
-  //       setEvents(res.data);
-  //     } else {
-  //       setEvents((prev) => [...prev, ...res.data]);
-  //     }
-
-  //     if (res.data.length < LIMIT) {
-  //       setHasMore(false);
-  //     }
-
-  //     setSkip((prev) => prev + LIMIT);
-  //   } catch (err) {
-  //     console.error(err);
-  //   } finally {
-  //     setLoading(false);
-  //     setLoadingMore(false);
-  //   }
-  // };
-
   const fetchEvents = async (reset = false) => {
-  try {
-    reset ? setLoading(true) : setLoadingMore(true);
+    try {
+      reset ? setLoading(true) : setLoadingMore(true);
 
-    const currentSkip = reset ? 0 : skip;
+      const currentSkip = reset ? 0 : skip;
 
-    const params = {
-      skip: currentSkip,
-      limit: LIMIT,
-      sort_by: sortBy,
-    };
+      const params = {
+        skip: currentSkip,
+        limit: LIMIT,
+        sort_by: sortBy,
+      };
 
-    if (orgType) params.org_type = orgType;
-    if (selectedItem) params.item = selectedItem;
-    if (debouncedSearch) params.search = debouncedSearch;
+      if (orgType) params.org_type = orgType;
+      if (selectedBoard) params.board = selectedBoard;   // ✅ FIX: now sent to API
+      if (selectedItem) params.item = selectedItem;
+      if (debouncedSearch) params.search = debouncedSearch;
 
-    const res = await api.get("/events", { params });
+      const res = await api.get("/events", { params });
 
-    if (reset) {
-      setEvents(res.data);
-    } else {
-      setEvents((prev) => [...prev, ...res.data]);
+      if (reset) {
+        setEvents(res.data);
+      } else {
+        setEvents((prev) => [...prev, ...res.data]);
+      }
+
+      setSkip(currentSkip + res.data.length);
+
+      if (res.data.length < LIMIT) {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
+  };
 
-    // 🔑 deterministic skip update
-    setSkip(currentSkip + res.data.length);
-
-    if (res.data.length < LIMIT) {
-      setHasMore(false);
-    }
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoading(false);
-    setLoadingMore(false);
-  }
-};
-
-
-  // ✅ FIX: OPEN MODAL INSTEAD OF DIRECT API CALL
   const handleRegisterClick = (event) => {
     if (!user) {
       setIsLoginOpen(true);
       return;
     }
-    // Set the event ID and open the modal
     setSelectedEventId(event.id);
     setIsRegisterModalOpen(true);
   };
 
-  // ✅ CALLBACK FOR SUCCESSFUL REGISTRATION
   const handleRegistrationSuccess = () => {
     setIsRegisterModalOpen(false);
     setSelectedEventId(null);
-    // Refresh the list so the button turns to "Registered"
-    // Passing 'false' to keep current list but we probably want to reload to update status
-    // For simplicity, we can just reload the current view or re-fetch
-
     setSkip(0);
-  setEvents([]);
-  setHasMore(true);
-    fetchEvents(true); 
+    setEvents([]);
+    setHasMore(true);
+    fetchEvents(true);
   };
 
   return (
     <>
-      {/* HEADER */}
       <div className="container mt-4 mb-4">
         <div className="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
           <div className="home-hero-header">
@@ -168,9 +117,7 @@ const Home = () => {
             <p>Find and register for club activities</p>
           </div>
 
-          {/* SEARCH + SORT + FILTER */}
           <div className="d-flex align-items-center gap-3 flex-wrap">
-            {/* Search */}
             <div className="search-glass">
               <Search size={16} className="search-icon" />
               <input
@@ -181,7 +128,6 @@ const Home = () => {
               />
             </div>
 
-            {/* Sort */}
             <div className="sort-glass">
               <ArrowUpDown size={16} />
               <select
@@ -195,7 +141,6 @@ const Home = () => {
               </select>
             </div>
 
-            {/* Filter */}
             <button
               className={`btn d-flex align-items-center gap-2 ${
                 orgType ? "btn-purple" : "btn-outline-secondary"
@@ -208,7 +153,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* CONTENT */}
         {loading ? (
           <div className="d-flex justify-content-center py-5">
             <Loader />
@@ -234,7 +178,6 @@ const Home = () => {
               )}
             </div>
 
-            {/* LOAD MORE */}
             {hasMore && (
               <div className="d-flex justify-content-center mt-5">
                 <button
@@ -265,7 +208,6 @@ const Home = () => {
           onClose={() => setIsLoginOpen(false)}
         />
 
-        {/* ✅ RENDER THE REGISTRATION MODAL */}
         <EventRegistrationModal
           isOpen={isRegisterModalOpen}
           onClose={() => setIsRegisterModalOpen(false)}

@@ -4,12 +4,14 @@ from app.models.user import User
 from app.models.registration import Registration
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import pandas as pd
+from datetime import datetime, timezone
 
 def get_event_recommendations(db: Session, user_id: int, limit: int = 5):
     """
     Returns a list of Event objects sorted by relevance to the user.
     Logic: Content-Based Filtering using Event Tags + Description.
+    Only considers events that would appear in the user's feed
+    (future, public + user's own org private events).
     """
     
     # 1. Fetch User & History
@@ -17,12 +19,32 @@ def get_event_recommendations(db: Session, user_id: int, limit: int = 5):
     if not user:
         return []
 
-    # Get all future events
-    all_events = db.query(Event).all()
+    now = datetime.now(timezone.utc)
+
+    # 2. Get only FUTURE events, matching feed visibility rules
+    from sqlalchemy import or_
+    query = db.query(Event).filter(Event.date >= now)
+
+    # Visibility: public events + private events from user's orgs
+    if user.authorizations:
+        user_org_names = [
+            r.org_name.value if hasattr(r.org_name, 'value') else r.org_name
+            for r in user.authorizations
+        ]
+        query = query.filter(
+            or_(
+                Event.is_private == False,
+                Event.org_name.in_(user_org_names)
+            )
+        )
+    else:
+        query = query.filter(Event.is_private == False)
+
+    all_events = query.all()
     if not all_events:
         return []
 
-    # Filter out events the user is not eligible for
+    # 3. Filter by target audience eligibility (same as feed)
     from app.api.v1.endpoints.events import check_user_eligibility
     all_events = [e for e in all_events if check_user_eligibility(user, e)]
     if not all_events:

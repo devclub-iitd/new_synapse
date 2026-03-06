@@ -78,10 +78,10 @@ def get_events(
 ):
     now = datetime.now(timezone.utc)
     # six_months_ago = now - timedelta(days=180)
-
     # ✅ Visibility filter:
     # - Unauthenticated users: public events only
     # - Authenticated users: public events + private events from their orgs
+    query = db.query(Event)
     if current_user and current_user.authorizations:
         user_org_names = [r.org_name.value if hasattr(r.org_name, 'value') else r.org_name for r in current_user.authorizations]
         from sqlalchemy import or_

@@ -79,11 +79,22 @@ def get_events(
     now = datetime.now(timezone.utc)
     # six_months_ago = now - timedelta(days=180)
 
-    query = db.query(Event)
-    # ✅ Only public events
-    query = query.filter(Event.is_private == False)
+    # ✅ Visibility filter:
+    # - Unauthenticated users: public events only
+    # - Authenticated users: public events + private events from their orgs
+    if current_user and current_user.authorizations:
+        user_org_names = [r.org_name.value if hasattr(r.org_name, 'value') else r.org_name for r in current_user.authorizations]
+        from sqlalchemy import or_
+        query = query.filter(
+            or_(
+                Event.is_private == False,
+                Event.org_name.in_(user_org_names)
+            )
+        )
+    else:
+        query = query.filter(Event.is_private == False)
 
-    # ❌ Hide older event
+    # ❌ Hide past events
     query = query.filter(Event.date >= now)
 
     # ✅ Org type filter

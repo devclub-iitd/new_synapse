@@ -241,6 +241,9 @@ const OrgDashboard = () => {
 
     formData.append('name', newEvent.name);
     formData.append('date', new Date(newEvent.date).toISOString());
+    if (newEvent.registration_deadline) {
+      formData.append('registration_deadline', new Date(newEvent.registration_deadline).toISOString());
+    }
     formData.append('venue', newEvent.venue);
     formData.append('description', newEvent.description);
     formData.append('tags', JSON.stringify(newEvent.tags.split(',').map(t => t.trim()).filter(Boolean)));
@@ -613,6 +616,11 @@ const OrgDashboard = () => {
                 <label className="form-label-modern">Date & Time</label>
                 <input type="datetime-local" className="form-control modern-input" required
                   value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label-modern">Registration Deadline <span style={{color:'var(--text-muted)', fontSize:'0.8rem'}}>(optional)</span></label>
+                <input type="datetime-local" className="form-control modern-input"
+                  value={newEvent.registration_deadline} onChange={e => setNewEvent({ ...newEvent, registration_deadline: e.target.value })} />
               </div>
               <div className="col-md-6">
                 <label className="form-label-modern">Venue</label>

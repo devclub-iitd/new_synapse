@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, ForeignKey, JSON, DateTime, Uniq
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from datetime import datetime
-from app.core.timezone import now_ist
 
 class Registration(Base):
     __tablename__ = "registrations"
@@ -16,7 +15,7 @@ class Registration(Base):
     # 2. Data
     custom_answers = Column(JSON, default=dict)
     feedback_rating = Column(Integer, nullable=True)
-    registered_at = Column(DateTime, default=now_ist, index=True)
+    registered_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     # 3. Relationships
     user = relationship("User", back_populates="registrations")

@@ -14,7 +14,7 @@ from app.services.cloudinary import cloudinary
 import cloudinary.uploader
 import uuid
 from datetime import datetime, timedelta, timezone
-from app.core.timezone import IST, now_ist
+from app.core.timezone import now_utc
 
 
 router = APIRouter()
@@ -155,9 +155,9 @@ def create_org_event(
 
         # Make timezone-aware (UTC)
         if date_obj.tzinfo is None:
-            date_obj = date_obj.replace(tzinfo=IST)
+            date_obj = date_obj.replace(tzinfo=timezone.utc)
 
-        now = now_ist()
+        now = now_utc()
 
         if date_obj <= now:
             raise HTTPException(status_code=400, detail="Event date must be in the future")
@@ -173,7 +173,7 @@ def create_org_event(
         if registration_deadline:
             deadline_obj = datetime.fromisoformat(registration_deadline)
             if deadline_obj.tzinfo is None:
-                deadline_obj = deadline_obj.replace(tzinfo=IST)
+                deadline_obj = deadline_obj.replace(tzinfo=timezone.utc)
             if deadline_obj <= now:
                 raise HTTPException(status_code=400, detail="Registration deadline must be in the future")
             if deadline_obj >= date_obj:
@@ -216,7 +216,10 @@ def delete_event(
     current_user: User = Depends(deps.get_current_user),
     role: AuthRole = Depends(get_org_role_by_id)
 ):
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = db.query(Event).filter(
+        Event.id == event_id,
+        Event.org_name == role.org_name
+    ).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     db.delete(event)
@@ -240,8 +243,11 @@ def update_event(
     current_user: User = Depends(deps.get_current_user),
     role: AuthRole = Depends(get_org_role_by_id)
 ):
-    event = db.query(Event).filter(Event.id == event_id).first()
-
+    print(date, registration_deadline)
+    event = db.query(Event).filter(
+        Event.id == event_id,
+        Event.org_name == role.org_name
+    ).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
@@ -261,9 +267,10 @@ def update_event(
             date_obj = datetime.fromisoformat(date)
 
             if date_obj.tzinfo is None:
-                date_obj = date_obj.replace(tzinfo=IST)
+                date_obj = date_obj.replace(tzinfo=timezone.utc)
 
-            now = now_ist()
+            now = now_utc()
+            print("Parsed date:", date_obj, "Current time:", now)
 
             if date_obj <= now:
                 raise HTTPException(status_code=400, detail="Event date must be in the future")
@@ -297,9 +304,9 @@ def update_event(
             try:
                 dl_obj = datetime.fromisoformat(registration_deadline)
                 if dl_obj.tzinfo is None:
-                    dl_obj = dl_obj.replace(tzinfo=IST)
-                now = now_ist()
-                event_date = event.date if event.date.tzinfo else event.date.replace(tzinfo=IST)
+                    dl_obj = dl_obj.replace(tzinfo=timezone.utc)
+                now = now_utc()
+                event_date = event.date if event.date.tzinfo else event.date.replace(tzinfo=timezone.utc)
                 if dl_obj <= now:
                     raise HTTPException(status_code=400, detail="Registration deadline must be in the future")
                 if dl_obj >= event_date:

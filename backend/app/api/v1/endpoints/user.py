@@ -11,8 +11,8 @@ from app.services.cloudinary import cloudinary
 from app.models.enums import HostelName
 
 from app.models.registration import Registration
-from datetime import datetime
-from app.core.timezone import IST, now_ist
+from datetime import datetime, timezone
+from app.core.timezone import now_utc
 
 router = APIRouter()
 
@@ -71,7 +71,7 @@ def get_feedback_pending(
     current_user: User = Depends(deps.get_current_user)
 ):
     """Get past events the user registered for but hasn't rated yet."""
-    now = now_ist()
+    now = now_utc()
 
     pending = (
         db.query(Registration)
@@ -87,7 +87,7 @@ def get_feedback_pending(
     for reg in pending:
         event_date = reg.event.date
         if event_date.tzinfo is None:
-            event_date = event_date.replace(tzinfo=IST)
+            event_date = event_date.replace(tzinfo=timezone.utc)
         if event_date < now:
             result.append(reg.event)
 

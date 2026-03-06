@@ -1,12 +1,11 @@
 """
 Central timezone configuration for the Synapse backend.
-All datetime operations should use IST from this module.
+Strategy: Store everything in UTC. Frontend converts to IST for display.
 """
-from datetime import timezone, timedelta, datetime
+from datetime import timezone, datetime
 
-# Indian Standard Time = UTC + 5:30
-IST = timezone(timedelta(hours=5, minutes=30))
+UTC = timezone.utc
 
-def now_ist() -> datetime:
-    """Get current datetime in IST."""
-    return datetime.now(IST)
+def now_utc() -> datetime:
+    """Get current datetime in UTC."""
+    return datetime.now(UTC)

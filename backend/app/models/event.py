@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, Boolean, JSON, Text, DateTime, E
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from datetime import datetime
-from app.core.timezone import now_ist
 from app.models.enums import OrgType, OrgName # Import both Enums
 
 class Event(Base):
@@ -30,8 +29,8 @@ class Event(Base):
     custom_form_schema = Column(JSON, default=list) 
 
     # Timestamps
-    created_at = Column(DateTime, default=now_ist)
-    updated_at = Column(DateTime, default=now_ist, onupdate=now_ist)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     registrations = relationship("Registration", back_populates="event", cascade="all, delete-orphan")

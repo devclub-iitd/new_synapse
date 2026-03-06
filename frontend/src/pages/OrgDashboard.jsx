@@ -11,6 +11,18 @@ import toast from 'react-hot-toast';
 import { DEPARTMENTS, HOSTELS, YEARS, HEAD_ROLES, TEAM_ROLES } from '../utils/constants';
 import OrgBanner from '../components/UI/OrgBanner';
 
+/**
+ * Converts a UTC ISO string to a local datetime-local input value.
+ * datetime-local inputs need "YYYY-MM-DDTHH:MM" in LOCAL time.
+ */
+const toLocalInputValue = (utcStr) => {
+  if (!utcStr) return '';
+  const str = utcStr.endsWith('Z') ? utcStr : `${utcStr}Z`;
+  const d = new Date(str);
+  const offset = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+};
+
 // --- HELPER COMPONENT: MultiSelect ---
 const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
   const handleSelect = (e) => {
@@ -241,7 +253,7 @@ const OrgDashboard = () => {
     const formData = new FormData();
 
     formData.append('name', newEvent.name);
-    formData.append('date', new Date(newEvent.date).toISOString());
+    formData.append('date', new Date(newEvent.date).toISOString());  // Convert to UTC for backend
     if (newEvent.registration_deadline) {
       formData.append('registration_deadline', new Date(newEvent.registration_deadline).toISOString());
     }
@@ -314,8 +326,8 @@ const OrgDashboard = () => {
     setEditingEventId(ev.id);
     setNewEvent({
       name: ev.name,
-      date: ev.date?.slice(0, 16) || '',
-      registration_deadline: ev.registration_deadline?.slice(0, 16) || '',
+      date: toLocalInputValue(ev.date),
+      registration_deadline: toLocalInputValue(ev.registration_deadline),
       venue: ev.venue || '',
       description: ev.description || '',
       tags: (ev.tags || []).join(', '),

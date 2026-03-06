@@ -9,7 +9,8 @@ const IST_OPTIONS = { timeZone: 'Asia/Kolkata' };
 /** Format date as "06 Mar 2026" */
 export const formatDate = (dateStr) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('en-IN', {
+    const str = dateStr.endsWith('Z') ? dateStr : `${dateStr}Z`;
+    return new Date(str).toLocaleDateString('en-IN', {
         ...IST_OPTIONS,
         day: '2-digit',
         month: 'short',
@@ -20,7 +21,8 @@ export const formatDate = (dateStr) => {
 /** Format date+time as "06 Mar 2026, 5:30 PM" */
 export const formatDateTime = (dateStr) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleString('en-IN', {
+    const str = dateStr.endsWith('Z') ? dateStr : `${dateStr}Z`;
+    return new Date(str).toLocaleString('en-IN', {
         ...IST_OPTIONS,
         day: '2-digit',
         month: 'short',
@@ -34,5 +36,6 @@ export const formatDateTime = (dateStr) => {
 /** Check if a date string is in the past (IST-aware comparison) */
 export const isPast = (dateStr) => {
     if (!dateStr) return false;
-    return new Date(dateStr) < new Date();
+    const str = dateStr.endsWith('Z') ? dateStr : `${dateStr}Z`;
+    return new Date(str) < new Date();
 };

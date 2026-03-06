@@ -5,7 +5,7 @@ from app.models.registration import Registration
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from datetime import datetime
-from app.core.timezone import IST, now_ist
+from app.core.timezone import now_utc
 
 def get_event_recommendations(db: Session, user_id: int, limit: int = 5):
     """
@@ -20,7 +20,7 @@ def get_event_recommendations(db: Session, user_id: int, limit: int = 5):
     if not user:
         return []
 
-    now = now_ist()
+    now = now_utc()
 
     # 2. Get only FUTURE events, matching feed visibility rules
     from sqlalchemy import or_

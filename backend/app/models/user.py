@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.enums import DepartmentName, HostelName
 from datetime import datetime
-from app.core.timezone import now_ist
 
 class User(Base):
     __tablename__ = "users"
@@ -28,7 +27,7 @@ class User(Base):
     # 4. Status
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=now_ist)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     # 5. Relationships (Cascade added)
     authorizations = relationship("AuthRole", back_populates="user", cascade="all, delete-orphan")

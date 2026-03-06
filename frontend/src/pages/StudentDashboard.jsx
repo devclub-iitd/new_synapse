@@ -28,7 +28,7 @@ const StudentDashboard = () => {
 
       const formattedEvents = calRes.data.map(event => ({
         title: event.name,
-        start: event.date,
+        start: event.date?.endsWith('Z') ? event.date : `${event.date}Z`,
         backgroundColor: '#7c3aed',
         borderColor: '#7c3aed',
         extendedProps: { venue: event.venue }

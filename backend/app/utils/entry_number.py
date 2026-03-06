@@ -21,7 +21,6 @@ Example: EEZ240001 → Dept=EE, Program=Z (Ph.D.), Year=2024, Roll=0001
 
 from datetime import datetime
 from app.models.enums import DepartmentName
-from app.core.timezone import now_ist
 
 # 2-letter department/unit code → DepartmentName enum
 DEPT_CODE_MAP = {
@@ -85,7 +84,7 @@ def parse_entry_number(entry_number: str) -> tuple[DepartmentName | None, int | 
     dept_enum = DEPT_CODE_MAP.get(dept_code)
 
     # Calculate current year of study (1-based)
-    now = now_ist()
+    now = datetime.now()
     # Academic year starts in July-August
     academic_year_start = now.year if now.month >= 7 else now.year - 1
     current_year_of_study = academic_year_start - admission_year + 1

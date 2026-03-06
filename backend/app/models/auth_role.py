@@ -18,9 +18,9 @@ class AuthRole(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    org_name = Column(String, nullable=False, index=True)
+    org_name = Column(Enum(OrgName, native_enum=False, values_callable=lambda obj: [e.value for e in obj]), nullable=False, index=True)
     role_name = Column(String, nullable=False)
-    org_type = Column(String, nullable=False, index=True)
+    org_type = Column(Enum(OrgType, native_enum=False, values_callable=lambda obj: [e.value for e in obj]), nullable=False, index=True)
     org_banner=Column(String, default=None)
     user = relationship("User", back_populates="authorizations")
 

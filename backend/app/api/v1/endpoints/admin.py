@@ -25,30 +25,28 @@ def authorize_club_head(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # ✅ FIX 1: Extract the string values explicitly
-    org_name_str = role_data.org_name.value  # "devclub"
-    role_name_str = role_data.role_name.value
-    org_type_str = role_data.org_type.value
+    # ✅ Extract role details from the schema Enum directly
+    org_name_val = role_data.org_name
+    role_name_val = role_data.role_name.value if hasattr(role_data.role_name, 'value') else role_data.role_name
+    org_type_val = role_data.org_type
 
-    # ✅ FIX 2: Use the string variable in the query
     existing = db.query(AuthRole).filter(
         AuthRole.user_id == user.id, 
-        AuthRole.org_name == org_name_str 
+        AuthRole.org_name == org_name_val 
     ).first()
     
     if existing:
         return {"msg": "User already has this role"}
 
-    # ✅ FIX 3: Use the string variable in the insert
     new_role = AuthRole(
         user_id=user.id,
-        org_name=org_name_str,
-        role_name=role_name_str,
-        org_type=org_type_str
+        org_name=org_name_val,
+        role_name=role_name_val,
+        org_type=org_type_val
     )
     db.add(new_role)
     db.commit()
-    return {"msg": f"Authorized {user.name} for {org_name_str}"}
+    return {"msg": f"Authorized {user.name} for {org_name_val.value}"}
 
 @router.get("/users", response_model=list[UserOut])
 def list_all_users(

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.user import User
@@ -8,6 +8,7 @@ import uuid
 from fastapi import Form, File, UploadFile
 import json
 from app.services.cloudinary import cloudinary
+from app.models.enums import DepartmentName, HostelName
 
 router = APIRouter()
 
@@ -39,9 +40,15 @@ def update_profile(
 
     # NORMAL FIELDS
     if hostel is not None:
-        current_user.hostel = hostel
+        try:
+            current_user.hostel = HostelName(hostel)
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"Invalid hostel: '{hostel}'. Must be a valid IITD hostel name.")
     if department is not None:
-        current_user.department = department
+        try:
+            current_user.department = DepartmentName(department)
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"Invalid department: '{department}'. Must be a valid IITD department name.")
     if current_year is not None:
         current_user.current_year = current_year
     if interests is not None:

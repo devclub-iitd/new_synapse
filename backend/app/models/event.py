@@ -16,8 +16,8 @@ class Event(Base):
     venue = Column(String, nullable=False)
     image_url = Column(String, nullable=True)
     
-    org_name = Column(String, nullable=False, index=True)
-    org_type = Column(String, nullable=False, index=True)
+    org_name = Column(Enum(OrgName, native_enum=False, values_callable=lambda obj: [e.value for e in obj]), nullable=False, index=True)
+    org_type = Column(Enum(OrgType, native_enum=False, values_callable=lambda obj: [e.value for e in obj]), nullable=False, index=True)
     
     event_manager_email = Column(String, nullable=False)
     

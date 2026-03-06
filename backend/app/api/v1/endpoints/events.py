@@ -18,12 +18,20 @@ def check_user_eligibility(user: User, event: Event) -> bool:
         return True
 
     target_depts = event.target_audience.get("depts", [])
-    if target_depts and (not user.department or user.department not in target_depts):
-        return False
+    if target_depts:
+        if not user.department:
+            return False
+        user_dept = user.department.value if hasattr(user.department, "value") else str(user.department)
+        if user_dept not in target_depts:
+            return False
 
     target_hostels = event.target_audience.get("hostels", [])
-    if target_hostels and (not user.hostel or user.hostel not in target_hostels):
-        return False
+    if target_hostels:
+        if not user.hostel:
+            return False
+        user_hostel = user.hostel.value if hasattr(user.hostel, "value") else str(user.hostel)
+        if user_hostel not in target_hostels:
+            return False
 
     target_years = event.target_audience.get("years", [])
     if target_years:
@@ -69,15 +77,14 @@ def get_events(
     limit: int = 20
 ):
     now = datetime.now(timezone.utc)
-    six_months_ago = now - timedelta(days=180)
+    # six_months_ago = now - timedelta(days=180)
 
     query = db.query(Event)
-
     # ✅ Only public events
     query = query.filter(Event.is_private == False)
 
-    # ❌ Hide events older than 6 months
-    query = query.filter(Event.date >= six_months_ago)
+    # ❌ Hide older event
+    query = query.filter(Event.date >= now)
 
     # ✅ Org type filter
     if org_type:
@@ -103,13 +110,10 @@ def get_events(
         ),
         Event.date.asc()
     )
-
     all_filtered_events = query.all()
-
     # ✅ Apply target audience filtering for logged-in users
     if current_user:
         all_filtered_events = [e for e in all_filtered_events if check_user_eligibility(current_user, e)]
-
     # ✅ Apply Pagination in memory
     paginated_events = all_filtered_events[skip : skip + limit]
 

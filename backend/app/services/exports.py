@@ -42,8 +42,8 @@ def generate_event_registration_csv(db: Session, event_id: int) -> io.StringIO:
             user.entry_number,
             user.name,
             user.email,
-            user.department,
-            user.hostel,
+            user.department.value if hasattr(user.department, 'value') else (user.department or ""),
+            user.hostel.value if hasattr(user.hostel, 'value') else (user.hostel or ""),
             reg.registered_at.strftime("%Y-%m-%d %H:%M")
         ]
         

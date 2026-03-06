@@ -88,11 +88,11 @@ def get_org_dashboard(
     dept_counts = {}
     for event in org_events:
         for reg in event.registrations:
-            dept = reg.user.department or "Unknown"
+            dept = (reg.user.department.value if hasattr(reg.user.department, 'value') else reg.user.department) or "Unknown"
             dept_counts[dept] = dept_counts.get(dept, 0) + 1
 
     return {
-        "org_name": role.org_name,
+        "org_name": role.org_name.value if hasattr(role.org_name, 'value') else role.org_name,
         "your_role": role.role_name,
         "org_banner":role.org_banner,
         "total_events": total_events,
@@ -489,7 +489,8 @@ def upload_org_banner(
     if banner.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
         raise HTTPException(status_code=400, detail="Only JPG/PNG allowed")
 
-    org_file_name = role.org_name.lower().replace(" ", "_")
+    org_name_str = role.org_name.value if hasattr(role.org_name, 'value') else str(role.org_name)
+    org_file_name = org_name_str.lower().replace(" ", "_")
 
     result = cloudinary.uploader.upload(
         banner.file,

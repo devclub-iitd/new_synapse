@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, JSON, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, JSON, DateTime, Enum
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from app.models.enums import DepartmentName, HostelName
 from datetime import datetime
 
 class User(Base):
@@ -14,8 +15,9 @@ class User(Base):
     name = Column(String, nullable=False)
     
     # 2. Demographics (Indexed for Analytics)
-    department = Column(String, nullable=True, index=True)
-    hostel = Column(String, nullable=True)
+    # 2. Demographics (Indexed for Analytics)
+    department = Column(Enum(DepartmentName, native_enum=False, values_callable=lambda obj: [e.value for e in obj]), nullable=True, index=True)
+    hostel = Column(Enum(HostelName, native_enum=False, values_callable=lambda obj: [e.value for e in obj]), nullable=True)
     current_year = Column(Integer, nullable=True, index=True)
     
     # 3. Profile

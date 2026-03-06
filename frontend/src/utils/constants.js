@@ -19,10 +19,10 @@ export const DEPARTMENTS = [
   "Textile and Fibre Engineering"
 ];
 
-
 export const HOSTELS = [
-  "Aravali", "Girnar", "Himadri", "Jwalamukhi", "Kailash", "Karakoram", 
-  "Kumaon", "Nilgiri", "Satpura", "Shivalik", "Udaigiri", "Vindhyachal", "Zanskar", "Dayscholar"
+  "Aravali", "Dronagiri", "Girnar", "Himadri", "Jwalamukhi", "Kailash", "Karakoram", 
+  "Kumaon", "Nalanda", "Nilgiri", "Satpura", "Sahyadri", "Saptagiri", "Shivalik", 
+  "Udaigiri", "Vindhyachal", "Zanskar", "Dayscholar"
 ];
 
 
@@ -35,6 +35,7 @@ export const ORG_TYPES = [
   { label: "Board", value: "board" },
   { label: "Society", value: "society" },
   { label: "Fest", value: "fest" },
+  { label: "Sport", value: "sport" },
   { label: "Department", value: "department" }
 ];
 
@@ -64,21 +65,31 @@ export const ALL_ORGS = {
   "club": [
     "devclub", "robotics club", "aeromodelling club", "business and consulting club", 
     "economics club", "physics and astronomy club", "algorithms and computing club", 
-    "aries", "igem", "hyperloop club", "music club", "dance club", "dramatics club", 
+    "aries", "igem", "hyperloop club", "indian game theory society", "blockchain society",
+    "axlr8r formula racing", "music club", "dance club", "dramatics club", 
     "literary club", "debating club", "photography and films club", 
     "fine arts and crafts club", "design club", "quizzing club", 
-    "hindi samiti", "spic macay", "indradhanu"
+    "hindi samiti", "spic macay", "envogue", "indradhanu"
   ],
   "board": [
-    "student affairs council", "board for student welfare", "board for sports activities",
-    "board for recreational and creative activities", "board for student publications",
-    "co-curricular and academic interaction council"
+    "student affairs council", "board for hostel management", "board for student welfare",
+    "board for sports activities", "board for recreational and creative activities", 
+    "board for student publications", "co-curricular and academic interaction council"
   ],
   "society": [
-    "mathsoc", "aces acm", "chemical engineering society", "mechanical engineering society",
-    "electrical engineering society", "civil engineering forum", "materials science and engineering society",
-    "biotechnology society", "physics society", "textile engineering society", "energy society"
+    "mathsoc", "aces acm", "beta", "mses", "cef", "mes", "ches", "energy society",
+    "physoc", "ees", "tes", "chemocronies"
   ],
-  "fest": ["rendezvous", "tryst", "becon", "literati"],
-  "department": ["cse", "ee", "me", "ce", "che", "dbeb", "physics", "chemistry", "maths", "textile"]
+  "fest": ["rendezvous", "tryst", "becon", "literati", "sportech"],
+  "sport": [
+    "aquatics", "athletics", "badminton", "basketball", "chess", "cricket",
+    "football", "hockey", "lawn tennis", "squash", "table tennis", "volleyball", "weightlifting"
+  ],
+  "department": [
+    "applied mechanics", "biochemical engineering and biotechnology", "chemical engineering",
+    "chemistry", "civil engineering", "computer science and engineering", "design",
+    "electrical engineering", "energy science and engineering", "humanities and social sciences",
+    "management studies", "materials science and engineering", "mathematics",
+    "mechanical engineering", "physics", "textile and fibre engineering"
+  ]
 };

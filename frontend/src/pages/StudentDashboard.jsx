@@ -7,9 +7,10 @@ import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
 import api from '../api/axios';
 import Loader from '../components/UI/Loader';
-import { Star, MessageSquare, Calendar as CalendarIcon, Download } from 'lucide-react';
+import { Star, MessageSquare, Calendar as CalendarIcon, Download, Link, Trash2, Copy, Check, X } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import FeedbackCard from '../components/Events/FeedbackCard';
+import toast from 'react-hot-toast';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -17,6 +18,12 @@ const StudentDashboard = () => {
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [feedbackNeeded, setFeedbackNeeded] = useState([]);
+
+  // Calendar Sync State
+  const [syncLink, setSyncLink] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -71,6 +78,40 @@ const StudentDashboard = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleGenerateSyncLink = async () => {
+    try {
+      setSyncLoading(true);
+      const res = await api.post('/calendar/generate-link');
+      const fullUrl = `${window.location.protocol}//${window.location.host}/api/v1/calendar/${res.data.share_token}.ics`;
+      setSyncLink(fullUrl);
+      toast.success("Calendar link generated!");
+    } catch (err) {
+      toast.error("Failed to generate link");
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  const handleRevokeSyncLink = async () => {
+    try {
+      setSyncLoading(true);
+      await api.post('/calendar/revoke-link');
+      setSyncLink('');
+      toast.success("Calendar links revoked");
+    } catch (err) {
+      toast.error("Failed to revoke links");
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(syncLink);
+    setCopied(true);
+    toast.success("Link copied to clipboard!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (loading) return <Loader />;
 
   return (
@@ -84,9 +125,14 @@ const StudentDashboard = () => {
               <div className="dashboard-section-title" style={{ marginBottom: 0 }}>
                 <CalendarIcon size={20} /> Your Calendar
               </div>
-              <button className="btn-ics-download" onClick={downloadICS} title="Download .ics file">
-                <Download size={15} /> Export .ics
-              </button>
+              <div className="d-flex gap-2">
+                <button className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2" onClick={() => setShowSyncModal(true)} title="Sync to Google/Apple Calendar">
+                  <Link size={14} /> Sync Calendar
+                </button>
+                <button className="btn-ics-download" onClick={downloadICS} title="Download .ics file">
+                  <Download size={15} /> Export .ics
+                </button>
+              </div>
             </div>
 
             <div className="calendar-shell">
@@ -165,6 +211,57 @@ const StudentDashboard = () => {
 
         </div>
       </div>
+
+      {/* SYNC CALENDAR MODAL */}
+      {showSyncModal && (
+        <div className="modal-overlay" onClick={() => setShowSyncModal(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050 }}>
+          <div className="modal-content glass-panel p-4" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', width: '100%', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="m-0 d-flex align-items-center gap-2 text-white">
+                <Link size={18} className="text-primary" /> Sync Calendar
+              </h5>
+              <button className="btn btn-link text-secondary p-0 border-0" onClick={() => setShowSyncModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <p className="small text-secondary mb-4">
+              Auto-sync your Synapse events with Google Calendar, Outlook, or Apple Calendar.
+            </p>
+
+            {!syncLink ? (
+              <button
+                className="btn btn-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2"
+                onClick={handleGenerateSyncLink}
+                disabled={syncLoading}
+              >
+                <Link size={16} />
+                {syncLoading ? 'Generating Link...' : 'Generate Sync Link'}
+              </button>
+            ) : (
+              <div className="sync-link-container">
+                <div className="d-flex align-items-center gap-2 mb-3 p-3 rounded" style={{ backgroundColor: 'rgba(0,0,0,0.2)', wordBreak: 'break-all', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span className="small text-white" style={{ fontSize: '0.85rem' }}>{syncLink}</span>
+                </div>
+                <div className="d-flex gap-2 mb-3">
+                  <button className="btn btn-primary flex-grow-1 d-flex align-items-center justify-content-center gap-2" onClick={copyToClipboard}>
+                    {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? 'Copied' : 'Copy Link'}
+                  </button>
+                  <button className="btn btn-outline-danger d-flex align-items-center justify-content-center px-3" onClick={handleRevokeSyncLink} disabled={syncLoading} title="Revoke access">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                <div className="alert alert-info py-2 px-3 mt-3 mb-0 border-0" style={{ fontSize: '0.8rem', backgroundColor: 'rgba(13, 110, 253, 0.1)', color: '#8bb4f3' }}>
+                  <strong>How to use:</strong><br />
+                  1. Open Google / Apple Calendar.<br />
+                  2. Select "Add calendar from URL".<br />
+                  3. Paste this link.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 

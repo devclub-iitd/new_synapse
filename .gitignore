@@ -16,7 +16,7 @@ backend/dummy_data.py
 backend/generate_token.py
 backend/seed_admin.py
 backend/static/uploads/
-
+backend/synapse_env/
 .DS_Store
 frontend/node_modules/
 frontend/build/

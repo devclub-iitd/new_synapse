@@ -13,6 +13,29 @@ from datetime import datetime, timedelta, timezone
 router = APIRouter()
 
 
+def check_user_eligibility(user: User, event: Event) -> bool:
+    if not event.target_audience:
+        return True
+
+    target_depts = event.target_audience.get("depts", [])
+    if target_depts and (not user.department or user.department not in target_depts):
+        return False
+
+    target_hostels = event.target_audience.get("hostels", [])
+    if target_hostels and (not user.hostel or user.hostel not in target_hostels):
+        return False
+
+    target_years = event.target_audience.get("years", [])
+    if target_years:
+        try:
+            target_years_int = [int(y) for y in target_years]
+            if not user.current_year or user.current_year not in target_years_int:
+                return False
+        except (ValueError, TypeError):
+            pass
+
+    return True
+
 def normalize_org_type(org_type: str) -> str:
     """
     Frontend sends: Clubs / Fests / Departments
@@ -81,17 +104,24 @@ def get_events(
         Event.date.asc()
     )
 
-    events = query.offset(skip).limit(limit).all()
+    all_filtered_events = query.all()
+
+    # ✅ Apply target audience filtering for logged-in users
+    if current_user:
+        all_filtered_events = [e for e in all_filtered_events if check_user_eligibility(current_user, e)]
+
+    # ✅ Apply Pagination in memory
+    paginated_events = all_filtered_events[skip : skip + limit]
 
     # ✅ Registration status
     registered_ids = set()
     if current_user:
         registered_ids = {r.event_id for r in current_user.registrations}
 
-    for e in events:
+    for e in paginated_events:
         e.is_registered = e.id in registered_ids
 
-    return events
+    return paginated_events
 
 
 # ============================================================
@@ -153,6 +183,13 @@ def register_for_event(
         raise HTTPException(
             status_code=400,
             detail="Cannot register for past events"
+        )
+
+    # ✅ Target Audience Check
+    if not check_user_eligibility(current_user, event):
+        raise HTTPException(
+            status_code=403,
+            detail="You are not eligible to register for this event based on its target audience restrictions."
         )
 
     existing = db.query(Registration).filter(

@@ -22,6 +22,12 @@ def get_event_recommendations(db: Session, user_id: int, limit: int = 5):
     if not all_events:
         return []
 
+    # Filter out events the user is not eligible for
+    from app.api.v1.endpoints.events import check_user_eligibility
+    all_events = [e for e in all_events if check_user_eligibility(user, e)]
+    if not all_events:
+        return []
+
     # 2. Build User Profile String
     # Combine explicitly selected interests
     user_interests = " ".join(user.interests) if user.interests else ""

@@ -245,7 +245,7 @@ def update_event(
         raise HTTPException(status_code=404, detail="Event not found")
 
     # Handle photo update
-    if photo:
+    if photo and photo.filename:
         result = cloudinary.uploader.upload(
             photo.file,
             folder="events",

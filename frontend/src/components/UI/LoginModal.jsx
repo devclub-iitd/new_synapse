@@ -42,7 +42,7 @@ const LoginModal = ({ isOpen, onClose }) => {
         {/* RIGHT SIDE */}
         <div className="login-form-side">
           <div className="form-wrapper">
-            <h2 className="mb-4 fw-bold text-white">Login</h2>
+            <h2 className="mb-4 fw-bold" style={{ color: 'var(--text-primary)' }}>Login</h2>
 
             <div className="input-group-custom">
               <label>
@@ -54,13 +54,13 @@ const LoginModal = ({ isOpen, onClose }) => {
             </div>
 
             <div className="microsoft-btn-container">
-  <button
-    className="btn-microsoft-login"
-    onClick={handleMicrosoftLogin}
-  >
-    Sign in with Microsoft
-  </button>
-</div>
+              <button
+                className="btn-microsoft-login"
+                onClick={handleMicrosoftLogin}
+              >
+                Sign in with Microsoft
+              </button>
+            </div>
           </div>
         </div>
       </div>

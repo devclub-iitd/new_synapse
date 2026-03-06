@@ -29,9 +29,9 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
 
   return (
     <div className="mb-3">
-      <label className="text-secondary small mb-2">{label}</label>
+      <label className="form-label-modern">{label}</label>
       <select
-        className="form-select bg-dark text-white border-secondary mb-2"
+        className="form-select modern-input mb-2"
         onChange={handleSelect}
         defaultValue=""
       >
@@ -43,20 +43,21 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
         ))}
       </select>
 
-      <div className="d-flex flex-wrap gap-2">
+      <div className="multiselect-chips">
         {selected.length > 0 ? (
           selected.map(item => (
-            <span key={item} className="badge bg-purple bg-opacity-25 text-white border border-secondary d-flex align-items-center gap-2 px-3 py-2">
+            <span key={item} className="multiselect-chip">
               {item}
-              <X
-                size={14}
-                className="cursor-pointer text-secondary hover-text-white"
+              <span
+                className="chip-remove"
                 onClick={() => removeOption(item)}
-              />
+              >
+                <X size={13} />
+              </span>
             </span>
           ))
         ) : (
-          <small className="text-muted fst-italic">Open to everyone</small>
+          <small style={{color: 'var(--text-muted)', fontStyle: 'italic'}}>Open to everyone</small>
         )}
       </div>
     </div>
@@ -284,62 +285,65 @@ const OrgDashboard = () => {
 
   return (
     <div className="container-fluid">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <OrgBanner orgId={orgId} orgName={stats?.org_name}   bannerUrl={stats?.org_banner}/>
-          <h2 className="text-white fw-bold">{stats?.org_name} Dashboard</h2>
-          <p className="text-secondary mb-0">
-            Role: <span className="badge bg-purple">{stats?.your_role}</span>
-          </p>
-        </div>
-        <div className="btn-group">
-          <button className={`btn ${activeTab === 'dashboard' ? 'btn-purple' : 'btn-outline-secondary'}`} onClick={() => setActiveTab('dashboard')}>
-            <BarChart3 size={18} className="me-2" /> Overview
-          </button>
-          <button className={`btn ${activeTab === 'events' ? 'btn-purple' : 'btn-outline-secondary'}`} onClick={() => setActiveTab('events')}>
-            <Eye size={18} className="me-2" /> Events
-          </button>
-          <button className={`btn ${activeTab === 'team' ? 'btn-purple' : 'btn-outline-secondary'}`} onClick={() => setActiveTab('team')}>
-            <Users size={18} className="me-2" /> Team
-          </button>
-          <button
-            className={`btn ${activeTab === 'create' ? 'btn-purple' : 'btn-outline-secondary'}`}
-            onClick={() => {
-              setEditingEventId(null);   // 🔑 EXIT EDIT MODE
-              setActiveTab('create');
-            }}
-          >
-            <Plus size={18} className="me-2" /> Create
-          </button>
-
+      <div className="org-header">
+        <div className="org-header-top">
+          <div>
+            <OrgBanner orgId={orgId} orgName={stats?.org_name} bannerUrl={stats?.org_banner}/>
+            <h2 className="fw-bold mt-2" style={{color: 'var(--text-primary)'}}>{stats?.org_name} Dashboard</h2>
+            <p style={{color: 'var(--text-secondary)'}}>
+              Role: <span className="badge bg-purple">{stats?.your_role}</span>
+            </p>
+          </div>
+          <div className="pill-tab-nav">
+            <button className={`pill-tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+              <BarChart3 size={16} /> Overview
+            </button>
+            <button className={`pill-tab ${activeTab === 'events' ? 'active' : ''}`} onClick={() => setActiveTab('events')}>
+              <Eye size={16} /> Events
+            </button>
+            <button className={`pill-tab ${activeTab === 'team' ? 'active' : ''}`} onClick={() => setActiveTab('team')}>
+              <Users size={16} /> Team
+            </button>
+            <button
+              className={`pill-tab ${activeTab === 'create' ? 'active' : ''}`}
+              onClick={() => {
+                setEditingEventId(null);
+                setActiveTab('create');
+              }}
+            >
+              <Plus size={16} /> Create
+            </button>
+          </div>
         </div>
       </div>
 
       {activeTab === 'dashboard' && (
         <div className="row g-4">
           <div className="col-md-6">
-            <div className="glass-card p-4 d-flex align-items-center justify-content-between">
+            <div className="stat-card-modern">
+              <div className="stat-icon purple"><Calendar size={28} /></div>
               <div>
-                <h3 className="text-white fw-bold mb-0">{stats?.total_events}</h3>
-                <p className="text-secondary mb-0">Total Events</p>
+                <div className="stat-value">{stats?.total_events}</div>
+                <div className="stat-label">Total Events</div>
               </div>
-              <div className="bg-primary bg-opacity-25 p-3 rounded-circle text-primary"><Calendar size={32} /></div>
             </div>
           </div>
           <div className="col-md-6">
-            <div className="glass-card p-4 d-flex align-items-center justify-content-between">
+            <div className="stat-card-modern">
+              <div className="stat-icon green"><Users size={28} /></div>
               <div>
-                <h3 className="text-white fw-bold mb-0">{stats?.total_registrations}</h3>
-                <p className="text-secondary mb-0">Total Registrations</p>
+                <div className="stat-value">{stats?.total_registrations}</div>
+                <div className="stat-label">Total Registrations</div>
               </div>
-              <div className="bg-success bg-opacity-25 p-3 rounded-circle text-success"><Users size={32} /></div>
             </div>
           </div>
           <div className="col-12 mt-4">
-            <h5 className="text-white mb-3">Quick Analytics</h5>
-            <div className="row g-4">
-              <div className="col-md-6" style={{ height: '300px' }}>
-                <DemographicsChart type="doughnut" title="Audience by Dept" data={stats?.dept_analytics || {}} />
+            <div className="glass-card p-4">
+              <h5 className="fw-bold mb-3" style={{color: 'var(--text-primary)'}}>Quick Analytics</h5>
+              <div className="row g-4">
+                <div className="col-md-6" style={{ height: '300px' }}>
+                  <DemographicsChart type="doughnut" title="Audience by Dept" data={stats?.dept_analytics || {}} />
+                </div>
               </div>
             </div>
           </div>
@@ -348,9 +352,9 @@ const OrgDashboard = () => {
 
       {activeTab === 'events' && (
         <div className="glass-card p-4">
-          <h5 className="text-white mb-4">Your Events</h5>
-          <div className="table-responsive">
-            <table className="table table-dark table-hover align-middle">
+          <h5 className="fw-bold mb-4" style={{color: 'var(--text-primary)'}}>Your Events</h5>
+          <div className="modern-table-wrapper">
+            <table className="modern-table">
               <thead>
                 <tr>
                   <th>Event Name</th>
@@ -362,37 +366,37 @@ const OrgDashboard = () => {
               <tbody>
                 {events.map(ev => (
                   <tr key={ev.id}>
-                    <td>{ev.name}</td>
-                    <td>{new Date(ev.date).toLocaleDateString()}</td>
-                    <td>{ev.is_private ? <span className="badge bg-secondary"><Lock size={12} /> Private</span> : <span className="badge bg-success"><Globe size={12} /> Public</span>}</td>
-                    <td className="d-flex gap-2">
-                      <button
-                        className="btn btn-sm btn-outline-success"
-                        onClick={() => handleDownloadCSV(ev.id)}
-                      >
-                        <Download size={14} /> CSV
-                      </button>
+                    <td className="fw-semibold">{ev.name}</td>
+                    <td style={{color: 'var(--text-secondary)'}}>{new Date(ev.date).toLocaleDateString()}</td>
+                    <td>{ev.is_private ? <span className="badge-visibility private"><Lock size={12} /> Private</span> : <span className="badge-visibility public"><Globe size={12} /> Public</span>}</td>
+                    <td>
+                      <div className="d-flex gap-2">
+                        <button
+                          className="btn-action success"
+                          onClick={() => handleDownloadCSV(ev.id)}
+                        >
+                          <Download size={14} /> CSV
+                        </button>
 
+                        {isHead && (
+                          <>
+                            <button
+                              className="btn-action primary"
+                              onClick={() => handleEditEvent(ev)}
+                            >
+                              <Edit size={14} />
+                            </button>
 
-                      {isHead && (
-                        <>
-                          <button
-                            className="btn btn-sm btn-outline-primary"
-                            onClick={() => handleEditEvent(ev)}
-                          >
-                            <Edit size={14} />
-                          </button>
-
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => handleDeleteEvent(ev.id)}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </>
-                      )}
+                            <button
+                              className="btn-action danger"
+                              onClick={() => handleDeleteEvent(ev.id)}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
-
                   </tr>
                 ))}
               </tbody>
@@ -406,13 +410,15 @@ const OrgDashboard = () => {
           {isHead && (
             <div className="col-md-4">
               <div className="glass-card p-4 h-100">
-                <h5 className="text-white mb-3"><UserPlus size={18} /> Add Member</h5>
+                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{color: 'var(--text-primary)'}}>
+                  <UserPlus size={18} className="text-purple" /> Add Member
+                </h5>
                 <form onSubmit={handleAddMember}>
                   <div className="mb-3">
-                    <label className="small text-secondary">IITD Email</label>
+                    <label className="form-label-modern">IITD Email</label>
                     <input
                       type="email"
-                      className="form-control bg-dark text-white border-secondary"
+                      className="form-control modern-input"
                       placeholder="e.g. cs1230001@iitd.ac.in"
                       value={newMember.email}
                       onChange={e => setNewMember({ ...newMember, email: e.target.value })}
@@ -420,13 +426,12 @@ const OrgDashboard = () => {
                     />
                   </div>
                   <div className="mb-3">
-                    <label className="small text-secondary">Role</label>
+                    <label className="form-label-modern">Role</label>
                     <select
-                      className="form-select bg-dark text-white border-secondary"
+                      className="form-select modern-input"
                       value={newMember.role}
                       onChange={e => setNewMember({ ...newMember, role: e.target.value })}
                     >
-                      {/* ✅ FIXED: Now using TEAM_ROLES constant */}
                       {TEAM_ROLES.map(role => (
                         <option key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</option>
                       ))}
@@ -440,9 +445,9 @@ const OrgDashboard = () => {
 
           <div className={isHead ? "col-md-8" : "col-12"}>
             <div className="glass-card p-4">
-              <h5 className="text-white mb-4">Team Members</h5>
-              <div className="table-responsive">
-                <table className="table table-dark table-hover align-middle">
+              <h5 className="fw-bold mb-4" style={{color: 'var(--text-primary)'}}>Team Members</h5>
+              <div className="modern-table-wrapper">
+                <table className="modern-table">
                   <thead>
                     <tr>
                       <th>Name</th>
@@ -454,8 +459,13 @@ const OrgDashboard = () => {
                   <tbody>
                     {team.map(member => (
                       <tr key={member.user_id}>
-                        <td>{member.name}</td>
-                        <td>{member.email}</td>
+                        <td>
+                          <div className="d-flex align-items-center gap-3">
+                            <div className="member-avatar-sm">{member.name.charAt(0)}</div>
+                            <span className="fw-semibold">{member.name}</span>
+                          </div>
+                        </td>
+                        <td style={{color: 'var(--text-secondary)'}}>{member.email}</td>
                         <td>
                           <span className={`badge ${HEAD_ROLES.includes(member.role) ? 'bg-danger' : 'bg-info text-dark'}`}>
                             {member.role}
@@ -465,7 +475,7 @@ const OrgDashboard = () => {
                           <td>
                             {!HEAD_ROLES.includes(member.role.toLowerCase()) && (
                               <button
-                                className="btn btn-sm btn-outline-danger"
+                                className="btn-action danger"
                                 onClick={() => handleRemoveMember(member.user_id)}
                               >
                                 <Trash2 size={14} />
@@ -484,61 +494,39 @@ const OrgDashboard = () => {
       )}
 
       {activeTab === 'create' && (
-        <div className="glass-card p-4 rounded-4 mx-auto" style={{ maxWidth: '800px' }}>
-          <h4 className="text-white fw-bold mb-4">Create New Event</h4>
+        <div className="glass-form-card">
+          <h4 className="fw-bold mb-4" style={{color: 'var(--text-primary)'}}>
+            {editingEventId ? "Edit Event" : "Create New Event"}
+          </h4>
           <form onSubmit={handleCreateEvent}>
-            {/* ... (Event form fields omitted for brevity, logic is same) ... */}
-            {/* You can copy the form fields from the previous file or ask me if you need the full form block again */}
-
-            {/* Simplified Check - Full Form Logic handled above in handleCreateEvent */}
             <p className="text-muted small">Event Form Fields loaded...</p>
 
-            {/* Just ensure MultiSelect and inputs use the state variables defined at top */}
             <div className="row g-3">
               <div className="col-12">
-                <label className="text-secondary small">Event Name</label>
-                <input type="text" className="form-control bg-dark text-white border-secondary" required
+                <label className="form-label-modern">Event Name</label>
+                <input type="text" className="form-control modern-input" required
                   value={newEvent.name} onChange={e => setNewEvent({ ...newEvent, name: e.target.value })} />
               </div>
               <div className="col-md-6">
-                <label className="text-secondary small">Date & Time</label>
-                <input type="datetime-local" className="form-control bg-dark text-white border-secondary" required
+                <label className="form-label-modern">Date & Time</label>
+                <input type="datetime-local" className="form-control modern-input" required
                   value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} />
               </div>
               <div className="col-md-6">
-                <label className="text-secondary small">Venue</label>
-                <input type="text" className="form-control bg-dark text-white border-secondary" required
+                <label className="form-label-modern">Venue</label>
+                <input type="text" className="form-control modern-input" required
                   value={newEvent.venue} onChange={e => setNewEvent({ ...newEvent, venue: e.target.value })} />
               </div>
-              {/* <div className="col-md-6">
-  <label className="text-secondary small">
-    Registration Deadline
-  </label>
-  <input
-    type="datetime-local"
-    className="form-control bg-dark text-white border-secondary"
-    required
-    value={newEvent.registration_deadline}
-    max={newEvent.date || undefined}
-    onChange={e =>
-      setNewEvent({
-        ...newEvent,
-        registration_deadline: e.target.value
-      })
-    }
-  />
-  <small className="text-muted">
-    Registrations will close automatically after this time
-  </small>
-</div> */}
               <div className="col-12">
-                <label className="text-secondary small">Description</label>
-                <textarea className="form-control bg-dark text-white border-secondary" rows="3" required
+                <label className="form-label-modern">Description</label>
+                <textarea className="form-control modern-input" rows="3" required
                   value={newEvent.description} onChange={e => setNewEvent({ ...newEvent, description: e.target.value })} />
               </div>
 
-              <div className="col-12 border-top border-secondary pt-3 mt-3">
-                <h6 className="text-white mb-3">Audience Targeting</h6>
+              <div className="col-12 form-section">
+                <div className="form-section-title">
+                  <Users size={16} className="section-icon" /> Audience Targeting
+                </div>
               </div>
 
               <div className="col-md-6">
@@ -575,22 +563,24 @@ const OrgDashboard = () => {
                 <div className="form-check form-switch mt-3">
                   <input className="form-check-input" type="checkbox" id="privateSwitch"
                     checked={newEvent.isPrivate} onChange={e => setNewEvent({ ...newEvent, isPrivate: e.target.checked })} />
-                  <label className="form-check-label text-white" htmlFor="privateSwitch">Member-Only (Hidden from feed)</label>
+                  <label className="form-check-label" style={{color: 'var(--text-primary)'}} htmlFor="privateSwitch">Member-Only (Hidden from feed)</label>
                 </div>
               </div>
 
-              <div className="col-12 border-top border-secondary pt-3 mt-3">
-                <h6 className="text-white mb-3">Media & Metadata</h6>
+              <div className="col-12 form-section">
+                <div className="form-section-title">
+                  <Calendar size={16} className="section-icon" /> Media & Metadata
+                </div>
               </div>
 
               <div className="col-md-6">
-                <label className="text-secondary small">Poster Image</label>
-                <input type="file" className="form-control bg-dark text-white border-secondary" accept="image/*"
+                <label className="form-label-modern">Poster Image</label>
+                <input type="file" className="form-control modern-input" accept="image/*"
                   onChange={e => setImageFile(e.target.files[0])} />
               </div>
               <div className="col-md-6">
-                <label className="text-secondary small">Tags (comma separated)</label>
-                <input type="text" className="form-control bg-dark text-white border-secondary" placeholder="Tech, Fun"
+                <label className="form-label-modern">Tags (comma separated)</label>
+                <input type="text" className="form-control modern-input" placeholder="Tech, Fun"
                   value={newEvent.tags} onChange={e => setNewEvent({ ...newEvent, tags: e.target.value })} />
               </div>
             </div>

@@ -44,11 +44,11 @@ export default function OrgBanner({ orgId, orgName, bannerUrl }) {
             height: "130px",
             borderRadius: "50%",
             overflow: "hidden",
-            border: "3px solid #ddd",
+            border: "3px solid var(--border-primary)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "#f4f4f4",
+            background: "var(--bg-tertiary)",
             position: "relative"
           }}
         >

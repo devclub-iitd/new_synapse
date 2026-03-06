@@ -31,29 +31,29 @@ const EventCard = ({ event, onRegisterClick }) => {
         />
 
         <div className="card-body p-0">
-          <h5 className="card-title fw-bold text-white">
+          <div className="card-org-badge">
+            {event.org_name}
+          </div>
+
+          <h5 className="card-title fw-bold" style={{color: 'var(--text-primary)'}}>
             {event.name}
           </h5>
 
-          <p className="text-accent small mb-3">
-            <strong>{event.org_name}</strong>
-          </p>
-
-          <div className="d-flex align-items-center mb-2 text-secondary small">
-            <Calendar size={14} className="me-2" />
+          <div className="card-meta-row">
+            <Calendar size={14} />
             {new Date(event.date).toLocaleDateString()}
           </div>
 
-          <div className="d-flex align-items-center mb-4 text-secondary small">
-            <MapPin size={14} className="me-2" />
+          <div className="card-meta-row mb-3">
+            <MapPin size={14} />
             {event.venue}
           </div>
 
-          {/* ✅ Deadline (only if backend provides it) */}
+          {/* Deadline (only if backend provides it) */}
           {hasDeadline && (
-            <p className="small text-secondary mb-2">
+            <p className="small mb-2" style={{color: 'var(--text-muted)'}}>
               Register by:{" "}
-              <strong>
+              <strong style={{color: 'var(--text-secondary)'}}>
                 {new Date(event.registration_deadline).toLocaleDateString()}
               </strong>
             </p>

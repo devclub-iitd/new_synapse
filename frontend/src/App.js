@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -63,8 +64,7 @@ const AppLayout = () => {
 
         {/* Sidebar */}
         <nav
-          className="col-md-2 d-none d-md-block h-100 border-end border-secondary border-opacity-10"
-          style={{ background: '#111222', overflowY: 'auto' }}
+          className="col-md-2 d-none d-md-block h-100 sidebar-col overflow-auto"
         >
           <Sidebar />
         </nav>
@@ -81,8 +81,7 @@ const AppLayout = () => {
 
           {/* Scrollable Content */}
           <div
-            className="flex-grow-1 overflow-y-auto custom-scrollbar px-md-4 py-4"
-            style={{ background: '#1a1b2e' }}
+            className="flex-grow-1 overflow-y-auto custom-scrollbar px-md-4 py-4 main-content-area"
           >
             <Routes>
               {/* Public routes */}
@@ -128,17 +127,24 @@ const AppLayout = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppLayout />
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: { background: '#1e222d', color: '#fff' }
-          }}
-        />
-      </Router>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <AppLayout />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: 'var(--bg-elevated)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-primary)',
+                borderRadius: 'var(--radius-md)',
+              }
+            }}
+          />
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

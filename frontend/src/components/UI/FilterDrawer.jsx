@@ -38,8 +38,8 @@ const FilterDrawer = ({
 
       <div className={`filter-sidebar ${isOpen ? "open" : ""}`}>
         <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
-          <h5 className="mb-0 fw-bold text-white">Filter Events</h5>
-          <button className="btn text-white" onClick={onClose}>
+          <h5 className="mb-0 fw-bold" style={{color: 'var(--text-primary)'}}>Filter Events</h5>
+          <button className="btn" style={{color: 'var(--text-primary)'}} onClick={onClose}>
             <X size={22} />
           </button>
         </div>

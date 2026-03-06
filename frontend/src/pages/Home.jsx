@@ -162,16 +162,14 @@ const Home = () => {
     <>
       {/* HEADER */}
       <div className="container mt-4 mb-4">
-        <div className="d-flex justify-content-between align-items-end mb-4">
-          <div>
-            <h2 className="fw-bold text-white mb-1">Upcoming Events</h2>
-            <p className="text-secondary mb-0">
-              Find and register for club activities
-            </p>
+        <div className="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
+          <div className="home-hero-header">
+            <h2>Upcoming <span>Events</span></h2>
+            <p>Find and register for club activities</p>
           </div>
 
           {/* SEARCH + SORT + FILTER */}
-          <div className="d-flex align-items-center gap-3">
+          <div className="d-flex align-items-center gap-3 flex-wrap">
             {/* Search */}
             <div className="search-glass">
               <Search size={16} className="search-icon" />
@@ -200,7 +198,7 @@ const Home = () => {
             {/* Filter */}
             <button
               className={`btn d-flex align-items-center gap-2 ${
-                orgType ? "btn-purple" : "btn-outline-secondary text-white"
+                orgType ? "btn-purple" : "btn-outline-secondary"
               }`}
               onClick={() => setIsFilterOpen(true)}
             >
@@ -217,7 +215,7 @@ const Home = () => {
           </div>
         ) : (
           <>
-            <div className="row g-4">
+            <div className="row g-4 grid-stagger">
               {events.length > 0 ? (
                 events.map((event) => (
                   <EventCard
@@ -227,8 +225,11 @@ const Home = () => {
                   />
                 ))
               ) : (
-                <div className="col-12 text-center py-5">
-                  <h4 className="text-secondary">No events found</h4>
+                <div className="col-12">
+                  <div className="no-events">
+                    <h4>No events found</h4>
+                    <p style={{color: 'var(--text-muted)'}}>Try adjusting your filters or check back later.</p>
+                  </div>
                 </div>
               )}
             </div>
@@ -237,11 +238,11 @@ const Home = () => {
             {hasMore && (
               <div className="d-flex justify-content-center mt-5">
                 <button
-                  className="btn btn-outline-secondary text-white px-5"
+                  className="btn-load-more"
                   onClick={() => fetchEvents(false)}
                   disabled={loadingMore}
                 >
-                  {loadingMore ? "Loading..." : "Load more"}
+                  {loadingMore ? "Loading..." : "Load more events"}
                 </button>
               </div>
             )}

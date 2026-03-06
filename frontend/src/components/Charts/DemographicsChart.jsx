@@ -33,15 +33,18 @@ const DemographicsChart = ({ type, data, title }) => {
     ],
   };
 
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#f1f5f9';
+  const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-primary').trim() || 'rgba(255,255,255,0.08)';
+
   const options = {
     responsive: true,
     plugins: {
-      legend: { position: 'right', labels: { color: '#fff' } },
-      title: { display: true, text: title, color: '#fff' }
+      legend: { position: 'right', labels: { color: textColor } },
+      title: { display: true, text: title, color: textColor }
     },
     scales: type === 'bar' ? {
-      y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-      x: { ticks: { color: '#fff' }, grid: { display: false } }
+      y: { ticks: { color: textColor }, grid: { color: gridColor } },
+      x: { ticks: { color: textColor }, grid: { display: false } }
     } : {}
   };
 

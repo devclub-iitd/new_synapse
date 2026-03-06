@@ -1,0 +1,1165 @@
+/* Deep Dark Background */
+body {
+  background-color: #1a1b2e; 
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Sidebar Styling */
+.sidebar {
+  background-color: #111222;
+  height: 100vh;
+  padding: 20px;
+}
+
+/* The "Glass" Effect for Event Cards */
+.event-card {
+  background: rgba(255, 255, 255, 0.05); /* Semi-transparent */
+  backdrop-filter: blur(10px); /* The blur effect */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.event-card:hover {
+  transform: translateY(-10px);
+  border-color: #7c3aed; /* Purple glow on hover */
+}
+
+.btn-purple {
+  background-color: #7c3aed;
+  color: white;
+  border-radius: 10px;
+  border: none;
+}
+
+.btn-purple:hover {
+  background-color: #6d28d9;
+}
+
+/* The Sidebar Drawer */
+.filter-sidebar {
+  position: fixed;
+  top: 0;
+  right: -400px; /* Hidden by default */
+  width: 350px;
+  height: 100vh;
+  background: rgba(17, 18, 34, 0.95);
+  backdrop-filter: blur(20px);
+  z-index: 1050;
+  transition: right 0.4s cubic-bezier(0.05, 0.7, 0.1, 1);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filter-sidebar.open {
+  right: 0;
+}
+
+/* Background Dimming */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+
+/* Filter Chips (Cooler than dropdowns) */
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.filter-chip.active {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.4);
+}
+
+/* Styling for the Board Name (Badge) */
+.board-badge {
+  background: rgba(124, 58, 237, 0.15); /* Soft purple background */
+  color: #a5a6f6; /* Bright pastel lavender */
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+/* Styling for the Club Name */
+.text-accent {
+  color: #7c3aed !important; /* Brand purple to make it pop */
+  letter-spacing: 0.5px;
+}
+
+/* Ensure the Event Name is bright white */
+.card-title {
+  color: #ffffff !important;
+  margin-top: 5px;
+}
+
+/* Ensure secondary info (date/location) is legible */
+.text-secondary {
+  color: #cbd5e1 !important; /* Light silver-blue */
+}
+
+.user-profile-circle {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #7c3aed, #9d66ff);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+.btn-purple {
+  background: #7c3aed;
+  border: none;
+  color: white;
+}
+
+/* Modal Overlay Animation */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+/* The Container */
+.login-glass-container {
+  width: 900px;
+  height: 550px;
+  display: flex;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Split Design */
+.login-brand-side {
+  flex: 1;
+  background: linear-gradient(rgba(124, 58, 237, 0.4), rgba(26, 27, 46, 0.8)), 
+              url('https://link-to-your-iit-delhi-image.jpg');
+  background-size: cover;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-form-side {
+  flex: 1;
+  background: #111222;
+  padding: 50px;
+  display: flex;
+  align-items: center;
+}
+
+/* Form Styling */
+.input-group-custom {
+  margin-bottom: 25px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.input-group-custom label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #a5a6f6;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.input-group-custom input, .select-custom {
+  background: transparent;
+  border: none;
+  color: white;
+  width: 100%;
+  padding: 8px 0;
+  outline: none;
+}
+
+.btn-login-submit {
+  width: 100%;
+  padding: 12px;
+  background: #7c3aed;
+  border-radius: 12px;
+  border: none;
+  color: white;
+  font-weight: bold;
+  margin-top: 20px;
+  transition: 0.3s;
+}
+
+.btn-login-submit:hover {
+  background: #6d28d9;
+  transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Fix the X Button placement */
+.close-modal-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.close-modal-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+/* Container for the button */
+.microsoft-btn-container {
+  width: 100%;
+  margin-top: 2rem;
+}
+
+/* Refined Microsoft Button Appearance */
+.btn-microsoft-login {
+  width: 100%;
+  padding: 12px 24px;
+  background-color: #ffffff; /* Stark white for high contrast */
+  color: #000000;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Ensure the logo stays consistent */
+.ms-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+/* Professional Hover Effects */
+.btn-microsoft-login:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-2px);
+  /* Adding a purple glow to tie into the Synapse branding */
+  box-shadow: 0 8px 15px rgba(124, 58, 237, 0.4);
+  border-color: rgba(124, 58, 237, 0.2);
+}
+
+.btn-microsoft-login:active {
+  transform: translateY(0);
+}
+
+/* Update Auth Notice to be more subtle */
+.auth-notice {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  margin-top: 1rem;
+  line-height: 1.4;
+  max-width: 250px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ===== HOME HEADER FIX ===== */
+
+.home-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+/* Remove accidental borders/lines */
+.home-header,
+.home-header * {
+  border: none !important;
+}
+
+/* Title styles */
+.home-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.home-subtitle {
+  color: #cbd5e1;
+  margin-top: 4px;
+}
+
+/* Right-side actions (Filter + Login) */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ===== LOGIN MODAL VISUAL FIX (TEST UI MATCH) ===== */
+
+.brand-content {
+  max-width: 360px;
+  color: white;
+}
+
+.synapse-logo {
+  font-size: 0.85rem;
+  letter-spacing: 1.2px;
+  opacity: 0.8;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.login-brand-side h1 {
+  font-size: 2.3rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.login-brand-side p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+/* Stronger purple gradient (this matches your screenshot) */
+.login-brand-side {
+  background: linear-gradient(
+    135deg,
+    rgba(124, 58, 237, 0.65),
+    rgba(26, 27, 46, 0.95)
+  );
+}
+
+/* Right-side form centering */
+.form-wrapper {
+  width: 100%;
+  max-width: 320px;
+}
+
+/* ===== BOOTSTRAP OVERRIDE FOR LOGIN MODAL ===== */
+
+/* Lock modal layout */
+.login-glass-container {
+  display: flex !important;
+  flex-direction: row !important;
+}
+
+/* Force equal split */
+.login-brand-side,
+.login-form-side {
+  flex: 0 0 50% !important;
+  max-width: 50% !important;
+}
+
+/* Prevent Bootstrap from stretching buttons */
+.btn-microsoft-login {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: auto !important;
+  white-space: normal !important;
+}
+
+/* Prevent form side from collapsing */
+.login-form-side {
+  align-items: center !important;
+}
+
+/* Ensure form content does not stretch */
+.form-wrapper {
+  width: 100%;
+  max-width: 320px;
+}
+
+/* ===== PROFILE PAGE ===== */
+
+.profile-page {
+  padding-top: 10px;
+}
+
+/* Shared glass card */
+.profile-glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Avatar */
+.profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #9d66ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: 700;
+  color: white;
+}
+
+/* Entry number pill */
+.entry-pill {
+  display: inline-block;
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+}
+
+/* Section title */
+.section-title {
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  color: #a5a6f6;
+  text-transform: uppercase;
+}
+
+/* Interest chips */
+.interest-chip {
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  background: rgba(124, 58, 237, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+/* Schedule list */
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Each schedule item */
+.schedule-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.schedule-item:hover {
+  transform: translateY(-2px);
+}
+
+/* Meta info */
+.schedule-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: #cbd5e1;
+}
+
+/* Status pill */
+.status-pill {
+  font-size: 0.7rem;
+  padding: 6px 12px;
+  border-radius: 50px;
+  background: rgba(34,197,94,0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34,197,94,0.3);
+}
+
+/* Empty state */
+.empty-state {
+  padding: 60px 0;
+  text-align: center;
+  color: #94a3b8;
+}
+
+/* ===== STUDENT DASHBOARD ===== */
+
+.student-dashboard {
+  padding-top: 10px;
+}
+
+/* Shared glass card */
+.dashboard-glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Headings */
+.section-heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+}
+
+.section-heading-sm {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Calendar container */
+.calendar-shell {
+  background: rgba(255,255,255,0.95);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+/* FullCalendar tweaks */
+.fc {
+  font-family: 'Inter', sans-serif;
+}
+
+.fc-toolbar-title {
+  font-weight: 600;
+}
+
+.fc-daygrid-day-number {
+  font-size: 0.8rem;
+}
+
+.fc-event {
+  border-radius: 6px !important;
+}
+
+/* Recommendations */
+.recommendation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recommendation-item {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: transform 0.2s ease;
+}
+
+.recommendation-item:hover {
+  transform: translateY(-2px);
+}
+
+/* Feedback */
+.feedback-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feedback-item {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Empty state */
+.empty-widget {
+  padding: 30px 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+/* Fix FullCalendar title color inside white calendar */
+.calendar-shell .fc-toolbar-title {
+  color: #1e293b !important; /* dark slate */
+}
+
+/* ===== REGISTERED BUTTON (VISIBLE + GLASS SAFE) ===== */
+.btn-registered {
+  background: rgba(124, 58, 237, 0.35) !important;
+  color: #ede9fe !important; /* very light lavender */
+  border: 1px solid rgba(124, 58, 237, 0.6) !important;
+
+  font-weight: 600;
+  font-size: 0.9rem;
+
+  min-height: 44px;
+  border-radius: 10px;
+
+  cursor: not-allowed;
+  opacity: 1 !important;
+}
+
+/* Kill Bootstrap disabled overrides */
+.btn-registered:disabled,
+.btn-registered[disabled] {
+  background: rgba(124, 58, 237, 0.35) !important;
+  color: #ede9fe !important;
+  opacity: 1 !important;
+}
+
+/* ===== SEARCH BAR (HOME HEADER) ===== */
+
+.search-glass {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  height: 42px;
+  padding: 0 14px;
+
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-glass:hover,
+.search-glass:focus-within {
+  border-color: rgba(124, 58, 237, 0.6);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+.search-glass input {
+  background: transparent;
+  border: none;
+  outline: none;
+
+  color: white;
+  font-size: 0.9rem;
+  width: 180px;
+}
+
+.search-glass input::placeholder {
+  color: #94a3b8;
+}
+
+.search-icon {
+  color: #a5a6f6;
+}
+
+/* ===== SORT DROPDOWN (HOME HEADER) ===== */
+
+.sort-glass {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  height: 42px;
+  padding: 0 14px;
+
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sort-glass:hover,
+.sort-glass:focus-within {
+  border-color: rgba(124, 58, 237, 0.6);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+.sort-glass select {
+  background: transparent;
+  border: none;
+  outline: none;
+
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.sort-glass select option {
+  background: #111222;
+  color: white;
+}
+
+.sort-glass svg {
+  color: #a5a6f6;
+}
+
+/* ===== EVENT DETAIL PAGE ===== */
+
+.event-detail-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-top: 20px;
+}
+
+.event-detail-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 32px;
+}
+
+.event-detail-image {
+  width: 100%;
+  border-radius: 20px;
+  margin-bottom: 24px;
+  object-fit: cover;
+}
+
+.event-detail-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+}
+
+.event-detail-org {
+  color: #7c3aed;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.event-detail-meta {
+  display: flex;
+  gap: 24px;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  margin-bottom: 24px;
+}
+
+.event-detail-description {
+  color: #e5e7eb;
+  line-height: 1.7;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+}
+
+/* Utility */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.event-detail-container {
+  max-width: 900px;
+}
+
+.event-detail-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced Event Detail Layout */
+.event-detail-page {
+  max-width: 900px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease;
+}
+
+.event-detail-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.event-detail-image {
+  width: 100%;
+  max-height: 450px;
+  object-fit: cover;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.event-detail-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+}
+
+.event-detail-org {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-top: 8px;
+}
+
+/* Metadata Icon Containers */
+.icon-box-purple {
+  width: 44px;
+  height: 44px;
+  background: rgba(124, 58, 237, 0.15);
+  color: #7c3aed;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.event-detail-description {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 24px;
+  border-radius: 16px;
+  border-left: 3px solid #7c3aed;
+  color: #d1d5db;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.btn-outline-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: white;
+}
+
+/* Hero Card styling */
+.profile-hero-card {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 24px;
+}
+
+/* Larger, cleaner avatar */
+.profile-avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 24px; /* Squircle looks more modern than a circle */
+  background: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* Floating Action Button for photo */
+.avatar-edit-fab {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  background: #7c3aed;
+  border: 3px solid #1a1b2e;
+  border-radius: 50%;
+  padding: 8px;
+  color: white;
+}
+
+/* Subtle input focus */
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+  color: white;
+}
+
+/* Active Interest Animation */
+.interest-chip.selectable {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interest-chip.selectable:hover {
+  background: rgba(124, 58, 237, 0.3);
+  transform: scale(1.05);
+}
+/* Professional Hero Banner */
+.profile-hero-card {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(26, 27, 46, 1) 100%);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 28px;
+}
+
+/* Squircle Avatar - very modern */
+.profile-avatar-large {
+  width: 140px;
+  height: 140px;
+  background: linear-gradient(135deg, #7c3aed, #9d66ff);
+  border-radius: 32px; /* Large radius creates the squircle feel */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  font-weight: 800;
+  color: white;
+  overflow: hidden;
+}
+
+/* Floating Action Button for Profile Pic */
+.avatar-edit-fab {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 42px;
+  height: 42px;
+  background: #7c3aed;
+  border: 4px solid #1a1b2e;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.avatar-edit-fab:hover {
+  transform: scale(1.1);
+  background: #6d28d9;
+}
+
+/* Refined Chips */
+.interest-chip.no-hover {
+  cursor: default;
+  pointer-events: none;
+}
+
+.bg-purple-soft { background: rgba(124, 58, 237, 0.1); }
+.border-purple { border: 1px solid rgba(124, 58, 237, 0.4); color: #a5a6f6; }
+
+.btn-purple-outline {
+  border: 1px solid #7c3aed;
+  color: #a5a6f6;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.btn-purple-outline:hover {
+  background: #7c3aed;
+  color: white;
+}
+
+/* The base chip */
+.interest-chip {
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+/* HIGH VISIBILITY: When an interest IS selected */
+.interest-chip.active {
+  background: #7c3aed !important; /* Brand Purple */
+  color: white !important;
+  border-color: #a5a6f6 !important;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+  font-weight: 600;
+}
+
+/* Visual feedback when hovering in edit mode */
+.interest-chip.selectable:hover:not(.active) {
+  background: rgba(124, 58, 237, 0.2);
+  border-color: #7c3aed;
+  color: white;
+}
+
+.glass-input option {
+  background-color: #1a1b2e; /* Matches your background */
+  color: white;
+}
+
+.form-select.glass-input {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%237c3aed' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-size: 12px;
+}
+
+/* ===== SIDEBAR BRAND ===== */
+
+/* .sidebar-brand {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 16px;
+}
+
+.sidebar-logo {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.35));
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: rgba(255, 255, 255, 0.9);
+} */
+
+/* Sidebar Brand Refinement */
+
+/* Sidebar Layout */
+.sidebar {
+  background-color: #111222;
+  min-height: 100vh;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Standalone Logo Styling */
+.sidebar-brand-minimal {
+  display: flex;
+  flex-direction: column; /* Stacks logo on top of text */
+  justify-content: center; /* Centers horizontally */
+  align-items: center;
+  padding-top: 10px;
+}
+
+.sidebar-logo-standalone {
+  width: 120px; /* Professional scale for a centered icon */
+  height: 120px;
+  object-fit: contain;
+  /* Soft glow using the brand purple */
+  filter: drop-shadow(0 0 15px rgba(124, 58, 237, 0.3));
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sidebar-logo-standalone:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.6));
+}
+
+/* Nav Link Polish */
+.nav-link {
+  color: #94a3b8 !important;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 12px 16px !important;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: white !important;
+}
+
+.active-link {
+  background: rgba(124, 58, 237, 0.12) !important;
+  color: #a5a6f6 !important;
+}
+
+/* Minimal Logout */
+.logout-btn-minimal {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  color: #ef4444;
+
+}
+
+.logout-btn-minimal:hover {
+  background: rgba(220, 53, 69, 0.1);
+  border-color: rgba(220, 53, 69, 0.4);
+}
+
+.sidebar-brand-text {
+  font-size: 1.5rem; /* Clean and readable */
+  font-weight: 800;
+  letter-spacing: 4px; /* Modern luxury/tech spacing */
+  text-transform: uppercase;
+  
+  /* Silver to Slate-Blue Gradient (Avoids "childish" all-purple look) */
+  background: linear-gradient(180deg, #FFFFFF 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  font-family: 'Inter', sans-serif;
+  margin-top: 8px;
+}
+
+.sidebar-brand-minimal:hover .sidebar-logo-standalone {
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.5));
+}
+
+.sidebar-brand-minimal:hover .sidebar-brand-text {
+  background: linear-gradient(180deg, #FFFFFF 0%, #a5a6f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: all 0.3s ease;
+}

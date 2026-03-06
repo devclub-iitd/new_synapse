@@ -132,7 +132,7 @@ const DynamicFormBuilder = ({ schema, setSchema }) => {
   return (
     <div
       className="mt-4 p-3 rounded-3"
-      style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed #555' }}
+      style={{ background: 'var(--bg-input)', border: '1px dashed var(--border-primary)' }}
     >
       <h6 className="text-secondary text-uppercase mb-3">
         Registration Form Builder

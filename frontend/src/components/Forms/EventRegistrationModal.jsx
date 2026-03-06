@@ -53,11 +53,11 @@ const EventRegistrationModal = ({ isOpen, onClose, eventId, onSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="glass-card p-4 rounded-4" style={{ background: '#1e222d', width: '500px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
+    <div className="modal-overlay">
+      <div className="glass-card p-4 rounded-4" style={{ background: 'var(--bg-elevated)', width: '500px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h4 className="text-white fw-bold m-0">Confirm Registration</h4>
-          <button className="btn text-white p-0" onClick={onClose}><X size={24} /></button>
+          <h4 className="fw-bold m-0" style={{color: 'var(--text-primary)'}}>Confirm Registration</h4>
+          <button className="btn p-0" style={{color: 'var(--text-primary)'}} onClick={onClose}><X size={24} /></button>
         </div>
 
         {loading ? <Loader /> : (
@@ -94,7 +94,7 @@ const EventRegistrationModal = ({ isOpen, onClose, eventId, onSuccess }) => {
             ))}
 
             {schema.length === 0 && (
-              <p className="text-white mb-4">Are you sure you want to register for this event?</p>
+              <p className="mb-4" style={{color: 'var(--text-primary)'}}>Are you sure you want to register for this event?</p>
             )}
 
             <button type="submit" className="btn btn-purple w-100 mt-3 d-flex align-items-center justify-content-center gap-2" disabled={loading}>

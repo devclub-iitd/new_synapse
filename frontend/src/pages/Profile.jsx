@@ -97,22 +97,23 @@ const Profile = () => {
     <div className="container-fluid profile-page py-4">
       
       {/* 1. HERO IDENTITY SECTION */}
-      <div className="profile-hero-card mb-4 p-4 p-md-5">
+      <div className="profile-hero-v2 mb-4">
         <div className="d-flex flex-column flex-md-row align-items-center gap-4">
           
           {/* AVATAR CONTAINER */}
-          <div className="position-relative" style={{ width: '120px', height: '120px' }}>
-            <div className="profile-avatar-large shadow-lg w-100 h-100 overflow-hidden d-flex align-items-center justify-content-center">
-              {form.photo_url ? (
-                <img src={form.photo_url} alt="profile" className="w-100 h-100 object-fit-cover" />
-              ) : (
-                <span className="fs-1 fw-bold text-white">{user.name.charAt(0)}</span>
-              )}
+          <div className="position-relative">
+            <div className="profile-avatar-ring">
+              <div className="profile-avatar-inner">
+                {form.photo_url ? (
+                  <img src={form.photo_url} alt="profile" />
+                ) : (
+                  <span className="profile-avatar-initial">{user.name.charAt(0)}</span>
+                )}
+              </div>
             </div>
 
             {editMode && (
               <>
-                {/* Upload Button overlay */}
                 <button 
                   className="avatar-edit-fab shadow border-0" 
                   onClick={() => document.getElementById("photoInput").click()}
@@ -121,7 +122,6 @@ const Profile = () => {
                   <Camera size={18} />
                 </button>
 
-                {/* Remove Button overlay - Small X top right */}
                 {form.photo_url && (
                   <button
                     className="btn btn-danger btn-sm rounded-circle p-1 shadow"
@@ -137,11 +137,9 @@ const Profile = () => {
           </div>
 
           <div className="text-center text-md-start flex-grow-1">
-            <h1 className="display-6 fw-bold text-white mb-1">{user.name}</h1>
-            <p className="text-secondary fs-5 mb-2">{user.email}</p>
-            <div className="d-flex flex-wrap justify-content-center justify-content-md-start gap-2">
-              <span className="entry-pill px-3 py-1">{user.entry_number}</span>
-            </div>
+            <h1 className="profile-name">{user.name}</h1>
+            <p className="profile-email">{user.email}</p>
+            <span className="entry-pill px-3 py-1">{user.entry_number}</span>
           </div>
 
           <div className="mt-3 mt-md-0">
@@ -171,65 +169,73 @@ const Profile = () => {
               <GraduationCap size={20} className="text-purple" /> Academic Info
             </h5>
             
-            <div className="info-group mb-4">
-              <label className="text-secondary small text-uppercase fw-bold mb-2">Department</label>
-              {!editMode ? (
-                <p className="text-white fs-5 border-start border-purple border-3 ps-3">{user.department || "Not set"}</p>
-              ) : (
-                <select 
-                  className="form-select glass-input" 
-                  value={form.department} 
-                  onChange={e => setForm({ ...form, department: e.target.value })}
-                >
-                  <option value="" disabled>Select your department</option>
-                  {DEPARTMENTS.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <div className="info-group mb-4">
-              <label className="text-secondary small text-uppercase fw-bold mb-2">Hostel</label>
-              {!editMode ? (
-                <p className="text-white fs-5 border-start border-purple border-3 ps-3">
-                  <MapPin size={16} className="me-2 text-purple" />
-                  {user.hostel || "Not set"}
-                </p>
-              ) : (
-                <select 
-                  className="form-select glass-input" 
-                  value={form.hostel} 
-                  onChange={e => setForm({ ...form, hostel: e.target.value })}
-                >
-                  <option value="" disabled>Select your hostel</option>
-                  {HOSTELS.map(h => (
-                    <option key={h} value={h}>{h}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <div className="info-group">
-              <label className="text-secondary small text-uppercase fw-bold mb-2">Current Year</label>
-              {!editMode ? (
-                <p className="text-white fs-5 border-start border-purple border-3 ps-3">
-                  <Calendar size={16} className="me-2 text-purple" />
-                  Year {user.current_year || "N/A"}
-                </p>
-              ) : (
-                <select 
-                  className="form-select glass-input" 
-                  value={form.current_year} 
-                  onChange={e => setForm({ ...form, current_year: e.target.value })}
-                >
-                  <option value="" disabled>Select year</option>
-                  {YEARS.map(y => (
-                    <option key={y} value={y}>Year {y}</option>
-                  ))}
-                </select>
-              )}
-            </div>
+            {!editMode ? (
+              <div className="d-flex flex-column gap-3">
+                <div className="info-mini-card">
+                  <div className="info-mini-icon"><GraduationCap size={18} /></div>
+                  <div>
+                    <div className="info-mini-label">Department</div>
+                    <div className="info-mini-value">{user.department || "Not set"}</div>
+                  </div>
+                </div>
+                <div className="info-mini-card">
+                  <div className="info-mini-icon"><MapPin size={18} /></div>
+                  <div>
+                    <div className="info-mini-label">Hostel</div>
+                    <div className="info-mini-value">{user.hostel || "Not set"}</div>
+                  </div>
+                </div>
+                <div className="info-mini-card">
+                  <div className="info-mini-icon"><Calendar size={18} /></div>
+                  <div>
+                    <div className="info-mini-label">Current Year</div>
+                    <div className="info-mini-value">Year {user.current_year || "N/A"}</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="d-flex flex-column gap-3">
+                <div>
+                  <label className="form-label-modern">Department</label>
+                  <select 
+                    className="form-select modern-input" 
+                    value={form.department} 
+                    onChange={e => setForm({ ...form, department: e.target.value })}
+                  >
+                    <option value="" disabled>Select your department</option>
+                    {DEPARTMENTS.map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label-modern">Hostel</label>
+                  <select 
+                    className="form-select modern-input" 
+                    value={form.hostel} 
+                    onChange={e => setForm({ ...form, hostel: e.target.value })}
+                  >
+                    <option value="" disabled>Select your hostel</option>
+                    {HOSTELS.map(h => (
+                      <option key={h} value={h}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label-modern">Current Year</label>
+                  <select 
+                    className="form-select modern-input" 
+                    value={form.current_year} 
+                    onChange={e => setForm({ ...form, current_year: e.target.value })}
+                  >
+                    <option value="" disabled>Select year</option>
+                    {YEARS.map(y => (
+                      <option key={y} value={y}>Year {y}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -250,17 +256,17 @@ const Profile = () => {
                   <button
                     key={interest}
                     disabled={!editMode}
-                    className={`interest-chip selectable ${isSelected ? "active" : ""} ${!editMode ? "view-only" : ""}`}
+                    className={`interest-chip-v2 ${isSelected ? "active" : ""} ${!editMode ? "view-only" : ""}`}
                     onClick={() => toggleInterest(interest)}
                   >
-                    {editMode && <span className="status-dot">{isSelected ? "●" : "○"}</span>}
+                    {editMode && <span>{isSelected ? "✓" : "+"}</span>}
                     {interest}
                   </button>
                 );
               })}
               
               {!editMode && user.interests.length === 0 && (
-                <div className="text-center w-100 py-4 opacity-50 italic">
+                <div className="text-center w-100 py-4 opacity-50 fst-italic" style={{color: 'var(--text-muted)'}}>
                   No interests selected. Click edit to add some!
                 </div>
               )}

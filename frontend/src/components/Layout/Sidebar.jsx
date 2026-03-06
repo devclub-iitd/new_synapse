@@ -134,7 +134,7 @@ const Sidebar = () => {
           )}
 
           {hasManagementAccess && (
-            <div className="mt-4 pt-4 border-top border-secondary-subtle" style={{ borderColor: 'rgba(255,255,255,0.05) !important' }}>
+            <div className="mt-4 pt-4 border-top" style={{ borderColor: 'var(--border-primary) !important' }}>
               <small className="text-muted text-uppercase fw-bold px-3 mb-2 d-block" style={{ fontSize: '0.65rem', letterSpacing: '1px', opacity: 0.5 }}>
                 Management
               </small>

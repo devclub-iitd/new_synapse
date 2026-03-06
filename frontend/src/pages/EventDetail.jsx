@@ -101,45 +101,44 @@ const EventDetail = () => {
       {/* BACK */}
       <button
         onClick={() => navigate(-1)}
-        className="btn btn-link text-secondary text-decoration-none mb-4 ps-0"
+        className="btn-back mb-4"
       >
-        <ArrowLeft size={18} className="me-2" /> Back
+        <ArrowLeft size={18} /> Back to events
       </button>
 
-      <div className="row">
+      <div className="row g-4">
         {/* IMAGE */}
-        <div className="col-md-5 mb-4">
-          <img
-            src={event.image_url || "https://via.placeholder.com/300x150"}
-            className="img-fluid rounded-4 shadow-lg w-100 object-fit-cover"
-            alt={event.name}
-            style={{ height: "350px" }}
-          />
+        <div className="col-md-5 mb-2">
+          <div className="event-detail-image-wrapper">
+            <img
+              src={event.image_url || "https://via.placeholder.com/300x150"}
+              alt={event.name}
+            />
+          </div>
         </div>
 
         {/* DETAILS */}
         <div className="col-md-7">
-          <span className="badge bg-purple-soft text-purple border-purple px-3 py-2 rounded-pill mb-3">
+          <span className="badge bg-purple-soft text-purple border-purple px-3 py-2 rounded-pill mb-3 d-inline-block">
             {event.org_name}
           </span>
 
-          <h1 className="fw-bold text-white mb-3">
+          <h1 className="fw-bold mb-3" style={{color: 'var(--text-primary)', fontSize: '2rem', letterSpacing: '-0.5px'}}>
             {event.name}
           </h1>
 
           {/* META CARDS */}
           <div className="row g-3 mb-4">
             <div className="col-md-6">
-              <div className="d-flex align-items-center gap-3 text-secondary p-3 rounded-3"
-                style={{ background: "rgba(255,255,255,0.03)" }}>
+              <div className="event-detail-meta-card">
                 <div className="icon-box-purple">
                   <Calendar size={20} />
                 </div>
                 <div>
-                  <small className="d-block text-uppercase fw-bold opacity-50">
+                  <small className="d-block text-uppercase fw-bold" style={{color: 'var(--text-muted)', fontSize: '0.7rem', letterSpacing: '0.5px'}}>
                     Date & Time
                   </small>
-                  <span className="text-white">
+                  <span style={{color: 'var(--text-primary)', fontWeight: 500}}>
                     {new Date(event.date).toLocaleString()}
                   </span>
                 </div>
@@ -147,35 +146,33 @@ const EventDetail = () => {
             </div>
 
             <div className="col-md-6">
-              <div className="d-flex align-items-center gap-3 text-secondary p-3 rounded-3"
-                style={{ background: "rgba(255,255,255,0.03)" }}>
+              <div className="event-detail-meta-card">
                 <div className="icon-box-purple">
                   <MapPin size={20} />
                 </div>
                 <div>
-                  <small className="d-block text-uppercase fw-bold opacity-50">
+                  <small className="d-block text-uppercase fw-bold" style={{color: 'var(--text-muted)', fontSize: '0.7rem', letterSpacing: '0.5px'}}>
                     Venue
                   </small>
-                  <span className="text-white">
+                  <span style={{color: 'var(--text-primary)', fontWeight: 500}}>
                     {event.venue}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* ✅ REGISTRATION DEADLINE */}
+            {/* REGISTRATION DEADLINE */}
             {hasDeadline && (
               <div className="col-md-6">
-                <div className="d-flex align-items-center gap-3 text-secondary p-3 rounded-3"
-                  style={{ background: "rgba(255,255,255,0.03)" }}>
+                <div className="event-detail-meta-card">
                   <div className="icon-box-purple">
                     <Clock size={20} />
                   </div>
                   <div>
-                    <small className="d-block text-uppercase fw-bold opacity-50">
+                    <small className="d-block text-uppercase fw-bold" style={{color: 'var(--text-muted)', fontSize: '0.7rem', letterSpacing: '0.5px'}}>
                       Registration Deadline
                     </small>
-                    <span className="text-white">
+                    <span style={{color: 'var(--text-primary)', fontWeight: 500}}>
                       {new Date(event.registration_deadline).toLocaleString()}
                     </span>
                   </div>
@@ -185,17 +182,17 @@ const EventDetail = () => {
           </div>
 
           {/* ABOUT */}
-          <div className="section-title mb-3 d-flex align-items-center gap-2 text-white">
+          <div className="section-title mb-3 d-flex align-items-center gap-2" style={{color: 'var(--text-primary)'}}>
             <Info size={18} className="text-purple" /> About Event
           </div>
 
-          <div className="text-secondary mb-5" style={{ lineHeight: 1.8 }}>
+          <div className="event-detail-desc-block mb-4">
             {event.description}
           </div>
 
           {/* ACTION */}
          <button
-  className={`btn px-5 py-3 fw-bold w-100 d-flex align-items-center justify-content-center gap-2 ${
+  className={`btn btn-register-lg ${
     eventPassed || deadlinePassed || event.is_registered
       ? "btn-registered"
       : "btn-purple"
@@ -203,8 +200,6 @@ const EventDetail = () => {
   disabled={eventPassed || deadlinePassed}
   onClick={handleRegisterClick}
 >
-
-
             {eventPassed
   ? "Event Over"
   : event.is_registered
@@ -212,8 +207,6 @@ const EventDetail = () => {
   : deadlinePassed
   ? "Registration Closed"
   : "Register Now"}
-
-
           </button>
         </div>
       </div>

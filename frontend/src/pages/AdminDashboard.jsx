@@ -102,19 +102,21 @@ const AdminDashboard = () => {
 
   return (
     <div className="container-fluid">
-      <h2 className="text-white fw-bold mb-4">Admin Control Center</h2>
+      <div className="page-header">
+        <h2>Admin Control Center</h2>
+        <p className="page-subtitle">Manage users, assign roles, and control access</p>
+      </div>
 
       <div className="row g-4">
         {/* LEFT: USER LIST */}
         <div className="col-md-8">
           <div className="glass-card p-4 h-100">
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h5 className="text-white m-0">All Users</h5>
-              <div className="position-relative">
-                <Search size={18} className="text-secondary position-absolute top-50 start-0 translate-middle-y ms-3" />
+              <h5 className="m-0 fw-bold" style={{color: 'var(--text-primary)'}}>All Users</h5>
+              <div className="admin-search-bar">
+                <Search size={16} className="text-purple" style={{flexShrink: 0}} />
                 <input 
                   type="text" 
-                  className="form-control bg-dark text-white border-secondary ps-5 rounded-pill"
                   placeholder="Search students..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -122,56 +124,61 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="table-responsive custom-scrollbar" style={{ maxHeight: '600px' }}>
-              <table className="table table-dark table-hover align-middle">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Current Roles</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map(user => (
-                    <tr key={user.id} className={selectedUser?.id === user.id ? "table-active" : ""}>
-                      <td>
-                        <div className="fw-bold">{user.name}</div>
-                        <div className="small text-secondary">{user.entry_number}</div>
-                      </td>
-                      <td>{user.email}</td>
-                      <td>
-                        <div className="d-flex flex-wrap gap-1">
-                          {user.authorizations?.length > 0 ? (
-                            user.authorizations.map(auth => (
-                              <span key={auth.id} className="badge bg-warning text-dark bg-opacity-75 d-flex align-items-center gap-1">
-                                {auth.org_name} 
-                                <span className="opacity-75">({auth.role_name})</span>
-                                
-                                {/* ✅ FIXED: Trash Icon now used to trigger revoke */}
-                                <button 
-                                  className="btn btn-link p-0 text-dark ms-1" 
-                                  onClick={(e) => { e.stopPropagation(); confirmRevoke(user, auth.id); }}
-                                  title="Revoke Role"
-                                >
-                                  <Trash2 size={12} />
-                                </button>
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-muted small">Student</span>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        <button className="btn btn-sm btn-outline-purple" onClick={() => setSelectedUser(user)}>
-                          <UserCheck size={16} /> Assign Role
-                        </button>
-                      </td>
+            <div className="custom-scrollbar" style={{ maxHeight: '600px', overflowY: 'auto' }}>
+              <div className="modern-table-wrapper">
+                <table className="modern-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Current Roles</th>
+                      <th>Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map(user => (
+                      <tr key={user.id} className={selectedUser?.id === user.id ? "row-selected" : ""}>
+                        <td>
+                          <div className="d-flex align-items-center gap-3">
+                            <div className="member-avatar-sm">{user.name.charAt(0)}</div>
+                            <div>
+                              <div className="fw-semibold">{user.name}</div>
+                              <div className="small" style={{color: 'var(--text-muted)'}}>{user.entry_number}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{color: 'var(--text-secondary)'}}>{user.email}</td>
+                        <td>
+                          <div className="d-flex flex-wrap gap-1">
+                            {user.authorizations?.length > 0 ? (
+                              user.authorizations.map(auth => (
+                                <span key={auth.id} className="role-badge">
+                                  {auth.org_name} 
+                                  <span style={{opacity: 0.7}}>({auth.role_name})</span>
+                                  <button 
+                                    className="badge-revoke btn p-0 border-0 bg-transparent d-flex" 
+                                    onClick={(e) => { e.stopPropagation(); confirmRevoke(user, auth.id); }}
+                                    title="Revoke Role"
+                                  >
+                                    <Trash2 size={11} />
+                                  </button>
+                                </span>
+                              ))
+                            ) : (
+                              <span style={{color: 'var(--text-muted)', fontSize: '0.82rem'}}>Student</span>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <button className="btn-action primary" onClick={() => setSelectedUser(user)}>
+                            <UserCheck size={15} /> Assign
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -179,32 +186,34 @@ const AdminDashboard = () => {
         {/* RIGHT: AUTHORIZE FORM */}
         <div className="col-md-4">
           <div className="glass-card p-4 position-sticky" style={{ top: '20px' }}>
-            <h5 className="text-white mb-3 d-flex align-items-center gap-2">
+            <h5 className="mb-3 d-flex align-items-center gap-2 fw-bold" style={{color: 'var(--text-primary)'}}>
               <ShieldAlert size={20} className="text-purple" /> Grant Access
             </h5>
             
             {!selectedUser ? (
-              <div className="text-center py-5 text-secondary border border-dashed rounded-3">
-                <UserCheck size={40} className="mb-3 opacity-50" />
+              <div className="empty-placeholder">
+                <UserCheck size={40} />
                 <p>Select a user from the list to assign a leadership role.</p>
               </div>
             ) : (
               <form onSubmit={handleAuthorize}>
-                <div className="alert alert-info d-flex align-items-center gap-3 mb-3">
-                  <div className="bg-white text-primary rounded-circle fw-bold d-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>
+                <div className="selected-user-card">
+                  <div className="selected-user-avatar">
                     {selectedUser.name.charAt(0)}
                   </div>
-                  <div>
-                    <div className="fw-bold">{selectedUser.name}</div>
-                    <div className="small">{selectedUser.email}</div>
+                  <div className="selected-user-info">
+                    <div className="selected-user-name">{selectedUser.name}</div>
+                    <div className="selected-user-email">{selectedUser.email}</div>
                   </div>
-                  <button type="button" className="btn-close ms-auto" onClick={() => setSelectedUser(null)}></button>
+                  <button type="button" className="btn p-0 border-0 bg-transparent" onClick={() => setSelectedUser(null)}>
+                    <X size={16} style={{color: 'var(--text-muted)'}} />
+                  </button>
                 </div>
 
                 <div className="mb-3">
-                  <label className="small text-secondary mb-1">Organization Type</label>
+                  <label className="form-label-modern">Organization Type</label>
                   <select 
-                    className="form-select bg-dark text-white border-secondary"
+                    className="form-select modern-input"
                     value={authForm.org_type}
                     onChange={handleTypeChange}
                   >
@@ -215,9 +224,9 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label className="small text-secondary mb-1">Organization Name</label>
+                  <label className="form-label-modern">Organization Name</label>
                   <select 
-                    className="form-select bg-dark text-white border-secondary"
+                    className="form-select modern-input"
                     value={authForm.org_name}
                     onChange={(e) => setAuthForm({ ...authForm, org_name: e.target.value })}
                   >
@@ -230,9 +239,9 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="mb-4">
-                  <label className="small text-secondary mb-1">Role Title</label>
+                  <label className="form-label-modern">Role Title</label>
                   <select 
-                    className="form-select bg-dark text-white border-secondary"
+                    className="form-select modern-input"
                     value={authForm.role_name}
                     onChange={(e) => setAuthForm({ ...authForm, role_name: e.target.value })}
                   >

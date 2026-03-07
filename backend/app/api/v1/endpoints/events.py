@@ -79,8 +79,7 @@ def normalize_org_type(org_type: str) -> str:
 def get_events(
     db: Session = Depends(deps.get_db),
     current_user: Optional[User] = Depends(deps.get_current_user_optional),
-    sort_by: str = Query("date", pattern="^(date|popularity)$"),
-    org_type: Optional[str] = None,
+    sort_by: str = Query("date_desc", pattern="^(date_desc|date_asc|popularity)$"),    org_type: Optional[str] = None,
     board: Optional[str] = None,       # ✅ NEW: board filter param
     item: Optional[str] = None,
     search: Optional[str] = None,
@@ -125,13 +124,10 @@ def get_events(
     if search:
         query = query.filter(Event.name.ilike(f"%{search}%"))
 
-    query = query.order_by(
-        case(
-            (Event.date >= now, 0),
-            else_=1
-        ),
-        Event.date.asc()
-    )
+    if sort_by == "date_asc":
+        query = query.order_by(Event.date.asc())
+    else:  # date_desc (default) — newest first
+        query = query.order_by(Event.date.desc())
     all_filtered_events = query.all()
 
     if current_user:

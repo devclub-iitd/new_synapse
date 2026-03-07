@@ -364,8 +364,10 @@ def get_event_registrations(
             "name": reg.user.name,
             "email": reg.user.email,
             "entry_number": reg.user.entry_number,
-            "custom_answers": reg.custom_answers,
-            "registered_at": reg.registered_at
+            "department": reg.user.department.value if hasattr(reg.user.department, 'value') else reg.user.department,
+            "hostel": reg.user.hostel.value if hasattr(reg.user.hostel, 'value') else reg.user.hostel,
+            "photo_url": reg.user.photo_url,
+            "registered_at": reg.registered_at,
         })
     return results
 
@@ -418,6 +420,9 @@ def get_event_feedback(
 # 👥 TEAM MANAGEMENT (Strictly Protected)
 # ------------------------------------------------------------------
 
+# PATCH for org.py — get_team_members endpoint
+# Replace the return statement in get_team_members with this:
+
 @router.get("/{org_id}/team", response_model=list[dict])
 def get_team_members(
     org_id: int,
@@ -425,13 +430,13 @@ def get_team_members(
     role: AuthRole = Depends(get_org_role_by_id)
 ):
     """View all team members."""
-    # ✅ FIX: Removed .value
     team_roles = db.query(AuthRole).filter(AuthRole.org_name == role.org_name).all()
     return [{
-        "user_id": r.user_id, 
-        "name": r.user.name, 
-        "email": r.user.email, 
-        "role": r.role_name
+        "user_id": r.user_id,
+        "name": r.user.name,
+        "email": r.user.email,
+        "role": r.role_name,
+        "photo_url": r.user.photo_url,   # ← ADD THIS LINE
     } for r in team_roles]
 
 @router.post("/{org_id}/team")

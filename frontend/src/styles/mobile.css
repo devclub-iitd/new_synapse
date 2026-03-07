@@ -1,0 +1,644 @@
+/* =====================================================
+   src/styles/mobile.css
+   Import in App.js AFTER App.css:
+     import './styles/mobile.css';
+   ===================================================== */
+
+/* ===== EVENT DETAIL — desktop styles ===== */
+.event-detail-container {
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+.event-detail-title {
+  color: var(--text-primary);
+  font-size: 2rem;
+  letter-spacing: -0.5px;
+}
+
+.event-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.meta-label {
+  display: block;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.meta-value {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+/* ===== ADMIN DASHBOARD ===== */
+.admin-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-list-header .admin-search-bar {
+  flex: 1;
+  min-width: 160px;
+  max-width: 300px;
+}
+
+/* Sort mobile label — hidden on desktop, shown on mobile */
+.sort-mobile-label {
+  display: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Filter active dot */
+.filter-active-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+/* ===== NAVBAR ===== */
+.navbar-container-responsive {
+  justify-content: space-between !important;
+}
+
+@media (min-width: 768px) {
+  .navbar-container-responsive {
+    justify-content: flex-end !important;
+  }
+}
+
+/* ===== MOBILE BOTTOM NAV ===== */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  z-index: 1000;
+  backdrop-filter: blur(20px);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.65rem;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 8px 4px;
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item.active {
+  color: var(--brand-primary);
+}
+
+.mobile-nav-item.active svg {
+  filter: drop-shadow(0 0 6px var(--brand-primary-glow));
+}
+
+/* ===== MOBILE MANAGEMENT DRAWER ===== */
+.mobile-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1100;
+}
+
+.mobile-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
+  border-radius: 20px 20px 0 0;
+  padding: 16px 24px 32px;
+  z-index: 1200;
+  animation: slideUpDrawer 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUpDrawer {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.mobile-drawer-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--border-primary);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+
+.mobile-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.mobile-drawer-link:hover {
+  background: var(--brand-primary-soft);
+  border-color: var(--border-accent);
+  color: var(--text-accent);
+}
+
+.mobile-drawer-logout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.mobile-drawer-logout:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ===== ALL MOBILE RESPONSIVE STYLES ===== */
+/* ===== ORG DASHBOARD — OVERVIEW STAT CHIPS ===== */
+.org-stats-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.org-stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 14px;
+  padding: 16px 24px;
+  min-width: 200px;
+  flex: 1;
+  max-width: 280px;
+}
+
+.org-stat-chip-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.org-stat-chip-icon.purple {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+}
+
+.org-stat-chip-icon.green {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.org-stat-chip-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.org-stat-chip-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Chart container — proper sizing */
+.org-chart-container {
+  height: 320px;
+  position: relative;
+}
+
+.org-chart-container .demographics-chart-wrapper {
+  height: 100% !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 767px) {
+
+  /* Fix blank screen — hide sidebar col, give main content full width */
+  .sidebar-col {
+    display: none !important;
+  }
+
+  /* Prevent content hiding behind bottom nav */
+  .main-content-area {
+    padding-bottom: 80px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* ===== HOME PAGE ===== */
+  .home-hero-header h2 {
+    font-size: 1.4rem;
+  }
+
+  /* Outer header row: stack title + controls vertically */
+  .d-flex.justify-content-between.align-items-end.mb-4.flex-wrap.gap-3 {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  /* Controls row: search takes full width on its own line,
+     sort + filter share second line as icon buttons */
+  .home-controls-row {
+    display: grid !important;
+    grid-template-columns: 1fr auto auto !important;
+    gap: 8px !important;
+    width: 100% !important;
+    align-items: center !important;
+  }
+
+  .home-controls-row .search-glass {
+    min-width: unset !important;
+    width: 100% !important;
+  }
+
+  .home-controls-row .search-glass input {
+    width: 100% !important;
+  }
+
+  /* Show sort mobile label, hide full select text */
+  .sort-mobile-label { display: inline !important; }
+
+  /* Sort: icon-only pill button */
+  .home-controls-row .sort-glass {
+    min-width: unset !important;
+    width: auto !important;
+    padding: 0 12px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .home-controls-row .sort-glass select {
+    display: none !important;
+  }
+
+  /* Filter: icon-only pill button */
+  .home-controls-row .btn span {
+    display: none !important;
+  }
+
+  .home-controls-row .btn {
+    width: auto !important;
+    padding: 8px 14px !important;
+  }
+
+  /* Event cards: 1 column on mobile */
+  .col-md-4 {
+    width: 100% !important;
+  }
+
+  /* ===== LOGIN MODAL ===== */
+  .login-glass-container {
+    flex-direction: column !important;
+    height: auto;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+
+  .login-brand-side,
+  .login-form-side {
+    flex: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .login-brand-side { padding: 28px 24px; min-height: 160px; }
+  .login-brand-side h1 { font-size: 1.6rem; }
+  .login-form-side { padding: 28px 24px; }
+
+  /* ===== EVENT CARD — horizontal layout on mobile ===== */
+  .col-md-4 {
+    width: 100% !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Turn card into horizontal row */
+  .event-card {
+    flex-direction: row !important;
+    padding: 12px !important;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  /* Override Bootstrap's card-img-top width:100% */
+  .event-card.card {
+    display: flex !important;
+    flex-direction: row !important;
+  }
+
+  /* Thumbnail: fixed square on the left */
+  .event-card img.card-img-top {
+    width: 90px !important;
+    height: 90px !important;
+    min-width: 90px !important;
+    object-fit: cover !important;
+    border-radius: 10px !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0;
+  }
+
+  /* Card body fills remaining space */
+  .event-card .card-body {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Tighter text */
+  .event-card .card-title {
+    font-size: 0.92rem !important;
+    margin-bottom: 4px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .event-card .card-org-badge {
+    font-size: 0.65rem !important;
+    padding: 2px 8px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .event-card .card-meta-row {
+    font-size: 0.75rem !important;
+    margin-bottom: 2px !important;
+  }
+
+  .event-card small {
+    font-size: 0.72rem !important;
+  }
+
+  /* Register button compact */
+  .event-card .btn {
+    padding: 6px 10px !important;
+    font-size: 0.78rem !important;
+    margin-top: 8px !important;
+  }
+
+  /* ===== EVENT DETAIL ===== */
+  .event-detail-container {
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
+  }
+
+  .event-detail-image-wrapper img {
+    height: 220px !important;
+    object-fit: cover;
+    border-radius: 14px;
+    width: 100%;
+  }
+
+  .event-detail-title {
+    font-size: 1.4rem !important;
+    letter-spacing: -0.3px;
+  }
+
+  /* Meta cards: full width stacked on mobile */
+  .event-meta-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .event-detail-meta-card {
+    padding: 12px 14px !important;
+  }
+
+  /* Back button */
+  .btn-back {
+    font-size: 0.85rem;
+    padding: 6px 0;
+  }
+
+  /* ===== ADMIN DASHBOARD ===== */
+  .admin-list-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .admin-list-header .admin-search-bar {
+    max-width: 100% !important;
+  }
+
+  /* ===== ORG DASHBOARD STAT CHIPS — mobile ===== */
+  .org-stats-row {
+    gap: 10px !important;
+  }
+
+  .org-stat-chip {
+    min-width: unset !important;
+    max-width: 100% !important;
+    flex: 1 1 calc(50% - 5px) !important;
+    padding: 12px 14px !important;
+    gap: 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .org-stat-chip-icon {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+  }
+
+  .org-stat-chip-value {
+    font-size: 1.4rem !important;
+    margin-bottom: 2px !important;
+  }
+
+  .org-stat-chip-label {
+    font-size: 0.65rem !important;
+    letter-spacing: 0.2px !important;
+  }
+
+  /* Chart container — shorter on mobile */
+  .org-chart-container {
+    height: 260px !important;
+  }
+
+  /* Analytics chart wrapper */
+  .demographics-chart-wrapper {
+    min-height: 200px;
+    height: 100% !important;
+  }
+
+  /* ===== ORG DASHBOARD ===== */
+  .pill-tab-nav {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* hide scrollbar on Firefox */
+    width: 100%;
+  }
+
+  .pill-tab-nav::-webkit-scrollbar { display: none; }
+
+  .pill-tab {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    font-size: 0.78rem !important;
+    padding: 6px 12px !important;
+  }
+
+  .modern-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Compact action buttons in tables */
+  .btn-action {
+    padding: 5px 8px !important;
+    font-size: 0.72rem !important;
+    min-width: unset !important;
+  }
+
+  .org-header-top { flex-direction: column; align-items: flex-start; }
+  .glass-form-card { padding: 20px 16px; }
+
+  /* ===== FILTER DRAWER ===== */
+  .filter-sidebar { width: 100% !important; right: -100% !important; }
+  .filter-sidebar.open { right: 0 !important; }
+
+  /* ===== STUDENT DASHBOARD ===== */
+  .calendar-shell { padding: 0 !important; }
+
+  /* Toolbar: wrap cleanly */
+  .fc .fc-toolbar {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .fc .fc-toolbar-chunk {
+    display: flex;
+    align-items: center;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 1rem !important;
+    white-space: nowrap;
+  }
+
+  .fc .fc-button {
+    padding: 3px 8px !important;
+    font-size: 0.72rem !important;
+  }
+
+  /* Day cells — ensure they have minimum height */
+  .fc .fc-daygrid-day {
+    min-height: 44px !important;
+  }
+
+  .fc .fc-daygrid-day-frame {
+    min-height: 44px !important;
+  }
+
+  /* Day number */
+  .fc .fc-daygrid-day-number {
+    font-size: 0.78rem !important;
+    padding: 3px 5px !important;
+  }
+
+  /* Column headers (SUN MON etc) */
+  .fc .fc-col-header-cell-cushion {
+    font-size: 0.68rem !important;
+    padding: 4px 2px !important;
+  }
+
+  /* Events in cells */
+  .fc-daygrid-event {
+    font-size: 0.65rem !important;
+  }
+
+  /* Section header row: keep inline on mobile */
+  .dashboard-calendar-header {
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+
+  /* Widget cards: reduce padding on mobile */
+  .widget-card {
+    padding: 16px !important;
+  }
+
+  /* Recommendation items */
+  .recommendation-item {
+    padding: 10px 12px !important;
+  }
+
+  /* ===== PROFILE PAGE ===== */
+  .profile-hero-v2 { padding: 24px 20px; }
+  .profile-avatar-ring { width: 90px; height: 90px; }
+  .profile-name { font-size: 1.3rem; }
+
+  /* ===== GENERAL ===== */
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.25rem !important; }
+  .btn-register-lg { padding: 14px 20px; font-size: 0.95rem; }
+}

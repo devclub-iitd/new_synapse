@@ -98,7 +98,7 @@
 //                 element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>}
 //               />
               
-//               {/* ✅ CHANGED: Now accepts orgId parameter */}
+//               {/* Now accepts orgId parameter */}
 //               <Route
 //                 path="/org/:orgId/dashboard"
 //                 element={<ProtectedRoute><OrgDashboard /></ProtectedRoute>}
@@ -283,7 +283,7 @@
 
 // export default App;
 
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -345,46 +345,40 @@ const AdminRoute = ({ children }) => {
 
 const AppLayout = () => {
   const { showLoginModal, closeLoginModal } = useAuth();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="container-fluid vh-100 overflow-hidden p-0">
-      <div className="row g-0 h-100">
+    <div className="app-shell">
+      {/* Desktop sidebar */}
+      <div className="d-none d-md-block">
+        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(c => !c)} />
+      </div>
 
-        {/* Sidebar — hidden on mobile via CSS in mobile.css (.sidebar-col) */}
-        {/* d-none d-md-block kept so Bootstrap grid doesn't reserve space on mobile */}
-        <nav className="col-md-2 d-none d-md-block h-100 sidebar-col overflow-auto">
-          <Sidebar />
-        </nav>
+      {/* Mobile bottom nav */}
+      <div className="d-block d-md-none">
+        <Sidebar mobileOnly />
+      </div>
 
-        {/* Mobile bottom nav — rendered outside the Bootstrap grid so it's always visible */}
-        <div className="d-block d-md-none">
-          <Sidebar mobileOnly />
+      {/* Main area */}
+      <div className={`app-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <div className="w-100 border-bottom border-secondary border-opacity-10" style={{ zIndex: 100 }}>
+          <Navbar />
         </div>
 
-        {/* Main Content — col auto-fills remaining space next to sidebar */}
-        <main className="col d-flex flex-column h-100">
-          <div
-            className="w-100 border-bottom border-secondary border-opacity-10"
-            style={{ zIndex: 100 }}
-          >
-            <Navbar />
-          </div>
+        <div className="flex-grow-1 overflow-y-auto custom-scrollbar px-md-4 py-4 main-content-area">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/events/:eventId" element={<EventDetail />} />
 
-          <div className="flex-grow-1 overflow-y-auto custom-scrollbar px-md-4 py-4 main-content-area">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/events/:eventId" element={<EventDetail />} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/org/:orgId/dashboard" element={<ProtectedRoute><OrgDashboard /></ProtectedRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
 
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
-              <Route path="/org/:orgId/dashboard" element={<ProtectedRoute><OrgDashboard /></ProtectedRoute>} />
-              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-        </main>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
       </div>
 
       <LoginModal isOpen={showLoginModal} onClose={closeLoginModal} />

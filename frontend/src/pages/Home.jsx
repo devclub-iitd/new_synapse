@@ -236,6 +236,7 @@ import { Filter, Search, ArrowUpDown } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
+import SearchableDropdown from "../components/UI/SearchableDropdown";
 
 const LIMIT = 6;
 
@@ -358,13 +359,16 @@ const Home = () => {
 
             <div className="sort-glass">
               <ArrowUpDown size={16} />
-              <select
+              <SearchableDropdown
+                className="sd-compact"
+                options={[
+                  { label: 'Newest First', value: 'date_desc' },
+                  { label: 'Oldest First', value: 'date_asc' },
+                ]}
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="date_desc">Newest First</option>
-                <option value="date_asc">Oldest First</option>
-              </select>
+                onChange={(val) => setSortBy(val)}
+                searchable={false}
+              />
               {/* Mobile-only label shown when select is hidden */}
               <span className="sort-mobile-label">
                 {sortBy === "date_desc" ? "Newest" : "Oldest"}

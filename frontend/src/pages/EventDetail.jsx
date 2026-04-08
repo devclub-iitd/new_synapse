@@ -44,13 +44,13 @@
 //       return;
 //     }
 
-//     // ❌ Block past events completely
+//     // Block past events completely
 //     if (eventPassed || deadlinePassed) {
 //       toast.error("Registrations are closed for this event");
 //       return;
 //     }
 
-//     // 🔄 Deregister
+//     // Deregister
 //     if (event.is_registered) {
 //       try {
 //         await api.delete(`/events/${eventId}/register`);
@@ -88,7 +88,7 @@
 //       </div>
 //     );
 
-//   // ✅ SAFE DEADLINE HANDLING
+//   // Safe deadline handling
 //   const hasDeadline = !!event.registration_deadline;
 //   const deadlinePassed = hasDeadline
 //     ? isPast(event.registration_deadline)
@@ -232,11 +232,13 @@ import {
   ArrowLeft,
   Clock,
   Info,
+  Share2,
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import { formatDateTime, isPast } from '../utils/dateUtils';
+import { capitalize } from '../utils/capitalize';
 
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
 
@@ -317,12 +319,25 @@ const EventDetail = () => {
         <div className="col-12 col-md-7">
 
           <span className="badge bg-purple-soft text-purple border-purple px-3 py-2 rounded-pill mb-3 d-inline-block">
-            {event.org_name}
+            {capitalize(event.organization?.name)}
           </span>
 
-          <h1 className="event-detail-title fw-bold mb-3">
-            {event.name}
-          </h1>
+          <div className="d-flex align-items-start justify-content-between gap-3 mb-3">
+            <h1 className="event-detail-title fw-bold m-0">
+              {capitalize(event.name)}
+            </h1>
+            <button className="btn-share" onClick={() => {
+              const url = `${window.location.origin}/events/${event.id}`;
+              if (navigator.share) {
+                navigator.share({ title: event.name, url }).catch(() => {});
+              } else {
+                navigator.clipboard.writeText(url);
+                toast.success('Link copied to clipboard');
+              }
+            }} title="Share event">
+              <Share2 size={18} />
+            </button>
+          </div>
 
           {/* META CARDS — single column on mobile, 2-col on desktop */}
           <div className="event-meta-grid mb-4">

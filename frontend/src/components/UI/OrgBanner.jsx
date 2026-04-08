@@ -148,7 +148,7 @@ export default function OrgBanner({ orgId, orgName, bannerUrl }) {
     const file = e.target.files[0];
     if (!file) return;
 
-    // ✅ Show local preview immediately so user sees something right away
+    // Show local preview immediately so user sees something right away
     const localUrl = URL.createObjectURL(file);
     setPreview(localUrl);
     setImgError(false);
@@ -201,7 +201,7 @@ export default function OrgBanner({ orgId, orgName, bannerUrl }) {
             <img
               src={preview}
               alt="banner"
-              onError={() => setImgError(true)}  // ✅ fallback on broken image
+              onError={() => setImgError(true)}  // fallback on broken image
               style={{
                 width: "100%",
                 height: "100%",
@@ -209,7 +209,7 @@ export default function OrgBanner({ orgId, orgName, bannerUrl }) {
               }}
             />
           ) : (
-            // ✅ Initials fallback instead of blank white circle
+            // Initials fallback instead of blank white circle
             <div style={{
               display: "flex",
               flexDirection: "column",
@@ -250,7 +250,7 @@ export default function OrgBanner({ orgId, orgName, bannerUrl }) {
         />
       </label>
 
-      {/* ✅ Remove button — outside the label so it doesn't trigger file picker */}
+      {/* Remove button — outside the label so it doesn't trigger file picker */}
       {showImage && !loading && (
         <button
           onClick={handleRemove}

@@ -89,6 +89,7 @@
 
 import React from 'react';
 import { Plus, Trash, X } from 'lucide-react';
+import SearchableDropdown from '../UI/SearchableDropdown';
 
 const DynamicFormBuilder = ({ schema, setSchema }) => {
 
@@ -170,16 +171,16 @@ const DynamicFormBuilder = ({ schema, setSchema }) => {
 
             <div className="col-md-5">
               <label className="small text-muted">Answer Type</label>
-              <select
-                className="form-select bg-dark text-white border-secondary"
+              <SearchableDropdown
+                options={[
+                  { label: 'Text Input', value: 'text' },
+                  { label: 'Multiple Choice (Radio)', value: 'radio' }
+                ]}
                 value={field.type}
-                onChange={(e) =>
-                  updateField(idx, 'type', e.target.value)
-                }
-              >
-                <option value="text">Text Input</option>
-                <option value="radio">Multiple Choice (Radio)</option>
-              </select>
+                onChange={(val) => updateField(idx, 'type', val)}
+                placeholder="Select type..."
+                searchable={false}
+              />
             </div>
           </div>
 

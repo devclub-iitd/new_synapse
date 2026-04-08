@@ -28,7 +28,7 @@ export const HOSTELS = [
 
 export const YEARS = [1, 2, 3, 4, 5];
 
-// 🔥 NEW: STRICT BACKEND ENUMS (Must match backend/app/models/enums.py exactly)
+// Org types (must match backend enums)
 
 export const ORG_TYPES = [
   { label: "Club", value: "club" },

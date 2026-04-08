@@ -7,7 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 NEW: login modal state
+  // Login modal state
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const openLoginModal = () => setShowLoginModal(true);
@@ -38,10 +38,13 @@ export const AuthProvider = ({ children }) => {
   const login = (token) => {
     localStorage.setItem('access_token', token);
     fetchUser();
-    closeLoginModal(); // ✅ close modal after successful login
+    closeLoginModal(); // close modal after successful login
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (_) { /* ignore */ }
     localStorage.removeItem('access_token');
     setUser(null);
     window.location.href = '/';

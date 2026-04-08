@@ -79,8 +79,9 @@
 
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, User, Calendar, LogOut, Shield, Layout, X } from 'lucide-react';
+import { LayoutDashboard, User, Calendar, LogOut, Shield, Layout, X, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { capitalize } from '../../utils/capitalize';
 
 const MobileNav = ({ user, hasManagementAccess, logout }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -126,9 +127,13 @@ const MobileNav = ({ user, hasManagementAccess, logout }) => {
                   <Shield size={18} /> Admin Panel
                 </NavLink>
               )}
-              {user?.authorizations?.map((auth, idx) => (
-                <NavLink key={idx} to={`/org/${auth.id}/dashboard`} className="mobile-drawer-link" onClick={closeMobileMenu}>
-                  <Layout size={18} /> {auth.org_name}
+              {user?.roles?.map((role, idx) => (
+                <NavLink key={idx} to={`/org/${role.org_id}/dashboard`} className="mobile-drawer-link" onClick={closeMobileMenu}>
+                  {role.organization?.banner_url ? (
+                    <img src={role.organization.banner_url} alt="" className="sidebar-org-img" />
+                  ) : (
+                    <Layout size={18} />
+                  )} {capitalize(role.organization?.name)}
                 </NavLink>
               ))}
               {user && (
@@ -144,78 +149,86 @@ const MobileNav = ({ user, hasManagementAccess, logout }) => {
   );
 };
 
-const Sidebar = ({ mobileOnly = false }) => {
+const Sidebar = ({ mobileOnly = false, collapsed, onToggle }) => {
   const { user, logout } = useAuth();
-  const hasManagementAccess = user?.is_superuser || (user?.authorizations && user.authorizations.length > 0);
+  const hasManagementAccess = user?.is_superuser || (user?.roles && user.roles.length > 0);
 
-  // Mobile-only mode: just render the bottom nav (used in App.js outside the grid)
   if (mobileOnly) {
     return <MobileNav user={user} hasManagementAccess={hasManagementAccess} logout={logout} />;
   }
 
-  // Desktop sidebar
   return (
-    <div className="sidebar d-flex flex-column justify-content-between p-3 h-100">
-      <div>
-        <div className="sidebar-brand-minimal d-flex flex-column align-items-center mb-5 px-3 pt-2">
-          <NavLink to="/" className="text-decoration-none d-flex flex-column align-items-center">
-            <img
-              src="http://localhost:8000/static/asset/logo_nobgn.png"
-              alt="Synapse"
-              className="sidebar-logo-standalone mb-3"
-            />
-            <span className="sidebar-brand-text">SYNAPSE</span>
-          </NavLink>
+    <div className={`sidebar-v2 ${collapsed ? 'collapsed' : ''}`}>
+      <div className="sidebar-v2-inner">
+        {/* Header */}
+        <div className="sidebar-v2-header">
+          {!collapsed && (
+            <NavLink to="/" className="sidebar-v2-brand">
+              <img src="http://localhost:8000/static/asset/logo_nobgn.png" alt="Synapse" className="sidebar-v2-logo" />
+              <span className="sidebar-v2-brand-text">SYNAPSE</span>
+            </NavLink>
+          )}
+          <button className="sidebar-v2-toggle" onClick={onToggle} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+            {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
+          </button>
         </div>
 
-        <ul className="nav flex-column gap-2">
-          <li className="nav-item">
-            <NavLink to="/" className={({ isActive }) => `nav-link d-flex align-items-center gap-3 ${isActive ? 'active-link' : 'text-secondary'}`}>
-              <LayoutDashboard size={20} /> Events Feed
-            </NavLink>
-          </li>
+        {/* Navigation */}
+        <nav className="sidebar-v2-nav">
+          <NavLink to="/" end className={({ isActive }) => `sidebar-v2-link ${isActive ? 'active' : ''}`}>
+            <LayoutDashboard size={19} />
+            {!collapsed && <span>Events Feed</span>}
+          </NavLink>
 
           {user && (
-            <li className="nav-item">
-              <NavLink to="/dashboard" className={({ isActive }) => `nav-link d-flex align-items-center gap-3 ${isActive ? 'active-link' : 'text-secondary'}`}>
-                <Calendar size={20} /> My Calendar
-              </NavLink>
-            </li>
+            <NavLink to="/dashboard" className={({ isActive }) => `sidebar-v2-link ${isActive ? 'active' : ''}`}>
+              <Calendar size={19} />
+              {!collapsed && <span>My Calendar</span>}
+            </NavLink>
           )}
 
           {user && (
-            <li className="nav-item">
-              <NavLink to="/profile" className={({ isActive }) => `nav-link d-flex align-items-center gap-3 ${isActive ? 'active-link' : 'text-secondary'}`}>
-                <User size={20} /> My Profile
-              </NavLink>
-            </li>
+            <NavLink to="/profile" className={({ isActive }) => `sidebar-v2-link ${isActive ? 'active' : ''}`}>
+              <User size={19} />
+              {!collapsed && <span>My Profile</span>}
+            </NavLink>
           )}
 
           {hasManagementAccess && (
-            <div className="mt-4 pt-4 border-top" style={{ borderColor: 'var(--border-primary) !important' }}>
-              <small className="text-muted text-uppercase fw-bold px-3 mb-2 d-block" style={{ fontSize: '0.65rem', letterSpacing: '1px', opacity: 0.5 }}>
-                Management
-              </small>
+            <>
+              <div className="sidebar-v2-divider" />
+              {!collapsed && <div className="sidebar-v2-section-label">Management</div>}
               {user?.is_superuser && (
-                <NavLink to="/admin" className="nav-link d-flex align-items-center gap-3 text-danger-emphasis">
-                  <Shield size={20} /> Admin Panel
+                <NavLink to="/admin" className={({ isActive }) => `sidebar-v2-link ${isActive ? 'active' : ''}`}>
+                  <Shield size={19} />
+                  {!collapsed && <span>Admin Panel</span>}
                 </NavLink>
               )}
-              {user?.authorizations?.map((auth, idx) => (
-                <NavLink key={idx} to={`/org/${auth.id}/dashboard`} className="nav-link d-flex align-items-center gap-3 text-warning-emphasis">
-                  <Layout size={20} /> {auth.org_name}
+              {user?.roles?.map((role, idx) => (
+                <NavLink key={idx} to={`/org/${role.org_id}/dashboard`}
+                  className={({ isActive }) => `sidebar-v2-link ${isActive ? 'active' : ''}`}>
+                  {role.organization?.banner_url ? (
+                    <img src={role.organization.banner_url} alt="" className="sidebar-org-img" />
+                  ) : (
+                    <Layout size={19} />
+                  )}
+                  {!collapsed && <span>{capitalize(role.organization?.name)}</span>}
                 </NavLink>
               ))}
-            </div>
+            </>
           )}
-        </ul>
-      </div>
+        </nav>
 
-      {user && (
-        <button onClick={logout} className="logout-btn-minimal d-flex align-items-center gap-2 justify-content-center w-100 mb-2">
-          <LogOut size={18} /> Logout
-        </button>
-      )}
+        {/* Footer */}
+        {user && (
+          <div className="sidebar-v2-footer">
+            <button onClick={logout} className="sidebar-v2-link logout">
+              <LogOut size={19} />
+              {!collapsed && <span>Logout</span>}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

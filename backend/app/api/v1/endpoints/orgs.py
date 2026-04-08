@@ -1,29 +1,31 @@
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Response
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
 from app.api import deps
 from app.models.user import User
 from app.models.event import Event
-from app.models.auth_role import AuthRole
+from app.models.organization import Organization
+from app.models.role import Role
+from app.models.registration import Registration
+from app.models.api_key import ApiKey
 from app.schemas.event import EventOut
 from app.schemas.user import TeamMemberCreate
-from app.core.config import settings
+from app.schemas.organization import OrganizationOut
 from app.services.exports import generate_event_registration_csv
 import json
-from datetime import datetime
+import secrets
+import hashlib
+from datetime import datetime, timedelta, timezone
+from app.core.timezone import now_utc
 from app.services.cloudinary import cloudinary
 import cloudinary.uploader
 import uuid
-from datetime import datetime, timedelta, timezone
-from app.core.timezone import now_utc
-
 
 router = APIRouter()
 
 # ------------------------------------------------------------------
-# 🔐 HIERARCHY DEFINITIONS
+# HIERARCHY DEFINITIONS
 # ------------------------------------------------------------------
-
-# Roles that manage others (The "Bosses")
 HEAD_ROLES_SET = {
     "overall coordinator",
     "president",
@@ -34,85 +36,99 @@ HEAD_ROLES_SET = {
     "convener"
 }
 
-# ------------------------------------------------------------------
-# 🔐 DEPENDENCIES
-# ------------------------------------------------------------------
 
-def get_org_role_by_id(
+# ------------------------------------------------------------------
+# DEPENDENCIES
+# ------------------------------------------------------------------
+def get_org_role(
     org_id: int,
     current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db),
 ):
-    """
-    Validates that the current user has ANY role in the specific org_id 
-    requested in the URL.
-    """
-    auth = next((a for a in current_user.authorizations if a.id == org_id), None)
-    
-    if not auth:
-        raise HTTPException(
-            status_code=403, 
-            detail="You are not authorized to manage this organization."
-        )
-    return auth
+    """Validates user has a role in the org referenced by org_id."""
+    role = db.query(Role).filter(
+        Role.user_id == current_user.id,
+        Role.org_id == org_id
+    ).first()
 
-def get_org_head(
-    role: AuthRole = Depends(get_org_role_by_id)
-):
-    """
-    Validates that the requester is a HEAD (e.g., President, OC).
-    """
-    # ✅ FIX: role.role_name is now a String, so we compare directly
-    if role.role_name not in HEAD_ROLES_SET:
-        raise HTTPException(
-            status_code=403, 
-            detail="Permission Denied. Only Organization Heads can manage the team."
-        )
+    if not role:
+        raise HTTPException(status_code=403, detail="You are not authorized to manage this organization.")
     return role
 
-# ------------------------------------------------------------------
-# 📊 DASHBOARD & ANALYTICS
-# ------------------------------------------------------------------
 
+def get_org_head(
+    role: Role = Depends(get_org_role)
+):
+    """Validates that the requester is a HEAD (e.g., President, OC)."""
+    if role.role_name not in HEAD_ROLES_SET:
+        raise HTTPException(status_code=403, detail="Permission Denied. Only Organization Heads can manage the team.")
+    return role
+
+
+# ------------------------------------------------------------------
+# DASHBOARD & ANALYTICS
+# ------------------------------------------------------------------
 @router.get("/{org_id}/dashboard")
 def get_org_dashboard(
     org_id: int,
     db: Session = Depends(deps.get_db),
-    role: AuthRole = Depends(get_org_role_by_id)
+    role: Role = Depends(get_org_role)
 ):
-    """Returns stats specific to the selected organization."""
-    # ✅ FIX: Removed .value (role.org_name is already a string)
-    org_events = db.query(Event).filter(Event.org_name == role.org_name).all()
-    
-    total_events = len(org_events)
-    total_regs = sum(len(e.registrations) for e in org_events)
-    
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    # Use SQL aggregation instead of loading all registrations into Python
+    total_events = db.query(func.count(Event.id)).filter(Event.org_id == org_id).scalar()
+    total_regs = (
+        db.query(func.count(Registration.id))
+        .join(Event, Registration.event_id == Event.id)
+        .filter(Event.org_id == org_id)
+        .scalar()
+    )
+
+    dept_rows = (
+        db.query(User.department, func.count(Registration.id))
+        .join(Registration, Registration.user_id == User.id)
+        .join(Event, Registration.event_id == Event.id)
+        .filter(Event.org_id == org_id)
+        .group_by(User.department)
+        .all()
+    )
     dept_counts = {}
-    for event in org_events:
-        for reg in event.registrations:
-            dept = (reg.user.department.value if hasattr(reg.user.department, 'value') else reg.user.department) or "Unknown"
-            dept_counts[dept] = dept_counts.get(dept, 0) + 1
+    for dept, count in dept_rows:
+        dept_key = (dept.value if hasattr(dept, 'value') else dept) or "Unknown"
+        dept_counts[dept_key] = count
 
     return {
-        "org_name": role.org_name.value if hasattr(role.org_name, 'value') else role.org_name,
+        "org_id": org.id,
+        "org_name": org.name,
+        "org_type": org.org_type,
+        "org_banner": org.banner_url,
         "your_role": role.role_name,
-        "org_banner":role.org_banner,
         "total_events": total_events,
         "total_registrations": total_regs,
-        "dept_analytics": dept_counts 
+        "dept_analytics": dept_counts
     }
 
-# ------------------------------------------------------------------
-# 📅 EVENT MANAGEMENT
-# ------------------------------------------------------------------
 
+# ------------------------------------------------------------------
+# EVENT MANAGEMENT
+# ------------------------------------------------------------------
 @router.get("/{org_id}/events", response_model=list[EventOut])
 def get_org_events(
     org_id: int,
     db: Session = Depends(deps.get_db),
-    role: AuthRole = Depends(get_org_role_by_id)
+    role: Role = Depends(get_org_role)
 ):
-    # ✅ FIX: Removed .value
-    return db.query(Event).filter(Event.org_name == role.org_name).order_by(Event.date.desc()).all()
+    return (
+        db.query(Event)
+        .options(joinedload(Event.organization))
+        .filter(Event.org_id == org_id)
+        .order_by(Event.date.desc())
+        .all()
+    )
+
 
 @router.post("/{org_id}/events", response_model=EventOut)
 def create_org_event(
@@ -127,33 +143,30 @@ def create_org_event(
     is_private: bool = Form(False),
     registration_deadline: str = Form(None),
     photo: UploadFile = File(None),
-    
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
-    role: AuthRole = Depends(get_org_role_by_id)
+    role: Role = Depends(get_org_role)
 ):
-    # 1. Handle File Upload
-    image_url = role.org_banner
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    # Handle File Upload
+    image_url = org.banner_url
     if photo:
         result = cloudinary.uploader.upload(
-            photo.file,
-            folder="events",
-            public_id=str(uuid.uuid4()),
-            resource_type="image"
+            photo.file, folder="events",
+            public_id=str(uuid.uuid4()), resource_type="image"
         )
         image_url = result["secure_url"]
-        
 
-    # 2. Parse JSON fields
+    # Parse JSON fields
     try:
         tags_list = json.loads(tags)
         schema_list = json.loads(custom_form_schema)
         audience_dict = json.loads(target_audience)
 
-        # Parse ISO date
         date_obj = datetime.fromisoformat(date)
-
-        # Make timezone-aware (UTC)
         if date_obj.tzinfo is None:
             date_obj = date_obj.replace(tzinfo=timezone.utc)
 
@@ -161,14 +174,11 @@ def create_org_event(
 
         if date_obj <= now:
             raise HTTPException(status_code=400, detail="Event date must be in the future")
-
         if date_obj < now + timedelta(minutes=5):
             raise HTTPException(status_code=400, detail="Event must be scheduled at least 5 minutes in advance")
-
         if date_obj > now + timedelta(days=365):
             raise HTTPException(status_code=400, detail="Event date cannot be more than 1 year in the future")
 
-        # Parse & validate registration deadline
         deadline_obj = None
         if registration_deadline:
             deadline_obj = datetime.fromisoformat(registration_deadline)
@@ -184,8 +194,6 @@ def create_org_event(
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON in request")
 
-
-    # 3. Create Event
     event = Event(
         name=name,
         description=description,
@@ -197,29 +205,25 @@ def create_org_event(
         custom_form_schema=schema_list,
         target_audience=audience_dict,
         is_private=is_private,
-        org_name=role.org_name,
-        org_type=role.org_type,
+        org_id=org_id,
         event_manager_email=current_user.email
     )
-    
+
     db.add(event)
     db.commit()
     db.refresh(event)
     return event
 
 
-
 @router.delete("/{org_id}/events/{event_id}", status_code=204)
 def delete_event(
+    org_id: int,
     event_id: int,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
-    role: AuthRole = Depends(get_org_role_by_id)
+    role: Role = Depends(get_org_role)
 ):
-    event = db.query(Event).filter(
-        Event.id == event_id,
-        Event.org_name == role.org_name
-    ).first()
+    event = db.query(Event).filter(Event.id == event_id, Event.org_id == org_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     db.delete(event)
@@ -228,6 +232,7 @@ def delete_event(
 
 @router.put("/{org_id}/events/{event_id}", response_model=EventOut)
 def update_event(
+    org_id: int,
     event_id: int,
     name: str = Form(None),
     description: str = Form(None),
@@ -241,51 +246,37 @@ def update_event(
     photo: UploadFile = File(None),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
-    role: AuthRole = Depends(get_org_role_by_id)
+    role: Role = Depends(get_org_role)
 ):
-    print(date, registration_deadline)
-    event = db.query(Event).filter(
-        Event.id == event_id,
-        Event.org_name == role.org_name
+    event = db.query(Event).options(joinedload(Event.organization)).filter(
+        Event.id == event_id, Event.org_id == org_id
     ).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    # Handle photo update
     if photo and photo.filename:
         result = cloudinary.uploader.upload(
-            photo.file,
-            folder="events",
-            public_id=str(uuid.uuid4()),
-            resource_type="image"
+            photo.file, folder="events",
+            public_id=str(uuid.uuid4()), resource_type="image"
         )
         event.image_url = result["secure_url"]
 
-    # Parse & validate date (if provided)
     if date:
         try:
             date_obj = datetime.fromisoformat(date)
-
             if date_obj.tzinfo is None:
                 date_obj = date_obj.replace(tzinfo=timezone.utc)
-
             now = now_utc()
-            print("Parsed date:", date_obj, "Current time:", now)
-
             if date_obj <= now:
                 raise HTTPException(status_code=400, detail="Event date must be in the future")
-
             if date_obj < now + timedelta(minutes=5):
                 raise HTTPException(status_code=400, detail="Event must be scheduled at least 5 minutes in advance")
-
             if date_obj > now + timedelta(days=365):
                 raise HTTPException(status_code=400, detail="Event date cannot be more than 1 year in the future")
-
             event.date = date_obj
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format")
 
-    # Update simple fields
     if name is not None:
         event.name = name
     if description is not None:
@@ -295,10 +286,8 @@ def update_event(
     if is_private is not None:
         event.is_private = is_private
 
-    # Update registration deadline
     if registration_deadline is not None:
         if registration_deadline == "":
-            # Allow clearing the deadline
             event.registration_deadline = None
         else:
             try:
@@ -315,7 +304,6 @@ def update_event(
             except ValueError:
                 raise HTTPException(status_code=400, detail="Invalid date format for registration_deadline")
 
-    # JSON fields
     if tags:
         event.tags = json.loads(tags)
     if custom_form_schema:
@@ -328,190 +316,157 @@ def update_event(
     return event
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ------------------------------------------------------------------
-# 📥 DATA EXPORTS & REGISTRATIONS
+# DATA EXPORTS & REGISTRATIONS
 # ------------------------------------------------------------------
-
 @router.get("/{org_id}/events/{event_id}/registrations")
 def get_event_registrations(
     org_id: int,
     event_id: int,
     db: Session = Depends(deps.get_db),
-    role: AuthRole = Depends(get_org_role_by_id)
+    role: Role = Depends(get_org_role)
 ):
-    """View list of students registered for a specific event."""
-    # ✅ FIX: Removed .value
-    event = db.query(Event).filter(Event.id == event_id, Event.org_name == role.org_name).first()
+    event = db.query(Event).filter(Event.id == event_id, Event.org_id == org_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found or not owned by you")
-    
-    results = []
-    for reg in event.registrations:
-        results.append({
-            "name": reg.user.name,
-            "email": reg.user.email,
-            "entry_number": reg.user.entry_number,
-            "department": reg.user.department.value if hasattr(reg.user.department, 'value') else reg.user.department,
-            "hostel": reg.user.hostel.value if hasattr(reg.user.hostel, 'value') else reg.user.hostel,
-            "photo_url": reg.user.photo_url,
-            "registered_at": reg.registered_at,
-        })
-    return results
+
+    regs = (
+        db.query(Registration)
+        .options(joinedload(Registration.user))
+        .filter(Registration.event_id == event_id)
+        .all()
+    )
+
+    return [{
+        "name": reg.user.name,
+        "email": reg.user.email,
+        "entry_number": reg.user.entry_number,
+        "department": reg.user.department.value if hasattr(reg.user.department, 'value') else reg.user.department,
+        "hostel": reg.user.hostel.value if hasattr(reg.user.hostel, 'value') else reg.user.hostel,
+        "photo_url": reg.user.photo_url,
+        "registered_at": reg.registered_at,
+    } for reg in regs]
+
 
 @router.get("/{org_id}/events/{event_id}/csv")
 def download_event_csv(
     org_id: int,
     event_id: int,
     db: Session = Depends(deps.get_db),
-    role: AuthRole = Depends(get_org_role_by_id)
+    role: Role = Depends(get_org_role)
 ):
-    """Download the attendee list as a CSV file."""
-    # ✅ FIX: Removed .value
-    event = db.query(Event).filter(Event.id == event_id, Event.org_name == role.org_name).first()
+    event = db.query(Event).filter(Event.id == event_id, Event.org_id == org_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
     csv_file = generate_event_registration_csv(db, event_id)
-    
+
     return Response(
         content=csv_file.getvalue(),
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=registrations_{event_id}.csv"}
     )
 
+
 @router.get("/{org_id}/events/{event_id}/feedback")
 def get_event_feedback(
     org_id: int,
     event_id: int,
     db: Session = Depends(deps.get_db),
-    role: AuthRole = Depends(get_org_role_by_id)
+    role: Role = Depends(get_org_role)
 ):
-    """Get average rating and stats."""
-    # ✅ FIX: Removed .value
-    event = db.query(Event).filter(Event.id == event_id, Event.org_name == role.org_name).first()
+    event = db.query(Event).filter(Event.id == event_id, Event.org_id == org_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
-        
+
     ratings = [r.feedback_rating for r in event.registrations if r.feedback_rating]
-    
+
     if not ratings:
         return {"average": 0, "count": 0, "distribution": {}}
-        
+
     return {
         "average": round(sum(ratings) / len(ratings), 1),
         "count": len(ratings),
         "distribution": {i: ratings.count(i) for i in range(1, 11)}
     }
 
-# ------------------------------------------------------------------
-# 👥 TEAM MANAGEMENT (Strictly Protected)
-# ------------------------------------------------------------------
 
-# PATCH for org.py — get_team_members endpoint
-# Replace the return statement in get_team_members with this:
-
-@router.get("/{org_id}/team", response_model=list[dict])
+# ------------------------------------------------------------------
+# TEAM MANAGEMENT
+# ------------------------------------------------------------------
+@router.get("/{org_id}/team")
 def get_team_members(
     org_id: int,
     db: Session = Depends(deps.get_db),
-    role: AuthRole = Depends(get_org_role_by_id)
+    role: Role = Depends(get_org_role)
 ):
-    """View all team members."""
-    team_roles = db.query(AuthRole).filter(AuthRole.org_name == role.org_name).all()
+    team_roles = db.query(Role).options(joinedload(Role.user)).filter(Role.org_id == org_id).all()
     return [{
         "user_id": r.user_id,
         "name": r.user.name,
         "email": r.user.email,
         "role": r.role_name,
-        "photo_url": r.user.photo_url,   # ← ADD THIS LINE
+        "photo_url": r.user.photo_url,
     } for r in team_roles]
+
 
 @router.post("/{org_id}/team")
 def add_team_member(
     org_id: int,
     member_in: TeamMemberCreate,
     db: Session = Depends(deps.get_db),
-    head_role: AuthRole = Depends(get_org_head)
+    head_role: Role = Depends(get_org_head)
 ):
-    """
-    Appoint a new team member.
-    RESTRICTION: Heads cannot appoint other Heads (e.g., President).
-    """
-    # ✅ FIX 1: Use .value for comparison (Enum Object vs String Set)
     if member_in.role.value in HEAD_ROLES_SET:
-        raise HTTPException(
-            status_code=403, 
-            detail="Permission Denied. You cannot appoint other Heads (President, OC, etc.). Contact Admin."
-        )
+        raise HTTPException(status_code=403, detail="Permission Denied. You cannot appoint other Heads. Contact Admin.")
 
     target_user = db.query(User).filter(User.email == member_in.email).first()
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found. They must login to Synapse at least once.")
 
-    # Check using string directly
-    existing = db.query(AuthRole).filter(
-        AuthRole.user_id == target_user.id,
-        AuthRole.org_name == head_role.org_name
+    existing = db.query(Role).filter(
+        Role.user_id == target_user.id,
+        Role.org_id == head_role.org_id
     ).first()
-    
+
     if existing:
         raise HTTPException(status_code=400, detail="User is already in team")
 
-    new_role = AuthRole(
+    new_role = Role(
         user_id=target_user.id,
-        org_name=head_role.org_name,
-        # ✅ FIX 2: Extract the string value for the database
-        role_name=member_in.role.value, 
-        org_type=head_role.org_type
+        org_id=head_role.org_id,
+        role_name=member_in.role.value,
     )
     db.add(new_role)
     db.commit()
     return {"msg": "Member added"}
+
 
 @router.delete("/{org_id}/team/{user_id}")
 def remove_team_member(
     org_id: int,
     user_id: int,
     db: Session = Depends(deps.get_db),
-    head_role: AuthRole = Depends(get_org_head)
+    head_role: Role = Depends(get_org_head)
 ):
     if user_id == head_role.user_id:
         raise HTTPException(status_code=400, detail="Cannot remove yourself")
 
-    # ✅ FIX: Use string directly
-    role_to_delete = db.query(AuthRole).filter(
-        AuthRole.user_id == user_id,
-        AuthRole.org_name == head_role.org_name
+    role_to_delete = db.query(Role).filter(
+        Role.user_id == user_id,
+        Role.org_id == org_id
     ).first()
-    
+
     if not role_to_delete:
         raise HTTPException(status_code=404, detail="Member not found")
 
-    # ✅ FIX: Check against set of strings
     if role_to_delete.role_name in HEAD_ROLES_SET:
-        raise HTTPException(
-            status_code=403, 
-            detail="Permission Denied. You cannot remove another Head-level member."
-        )
-    
+        raise HTTPException(status_code=403, detail="Permission Denied. You cannot remove another Head-level member.")
+
     db.delete(role_to_delete)
     db.commit()
-    
-    return {"msg": "Member removed"}
 
+    return {"msg": "Member removed"}
 
 
 @router.post("/{org_id}/banner")
@@ -519,26 +474,99 @@ def upload_org_banner(
     org_id: int,
     banner: UploadFile = File(...),
     db: Session = Depends(deps.get_db),
-    role: AuthRole = Depends(get_org_role_by_id)
+    role: Role = Depends(get_org_role)
 ):
     if banner.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
         raise HTTPException(status_code=400, detail="Only JPG/PNG allowed")
 
-    org_name_str = role.org_name.value if hasattr(role.org_name, 'value') else str(role.org_name)
-    org_file_name = org_name_str.lower().replace(" ", "_")
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    org_file_name = org.name.lower().replace(" ", "_")
 
     result = cloudinary.uploader.upload(
-        banner.file,
-        folder="org_banners",
-        public_id=org_file_name,
-        format="jpg",   # force jpg
-        resource_type="image"
+        banner.file, folder="org_banners",
+        public_id=org_file_name, format="jpg", resource_type="image"
     )
 
-    role.org_banner=result["secure_url"]
-    db.add(role)
+    org.banner_url = result["secure_url"]
     db.commit()
-    db.refresh(role)
+    db.refresh(org)
     return {"banner_url": result["secure_url"]}
 
 
+# ------------------------------------------------------------------
+# API KEY MANAGEMENT (HEAD only)
+# ------------------------------------------------------------------
+@router.get("/{org_id}/api-keys")
+def list_api_keys(
+    org_id: int,
+    db: Session = Depends(deps.get_db),
+    head_role: Role = Depends(get_org_head),
+):
+    keys = db.query(ApiKey).filter(ApiKey.org_id == org_id).order_by(ApiKey.created_at.desc()).all()
+    return [{
+        "id": k.id,
+        "key_prefix": k.key_prefix,
+        "label": k.label,
+        "is_active": k.is_active,
+        "allowed_ips": k.allowed_ips,
+        "created_at": k.created_at,
+        "last_used_at": k.last_used_at,
+    } for k in keys]
+
+
+@router.post("/{org_id}/api-keys")
+def create_api_key(
+    org_id: int,
+    payload: dict = None,
+    db: Session = Depends(deps.get_db),
+    head_role: Role = Depends(get_org_head),
+):
+    """Generate a new API key for the org. Returns the raw key ONCE."""
+    label = (payload or {}).get("label", "default")
+    allowed_ips = (payload or {}).get("allowed_ips", [])
+
+    # Validate IPs if provided
+    if not isinstance(allowed_ips, list):
+        raise HTTPException(status_code=400, detail="allowed_ips must be a list")
+
+    raw_key = f"syn_{secrets.token_urlsafe(32)}"
+    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+
+    api_key = ApiKey(
+        org_id=org_id,
+        key_hash=key_hash,
+        key_prefix=raw_key[:8],
+        label=label,
+        allowed_ips=allowed_ips,
+    )
+    db.add(api_key)
+    db.commit()
+    db.refresh(api_key)
+
+    return {
+        "id": api_key.id,
+        "key": raw_key,  # shown ONCE, never stored in plaintext
+        "key_prefix": api_key.key_prefix,
+        "label": api_key.label,
+        "allowed_ips": api_key.allowed_ips,
+        "msg": "Store this key securely. It will NOT be shown again.",
+    }
+
+
+@router.delete("/{org_id}/api-keys/{key_id}")
+def revoke_api_key(
+    org_id: int,
+    key_id: int,
+    db: Session = Depends(deps.get_db),
+    head_role: Role = Depends(get_org_head),
+):
+    api_key = db.query(ApiKey).filter(ApiKey.id == key_id, ApiKey.org_id == org_id).first()
+    if not api_key:
+        raise HTTPException(status_code=404, detail="API key not found")
+
+    api_key.is_active = False
+    db.commit()
+    return {"msg": "API key revoked"}

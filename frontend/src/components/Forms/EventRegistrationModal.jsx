@@ -3,6 +3,7 @@ import { X, Check } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 import Loader from '../UI/Loader';
+import SearchableDropdown from '../UI/SearchableDropdown';
 
 const EventRegistrationModal = ({ isOpen, onClose, eventId, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -79,16 +80,13 @@ const EventRegistrationModal = ({ isOpen, onClose, eventId, onSuccess }) => {
                 )}
 
                 {field.type === 'radio' && field.options && (
-                  <select
-  className="form-select bg-dark text-white border-secondary"
-  required
-  value={answers[field.label] || ""}
-  onChange={e => handleInputChange(field.label, e.target.value)}
->
-
-                    <option value="">Select option...</option>
-                    {field.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
+                  <SearchableDropdown
+                    options={field.options}
+                    value={answers[field.label] || ""}
+                    onChange={val => handleInputChange(field.label, val)}
+                    placeholder="Select option..."
+                    searchable={field.options.length > 5}
+                  />
                 )}
               </div>
             ))}

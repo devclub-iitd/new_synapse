@@ -30,5 +30,5 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # 5. Relationships (Cascade added)
-    authorizations = relationship("AuthRole", back_populates="user", cascade="all, delete-orphan")
+    roles = relationship("Role", back_populates="user", cascade="all, delete-orphan")
     registrations = relationship("Registration", back_populates="user", cascade="all, delete-orphan")

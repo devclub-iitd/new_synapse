@@ -1,275 +1,18 @@
-// import React, { useState, useEffect } from 'react';
-// import api from '../api/axios';
-// import { Search, ShieldAlert, Trash2, UserCheck, PlusCircle, X } from 'lucide-react';
-// import Loader from '../components/UI/Loader';
-// import ConfirmationModal from '../components/UI/ConfirmationModal';
-// import toast from 'react-hot-toast';
-
-// import { ORG_TYPES, HEAD_ROLES, ALL_ORGS } from '../utils/constants';
-
-// const AdminDashboard = () => {
-//   const [users, setUsers] = useState([]);
-//   const [filteredUsers, setFilteredUsers] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [searchTerm, setSearchTerm] = useState('');
-//   const [selectedUser, setSelectedUser] = useState(null);
-//   const [authForm, setAuthForm] = useState({
-//     org_type: 'club',
-//     org_name: 'devclub',
-//     role_name: 'overall coordinator'
-//   });
-//   const [revokeModalOpen, setRevokeModalOpen] = useState(false);
-//   const [roleToRevoke, setRoleToRevoke] = useState(null);
-
-//   useEffect(() => { fetchUsers(); }, []);
-
-//   useEffect(() => {
-//     const results = users.filter(user =>
-//       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//       user.email.toLowerCase().includes(searchTerm.toLowerCase())
-//     );
-//     setFilteredUsers(results);
-//   }, [searchTerm, users]);
-
-//   const fetchUsers = async () => {
-//     try {
-//       setLoading(true);
-//       const res = await api.get('/admin/users');
-//       setUsers(res.data);
-//       setFilteredUsers(res.data);
-//     } catch (err) {
-//       toast.error("Failed to load users");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const handleAuthorize = async (e) => {
-//     e.preventDefault();
-//     if (!selectedUser) return;
-//     try {
-//       await api.post(`/admin/authorize?email=${selectedUser.email}`, authForm);
-//       toast.success(`Role assigned to ${selectedUser.name}`);
-//       setSelectedUser(null);
-//       fetchUsers();
-//     } catch (err) {
-//       toast.error(err.response?.data?.detail || "Failed to authorize user");
-//     }
-//   };
-
-//   const confirmRevoke = (user, authId) => {
-//     setRoleToRevoke({ user_id: user.id, auth_id: authId });
-//     setRevokeModalOpen(true);
-//   };
-
-//   const handleRevoke = async () => {
-//     try {
-//       toast.success("Role revoked (Simulation)");
-//       fetchUsers();
-//       setRevokeModalOpen(false);
-//       setRoleToRevoke(null);
-//     } catch (err) {
-//       toast.error("Failed to revoke role");
-//     }
-//   };
-
-//   const handleTypeChange = (e) => {
-//     const newType = e.target.value;
-//     const availableOrgs = ALL_ORGS[newType] || [];
-//     setAuthForm({ ...authForm, org_type: newType, org_name: availableOrgs[0] || '' });
-//   };
-
-//   if (loading) return <Loader />;
-
-//   return (
-//     <div className="container-fluid">
-//       <div className="page-header">
-//         <h2>Admin Control Center</h2>
-//         <p className="page-subtitle">Manage users, assign roles, and control access</p>
-//       </div>
-
-//       <div className="row g-4">
-
-//         {/* LEFT: USER LIST */}
-//         <div className="col-12 col-md-8">
-//           <div className="glass-card p-4 h-100">
-
-//             {/* Header: stacks on mobile */}
-//             <div className="admin-list-header mb-4">
-//               <h5 className="m-0 fw-bold" style={{ color: 'var(--text-primary)' }}>All Users</h5>
-//               <div className="admin-search-bar">
-//                 <Search size={16} className="text-purple" style={{ flexShrink: 0 }} />
-//                 <input
-//                   type="text"
-//                   placeholder="Search students..."
-//                   value={searchTerm}
-//                   onChange={(e) => setSearchTerm(e.target.value)}
-//                 />
-//               </div>
-//             </div>
-
-//             <div className="custom-scrollbar" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-//               <div className="modern-table-wrapper">
-//                 <table className="modern-table">
-//                   <thead>
-//                     <tr>
-//                       <th>Name</th>
-//                       {/* Hide email + roles on mobile */}
-//                       <th className="d-none d-md-table-cell">Email</th>
-//                       <th className="d-none d-md-table-cell">Current Roles</th>
-//                       <th>Action</th>
-//                     </tr>
-//                   </thead>
-//                   <tbody>
-//                     {filteredUsers.map(user => (
-//                       <tr key={user.id} className={selectedUser?.id === user.id ? "row-selected" : ""}>
-//                         <td>
-//                           <div className="d-flex align-items-center gap-2">
-//                             <div className="member-avatar-sm">{user.name.charAt(0)}</div>
-//                             <div>
-//                               <div className="fw-semibold" style={{ fontSize: '0.88rem' }}>{user.name}</div>
-//                               <div className="small" style={{ color: 'var(--text-muted)' }}>{user.entry_number}</div>
-//                               {/* Show email below name on mobile only */}
-//                               <div className="d-md-none small" style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>
-//                                 {user.email}
-//                               </div>
-//                               {/* Show roles below name on mobile only */}
-//                               {user.authorizations?.length > 0 && (
-//                                 <div className="d-md-none d-flex flex-wrap gap-1 mt-1">
-//                                   {user.authorizations.map(auth => (
-//                                     <span key={auth.id} className="role-badge" style={{ fontSize: '0.62rem' }}>
-//                                       {auth.org_name}
-//                                     </span>
-//                                   ))}
-//                                 </div>
-//                               )}
-//                             </div>
-//                           </div>
-//                         </td>
-
-//                         {/* Desktop-only columns */}
-//                         <td className="d-none d-md-table-cell" style={{ color: 'var(--text-secondary)' }}>
-//                           {user.email}
-//                         </td>
-//                         <td className="d-none d-md-table-cell">
-//                           <div className="d-flex flex-wrap gap-1">
-//                             {user.authorizations?.length > 0 ? (
-//                               user.authorizations.map(auth => (
-//                                 <span key={auth.id} className="role-badge">
-//                                   {auth.org_name}
-//                                   <span style={{ opacity: 0.7 }}> ({auth.role_name})</span>
-//                                   <button
-//                                     className="badge-revoke btn p-0 border-0 bg-transparent d-flex"
-//                                     onClick={(e) => { e.stopPropagation(); confirmRevoke(user, auth.id); }}
-//                                     title="Revoke Role"
-//                                   >
-//                                     <Trash2 size={11} />
-//                                   </button>
-//                                 </span>
-//                               ))
-//                             ) : (
-//                               <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Student</span>
-//                             )}
-//                           </div>
-//                         </td>
-
-//                         <td>
-//                           <button className="btn-action primary" onClick={() => setSelectedUser(user)}>
-//                             <UserCheck size={15} />
-//                             <span className="d-none d-sm-inline"> Assign</span>
-//                           </button>
-//                         </td>
-//                       </tr>
-//                     ))}
-//                   </tbody>
-//                 </table>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* RIGHT: AUTHORIZE FORM */}
-//         <div className="col-12 col-md-4">
-//           <div className="glass-card p-4">
-//             <h5 className="mb-3 d-flex align-items-center gap-2 fw-bold" style={{ color: 'var(--text-primary)' }}>
-//               <ShieldAlert size={20} className="text-purple" /> Grant Access
-//             </h5>
-
-//             {!selectedUser ? (
-//               <div className="empty-placeholder">
-//                 <UserCheck size={40} />
-//                 <p>Select a user from the list to assign a leadership role.</p>
-//               </div>
-//             ) : (
-//               <form onSubmit={handleAuthorize}>
-//                 <div className="selected-user-card">
-//                   <div className="selected-user-avatar">{selectedUser.name.charAt(0)}</div>
-//                   <div className="selected-user-info">
-//                     <div className="selected-user-name">{selectedUser.name}</div>
-//                     <div className="selected-user-email">{selectedUser.email}</div>
-//                   </div>
-//                   <button type="button" className="btn p-0 border-0 bg-transparent" onClick={() => setSelectedUser(null)}>
-//                     <X size={16} style={{ color: 'var(--text-muted)' }} />
-//                   </button>
-//                 </div>
-
-//                 <div className="mb-3">
-//                   <label className="form-label-modern">Organization Type</label>
-//                   <select className="form-select modern-input" value={authForm.org_type} onChange={handleTypeChange}>
-//                     {ORG_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-//                   </select>
-//                 </div>
-
-//                 <div className="mb-3">
-//                   <label className="form-label-modern">Organization Name</label>
-//                   <select className="form-select modern-input" value={authForm.org_name}
-//                     onChange={(e) => setAuthForm({ ...authForm, org_name: e.target.value })}>
-//                     {(ALL_ORGS[authForm.org_type] || []).map(org => (
-//                       <option key={org} value={org}>{org.charAt(0).toUpperCase() + org.slice(1)}</option>
-//                     ))}
-//                   </select>
-//                 </div>
-
-//                 <div className="mb-4">
-//                   <label className="form-label-modern">Role Title</label>
-//                   <select className="form-select modern-input" value={authForm.role_name}
-//                     onChange={(e) => setAuthForm({ ...authForm, role_name: e.target.value })}>
-//                     {HEAD_ROLES.map(role => <option key={role} value={role}>{role.toUpperCase()}</option>)}
-//                   </select>
-//                 </div>
-
-//                 <button type="submit" className="btn btn-purple w-100 fw-bold">
-//                   <PlusCircle size={18} className="me-2" /> Assign
-//                 </button>
-//               </form>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-
-//       <ConfirmationModal
-//         isOpen={revokeModalOpen}
-//         onClose={() => setRevokeModalOpen(false)}
-//         onConfirm={handleRevoke}
-//         title="Revoke Access"
-//         message="Are you sure you want to remove this role? The user will lose access immediately."
-//       />
-//     </div>
-//   );
-// };
-
-// export default AdminDashboard;
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import api from '../api/axios';
-import { Search, ShieldAlert, Trash2, UserCheck, PlusCircle, X } from 'lucide-react';
+import {
+  Search, ShieldAlert, Trash2, UserCheck, PlusCircle, X, Users,
+  Building2, BarChart3, Edit2, Plus, ChevronDown, ChevronRight,
+  AlertTriangle, TrendingUp, Calendar, UserX, Shield
+} from 'lucide-react';
 import Loader from '../components/UI/Loader';
 import ConfirmationModal from '../components/UI/ConfirmationModal';
 import toast from 'react-hot-toast';
+import { capitalize } from '../utils/capitalize';
 
-import { ORG_TYPES, HEAD_ROLES, ALL_ORGS } from '../utils/constants';
+import { ALL_ROLES, ORG_TYPES } from '../utils/constants';
+import SearchableDropdown from '../components/UI/SearchableDropdown';
 
-// Shared avatar helper — photo if available, else coloured initial
 const UserAvatar = ({ name, photoUrl, size = 38 }) => {
   const style = {
     width: size, height: size, borderRadius: '10px',
@@ -281,9 +24,7 @@ const UserAvatar = ({ name, photoUrl, size = 38 }) => {
   if (photoUrl) {
     return (
       <div style={style}>
-        <img
-          src={photoUrl}
-          alt={name}
+        <img src={photoUrl} alt={name}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement.textContent = name?.charAt(0) || '?'; }}
         />
@@ -293,248 +34,802 @@ const UserAvatar = ({ name, photoUrl, size = 38 }) => {
   return <div style={style}>{name?.charAt(0) || '?'}</div>;
 };
 
-const AdminDashboard = () => {
-  const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+const TABS = [
+  { key: 'users', label: 'Users', icon: Users },
+  { key: 'orgs', label: 'Organizations', icon: Building2 },
+  { key: 'analytics', label: 'Analytics', icon: BarChart3 },
+];
+
+// ─── USERS TAB ────────────────────────────────────────────
+const UsersTab = ({ users, totalUsers, orgs, onRefresh, onLoadMore, loadingMore, hasMore, onFetchOrgs }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
-  const [authForm, setAuthForm] = useState({
-    org_type: 'club',
-    org_name: 'devclub',
-    role_name: 'overall coordinator'
-  });
+  const [authForm, setAuthForm] = useState({ org_id: '', role_name: 'overall coordinator' });
   const [revokeModalOpen, setRevokeModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [roleToRevoke, setRoleToRevoke] = useState(null);
-
-  useEffect(() => { fetchUsers(); }, []);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const sentinelRef = useRef(null);
 
   useEffect(() => {
-    const results = users.filter(user =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredUsers(results);
-  }, [searchTerm, users]);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get('/admin/users');
-      setUsers(res.data);
-      setFilteredUsers(res.data);
-    } catch (err) {
-      toast.error("Failed to load users");
-    } finally {
-      setLoading(false);
+    if (orgs.length > 0 && !authForm.org_id) {
+      setAuthForm(prev => ({ ...prev, org_id: orgs[0].id }));
     }
-  };
+  }, [orgs, authForm.org_id]);
+
+  // Fetch orgs when user selects someone for role assignment
+  useEffect(() => {
+    if (selectedUser && orgs.length === 0) onFetchOrgs();
+  }, [selectedUser, orgs.length, onFetchOrgs]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || loadingMore) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) onLoadMore(); },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, onLoadMore]);
+
+  const filteredUsers = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    return users.filter(u =>
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      (u.entry_number || '').toLowerCase().includes(q)
+    );
+  }, [searchTerm, users]);
 
   const handleAuthorize = async (e) => {
     e.preventDefault();
-    if (!selectedUser) return;
+    if (!selectedUser || !authForm.org_id) return;
     try {
-      await api.post(`/admin/authorize?email=${selectedUser.email}`, authForm);
+      await api.post(`/admin/authorize?email=${encodeURIComponent(selectedUser.email)}`, {
+        org_id: parseInt(authForm.org_id), role_name: authForm.role_name
+      });
       toast.success(`Role assigned to ${selectedUser.name}`);
       setSelectedUser(null);
-      fetchUsers();
+      onRefresh();
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to authorize user");
+      toast.error(err.response?.data?.detail || "Failed to authorize");
     }
-  };
-
-  const confirmRevoke = (user, authId) => {
-    setRoleToRevoke({ user_id: user.id, auth_id: authId });
-    setRevokeModalOpen(true);
   };
 
   const handleRevoke = async () => {
+    if (!roleToRevoke) return;
     try {
-      toast.success("Role revoked (Simulation)");
-      fetchUsers();
-      setRevokeModalOpen(false);
-      setRoleToRevoke(null);
-    } catch (err) {
-      toast.error("Failed to revoke role");
-    }
+      await api.delete(`/admin/revoke?email=${encodeURIComponent(roleToRevoke.email)}&org_id=${roleToRevoke.org_id}`);
+      toast.success("Role revoked");
+      onRefresh();
+    } catch { toast.error("Failed to revoke"); }
+    setRevokeModalOpen(false);
+    setRoleToRevoke(null);
   };
 
-  const handleTypeChange = (e) => {
-    const newType = e.target.value;
-    const availableOrgs = ALL_ORGS[newType] || [];
-    setAuthForm({ ...authForm, org_type: newType, org_name: availableOrgs[0] || '' });
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    try {
+      await api.delete(`/admin/users/${userToDelete.id}`);
+      toast.success(`Deleted ${userToDelete.name}`);
+      onRefresh();
+    } catch (err) { toast.error(err.response?.data?.detail || "Failed to delete user"); }
+    setDeleteModalOpen(false);
+    setUserToDelete(null);
   };
 
-  if (loading) return <Loader />;
+  const usersWithRoles = users.filter(u => u.roles?.length > 0).length;
 
   return (
-    <div className="container-fluid">
-      <div className="page-header">
-        <h2>Admin Control Center</h2>
-        <p className="page-subtitle">Manage users, assign roles, and control access</p>
+    <>
+      {/* Stats row */}
+      <div className="row g-3 mb-4">
+        <div className="col-6 col-lg-3">
+          <div className="admin-stat-card">
+            <div className="admin-stat-icon" style={{ background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' }}>
+              <Users size={20} />
+            </div>
+            <div>
+              <div className="admin-stat-value">{totalUsers}</div>
+              <div className="admin-stat-label">Total Users</div>
+            </div>
+          </div>
+        </div>
+        <div className="col-6 col-lg-3">
+          <div className="admin-stat-card">
+            <div className="admin-stat-icon" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>
+              <Shield size={20} />
+            </div>
+            <div>
+              <div className="admin-stat-value">{usersWithRoles}</div>
+              <div className="admin-stat-label">With Roles</div>
+            </div>
+          </div>
+        </div>
+        <div className="col-6 col-lg-3">
+          <div className="admin-stat-card">
+            <div className="admin-stat-icon" style={{ background: 'var(--info-soft)', color: 'var(--info)' }}>
+              <Building2 size={20} />
+            </div>
+            <div>
+              <div className="admin-stat-value">{orgs.length}</div>
+              <div className="admin-stat-label">Organizations</div>
+            </div>
+          </div>
+        </div>
+        <div className="col-6 col-lg-3">
+          <div className="admin-stat-card">
+            <div className="admin-stat-icon" style={{ background: 'var(--warning-soft)', color: 'var(--warning)' }}>
+              <UserX size={20} />
+            </div>
+            <div>
+              <div className="admin-stat-value">{users.length - usersWithRoles}</div>
+              <div className="admin-stat-label">Students Only</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="row g-4">
-
-        {/* LEFT: USER LIST */}
-        <div className="col-12 col-md-8">
-          <div className="glass-card p-4 h-100">
-
-            <div className="admin-list-header mb-4">
-              <h5 className="m-0 fw-bold" style={{ color: 'var(--text-primary)' }}>All Users</h5>
+        {/* User list */}
+        <div className="col-12 col-lg-8">
+          <div className="admin-panel">
+            <div className="admin-panel-header">
+              <h6 className="admin-panel-title"><Users size={16} /> All Users</h6>
               <div className="admin-search-bar">
-                <Search size={16} className="text-purple" style={{ flexShrink: 0 }} />
-                <input
-                  type="text"
-                  placeholder="Search students..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                <input type="text" placeholder="Search by name, email, or entry number..."
+                  value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                {searchTerm && (
+                  <button className="btn p-0 border-0 bg-transparent d-flex" onClick={() => setSearchTerm('')}>
+                    <X size={14} style={{ color: 'var(--text-muted)' }} />
+                  </button>
+                )}
               </div>
             </div>
-
-            <div className="custom-scrollbar" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-              <div className="modern-table-wrapper">
-                <table className="modern-table">
+            <div className="admin-panel-body">
+              <div className="admin-table-scroll">
+                <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Name</th>
+                      <th>User</th>
                       <th className="d-none d-md-table-cell">Email</th>
-                      <th className="d-none d-md-table-cell">Current Roles</th>
-                      <th>Action</th>
+                      <th className="d-none d-lg-table-cell">Roles</th>
+                      <th style={{ width: 120 }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.map(user => (
-                      <tr key={user.id} className={selectedUser?.id === user.id ? "row-selected" : ""}>
+                    {filteredUsers.length === 0 ? (
+                      <tr><td colSpan={4} className="text-center py-5" style={{ color: 'var(--text-muted)' }}>No users found</td></tr>
+                    ) : filteredUsers.map(user => (
+                      <tr key={user.id} className={selectedUser?.id === user.id ? 'row-active' : ''}>
                         <td>
                           <div className="d-flex align-items-center gap-2">
-                            <UserAvatar name={user.name} photoUrl={user.photo_url} size={36} />
-                            <div>
-                              <div className="fw-semibold" style={{ fontSize: '0.88rem' }}>{user.name}</div>
-                              <div className="small" style={{ color: 'var(--text-muted)' }}>{user.entry_number}</div>
-                              <div className="d-md-none small" style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>
-                                {user.email}
+                            <UserAvatar name={user.name} photoUrl={user.photo_url} size={34} />
+                            <div style={{ minWidth: 0 }}>
+                              <div className="admin-cell-name">{user.name}</div>
+                              <div className="admin-cell-meta">
+                                {user.entry_number || 'No entry number'}
                               </div>
-                              {user.authorizations?.length > 0 && (
-                                <div className="d-md-none d-flex flex-wrap gap-1 mt-1">
-                                  {user.authorizations.map(auth => (
-                                    <span key={auth.id} className="role-badge" style={{ fontSize: '0.62rem' }}>
-                                      {auth.org_name}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
+                              <div className="d-md-none admin-cell-meta" style={{ fontSize: '0.7rem' }}>{user.email}</div>
                             </div>
                           </div>
                         </td>
-
-                        <td className="d-none d-md-table-cell" style={{ color: 'var(--text-secondary)' }}>
-                          {user.email}
-                        </td>
                         <td className="d-none d-md-table-cell">
+                          <span className="admin-cell-mono">{user.email}</span>
+                        </td>
+                        <td className="d-none d-lg-table-cell">
                           <div className="d-flex flex-wrap gap-1">
-                            {user.authorizations?.length > 0 ? (
-                              user.authorizations.map(auth => (
-                                <span key={auth.id} className="role-badge">
-                                  {auth.org_name}
-                                  <span style={{ opacity: 0.7 }}> ({auth.role_name})</span>
-                                  <button
-                                    className="badge-revoke btn p-0 border-0 bg-transparent d-flex"
-                                    onClick={(e) => { e.stopPropagation(); confirmRevoke(user, auth.id); }}
-                                    title="Revoke Role"
-                                  >
-                                    <Trash2 size={11} />
-                                  </button>
-                                </span>
-                              ))
-                            ) : (
-                              <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Student</span>
-                            )}
+                            {user.roles?.length > 0 ? user.roles.map(role => (
+                              <span key={role.id} className="admin-role-chip">
+                                <span className="admin-role-org">{capitalize(role.organization?.name)}</span>
+                                <span className="admin-role-name">{role.role_name}</span>
+                                <button className="admin-role-revoke" onClick={e => {
+                                  e.stopPropagation();
+                                  setRoleToRevoke({ email: user.email, org_id: role.org_id });
+                                  setRevokeModalOpen(true);
+                                }}><X size={10} /></button>
+                              </span>
+                            )) : <span className="admin-cell-meta">No roles</span>}
                           </div>
                         </td>
-
                         <td>
-                          <button className="btn-action primary" onClick={() => setSelectedUser(user)}>
-                            <UserCheck size={15} />
-                            <span className="d-none d-sm-inline"> Assign</span>
-                          </button>
+                          <div className="d-flex gap-1">
+                            <button className="admin-btn-sm primary" onClick={() => setSelectedUser(user)} title="Assign role">
+                              <UserCheck size={14} />
+                            </button>
+                            <button className="admin-btn-sm danger" title="Delete user"
+                              onClick={() => { setUserToDelete(user); setDeleteModalOpen(true); }}>
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+              {filteredUsers.length > 0 && (
+                <div className="admin-table-footer">
+                  Showing {users.length} of {totalUsers} users
+                  {searchTerm && ` (${filteredUsers.length} matching)`}
+                </div>
+              )}
+              {/* Infinite scroll sentinel */}
+              <div ref={sentinelRef} style={{ height: 1 }} />
+              {loadingMore && (
+                <div className="d-flex justify-content-center py-3">
+                  <Loader />
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* RIGHT: AUTHORIZE FORM */}
-        <div className="col-12 col-md-4">
-          <div className="glass-card p-4">
-            <h5 className="mb-3 d-flex align-items-center gap-2 fw-bold" style={{ color: 'var(--text-primary)' }}>
-              <ShieldAlert size={20} className="text-purple" /> Grant Access
-            </h5>
-
-            {!selectedUser ? (
-              <div className="empty-placeholder">
-                <UserCheck size={40} />
-                <p>Select a user from the list to assign a leadership role.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleAuthorize}>
-                <div className="selected-user-card">
-                  <UserAvatar name={selectedUser.name} photoUrl={selectedUser.photo_url} size={40} />
-                  <div className="selected-user-info">
-                    <div className="selected-user-name">{selectedUser.name}</div>
-                    <div className="selected-user-email">{selectedUser.email}</div>
+        {/* Assign role panel */}
+        <div className="col-12 col-lg-4">
+          <div className="admin-panel">
+            <div className="admin-panel-header">
+              <h6 className="admin-panel-title"><ShieldAlert size={16} /> Assign Role</h6>
+            </div>
+            <div className="admin-panel-body">
+              {!selectedUser ? (
+                <div className="admin-empty-state">
+                  <UserCheck size={36} strokeWidth={1.5} />
+                  <p>Select a user from the table to assign a role</p>
+                </div>
+              ) : (
+                <form onSubmit={handleAuthorize}>
+                  <div className="selected-user-card mb-3">
+                    <UserAvatar name={selectedUser.name} photoUrl={selectedUser.photo_url} size={38} />
+                    <div className="selected-user-info">
+                      <div className="selected-user-name">{selectedUser.name}</div>
+                      <div className="selected-user-email">{selectedUser.email}</div>
+                    </div>
+                    <button type="button" className="btn p-0 border-0 bg-transparent d-flex"
+                      onClick={() => setSelectedUser(null)}>
+                      <X size={14} style={{ color: 'var(--text-muted)' }} />
+                    </button>
                   </div>
-                  <button type="button" className="btn p-0 border-0 bg-transparent" onClick={() => setSelectedUser(null)}>
-                    <X size={16} style={{ color: 'var(--text-muted)' }} />
+
+                  {selectedUser.roles?.length > 0 && (
+                    <div className="mb-3">
+                      <label className="admin-form-label">Current Roles</label>
+                      <div className="d-flex flex-wrap gap-1">
+                        {selectedUser.roles.map(r => (
+                          <span key={r.id} className="admin-role-chip">
+                            <span className="admin-role-org">{capitalize(r.organization?.name)}</span>
+                            <span className="admin-role-name">{r.role_name}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mb-3">
+                    <label className="admin-form-label">Organization</label>
+                    <SearchableDropdown
+                      className="sd-admin"
+                      options={orgs.map(org => ({ label: `${capitalize(org.name)} (${org.org_type})`, value: org.id }))}
+                      value={authForm.org_id}
+                      onChange={(val) => setAuthForm({ ...authForm, org_id: val })}
+                      placeholder="Select organization..."
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="admin-form-label">Role</label>
+                    <SearchableDropdown
+                      className="sd-admin"
+                      options={ALL_ROLES}
+                      value={authForm.role_name}
+                      onChange={(val) => setAuthForm({ ...authForm, role_name: val })}
+                      placeholder="Select role..."
+                    />
+                  </div>
+
+                  <button type="submit" className="admin-btn-primary w-100">
+                    <PlusCircle size={16} /> Assign Role
                   </button>
-                </div>
-
-                <div className="mb-3">
-                  <label className="form-label-modern">Organization Type</label>
-                  <select className="form-select modern-input" value={authForm.org_type} onChange={handleTypeChange}>
-                    {ORG_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                </div>
-
-                <div className="mb-3">
-                  <label className="form-label-modern">Organization Name</label>
-                  <select className="form-select modern-input" value={authForm.org_name}
-                    onChange={(e) => setAuthForm({ ...authForm, org_name: e.target.value })}>
-                    {(ALL_ORGS[authForm.org_type] || []).map(org => (
-                      <option key={org} value={org}>{org.charAt(0).toUpperCase() + org.slice(1)}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label className="form-label-modern">Role Title</label>
-                  <select className="form-select modern-input" value={authForm.role_name}
-                    onChange={(e) => setAuthForm({ ...authForm, role_name: e.target.value })}>
-                    {HEAD_ROLES.map(role => <option key={role} value={role}>{role.toUpperCase()}</option>)}
-                  </select>
-                </div>
-
-                <button type="submit" className="btn btn-purple w-100 fw-bold">
-                  <PlusCircle size={18} className="me-2" /> Assign
-                </button>
-              </form>
-            )}
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <ConfirmationModal
-        isOpen={revokeModalOpen}
-        onClose={() => setRevokeModalOpen(false)}
-        onConfirm={handleRevoke}
-        title="Revoke Access"
-        message="Are you sure you want to remove this role? The user will lose access immediately."
-      />
+      <ConfirmationModal isOpen={revokeModalOpen} onClose={() => setRevokeModalOpen(false)}
+        onConfirm={handleRevoke} title="Revoke Role"
+        message="This will remove the role immediately. The user will lose access to this organization." />
+      <ConfirmationModal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDeleteUser} title="Delete User"
+        message={`Are you sure you want to delete ${userToDelete?.name}? This action cannot be undone.`} />
+    </>
+  );
+};
+
+// ─── ORGANIZATIONS TAB ────────────────────────────────────
+const OrgsTab = ({ orgs, onRefresh }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingOrg, setEditingOrg] = useState(null);
+  const [form, setForm] = useState({ name: '', org_type: 'club' });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [orgToDelete, setOrgToDelete] = useState(null);
+
+  const filtered = useMemo(() => {
+    return orgs.filter(o => {
+      const matchName = o.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchType = !filterType || o.org_type === filterType;
+      return matchName && matchType;
+    });
+  }, [orgs, searchTerm, filterType]);
+
+  const typeCounts = useMemo(() => {
+    const c = {};
+    orgs.forEach(o => { c[o.org_type] = (c[o.org_type] || 0) + 1; });
+    return c;
+  }, [orgs]);
+
+  const openCreate = () => {
+    setEditingOrg(null);
+    setForm({ name: '', org_type: 'club' });
+    setShowForm(true);
+  };
+
+  const openEdit = (org) => {
+    setEditingOrg(org);
+    setForm({ name: org.name, org_type: org.org_type });
+    setShowForm(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim()) return;
+    try {
+      if (editingOrg) {
+        await api.put(`/admin/orgs/${editingOrg.id}`, form);
+        toast.success(`Updated ${form.name}`);
+      } else {
+        await api.post('/admin/orgs', form);
+        toast.success(`Created ${form.name}`);
+      }
+      setShowForm(false);
+      setEditingOrg(null);
+      onRefresh();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Operation failed");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!orgToDelete) return;
+    try {
+      await api.delete(`/admin/orgs/${orgToDelete.id}`);
+      toast.success(`Deleted ${orgToDelete.name}`);
+      onRefresh();
+    } catch (err) { toast.error(err.response?.data?.detail || "Failed to delete"); }
+    setDeleteModalOpen(false);
+    setOrgToDelete(null);
+  };
+
+  return (
+    <>
+      {/* Type filter chips */}
+      <div className="d-flex flex-wrap gap-2 mb-4 align-items-center">
+        <button className={`admin-filter-chip ${!filterType ? 'active' : ''}`}
+          onClick={() => setFilterType('')}>
+          All <span className="admin-filter-count">{orgs.length}</span>
+        </button>
+        {ORG_TYPES.map(t => (
+          <button key={t.value} className={`admin-filter-chip ${filterType === t.value ? 'active' : ''}`}
+            onClick={() => setFilterType(filterType === t.value ? '' : t.value)}>
+            {t.label} <span className="admin-filter-count">{typeCounts[t.value] || 0}</span>
+          </button>
+        ))}
+        <div style={{ flex: 1 }} />
+        <button className="admin-btn-primary" onClick={openCreate}>
+          <Plus size={16} /> New Organization
+        </button>
+      </div>
+
+      {/* Inline create/edit form */}
+      {showForm && (
+        <div className="admin-panel mb-4">
+          <div className="admin-panel-header">
+            <h6 className="admin-panel-title">
+              {editingOrg ? <><Edit2 size={15} /> Edit Organization</> : <><Plus size={15} /> New Organization</>}
+            </h6>
+            <button className="btn p-0 border-0 bg-transparent d-flex" onClick={() => setShowForm(false)}>
+              <X size={16} style={{ color: 'var(--text-muted)' }} />
+            </button>
+          </div>
+          <div className="admin-panel-body">
+            <form onSubmit={handleSubmit} className="row g-3 align-items-end">
+              <div className="col-12 col-md-5">
+                <label className="admin-form-label">Name</label>
+                <input className="admin-input" placeholder="Organization name" value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })} required />
+              </div>
+              <div className="col-12 col-md-4">
+                <label className="admin-form-label">Type</label>
+                <SearchableDropdown
+                  className="sd-admin"
+                  options={ORG_TYPES.map(t => ({ label: t.label, value: t.value }))}
+                  value={form.org_type}
+                  onChange={(val) => setForm({ ...form, org_type: val })}
+                  placeholder="Select type..."
+                  searchable={false}
+                />
+              </div>
+              <div className="col-12 col-md-3 d-flex gap-2">
+                <button type="submit" className="admin-btn-primary flex-grow-1">
+                  {editingOrg ? 'Update' : 'Create'}
+                </button>
+                <button type="button" className="admin-btn-ghost" onClick={() => setShowForm(false)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="admin-panel">
+        <div className="admin-panel-header">
+          <h6 className="admin-panel-title"><Building2 size={16} /> Organizations</h6>
+          <div className="admin-search-bar" style={{ maxWidth: 280 }}>
+            <Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            <input type="text" placeholder="Search organizations..." value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)} />
+          </div>
+        </div>
+        <div className="admin-panel-body p-0">
+          <div className="admin-table-scroll">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th className="d-none d-md-table-cell">Created</th>
+                  <th style={{ width: 120 }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={4} className="text-center py-5" style={{ color: 'var(--text-muted)' }}>No organizations found</td></tr>
+                ) : filtered.map(org => (
+                  <tr key={org.id}>
+                    <td>
+                      <div className="d-flex align-items-center gap-2">
+                        <div className="admin-org-icon">
+                          <Building2 size={16} />
+                        </div>
+                        <div>
+                          <div className="admin-cell-name">{capitalize(org.name)}</div>
+                          <div className="admin-cell-meta">ID: {org.id}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span className="admin-type-badge">{org.org_type}</span></td>
+                    <td className="d-none d-md-table-cell">
+                      <span className="admin-cell-meta">{org.created_at ? new Date(org.created_at).toLocaleDateString() : '--'}</span>
+                    </td>
+                    <td>
+                      <div className="d-flex gap-1">
+                        <button className="admin-btn-sm primary" onClick={() => openEdit(org)} title="Edit">
+                          <Edit2 size={14} />
+                        </button>
+                        <button className="admin-btn-sm danger" title="Delete"
+                          onClick={() => { setOrgToDelete(org); setDeleteModalOpen(true); }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="admin-table-footer">
+            Showing {filtered.length} of {orgs.length} organizations
+          </div>
+        </div>
+      </div>
+
+      <ConfirmationModal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDelete} title="Delete Organization"
+        message={`Delete "${orgToDelete?.name}"? All associated roles and events will also be removed.`} />
+    </>
+  );
+};
+
+// ─── ANALYTICS TAB ────────────────────────────────────────
+const AnalyticsTab = ({ orgs }) => {
+  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredOrgs = useMemo(() => {
+    return orgs.filter(o => o.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [orgs, searchTerm]);
+
+  const fetchAnalytics = async (org) => {
+    setSelectedOrg(org);
+    setLoadingAnalytics(true);
+    try {
+      const res = await api.get(`/admin/orgs/${org.id}/analytics`);
+      setAnalytics(res.data);
+    } catch { toast.error("Failed to load analytics"); }
+    setLoadingAnalytics(false);
+  };
+
+  const sortedDepts = analytics ? Object.entries(analytics.dept_analytics)
+    .sort(([, a], [, b]) => b - a) : [];
+  const maxDeptCount = sortedDepts.length > 0 ? sortedDepts[0][1] : 0;
+
+  return (
+    <div className="row g-4">
+      {/* Org selector */}
+      <div className="col-12 col-md-4">
+        <div className="admin-panel h-100">
+          <div className="admin-panel-header">
+            <h6 className="admin-panel-title"><Building2 size={16} /> Select Org</h6>
+          </div>
+          <div className="p-3">
+            <div className="admin-search-bar mb-3" style={{ maxWidth: '100%' }}>
+              <Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+              <input type="text" placeholder="Filter..." value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)} />
+            </div>
+            <div className="admin-org-list">
+              {filteredOrgs.map(org => (
+                <button key={org.id}
+                  className={`admin-org-item ${selectedOrg?.id === org.id ? 'active' : ''}`}
+                  onClick={() => fetchAnalytics(org)}>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="admin-cell-name">{capitalize(org.name)}</div>
+                    <div className="admin-cell-meta">{org.org_type}</div>
+                  </div>
+                  <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics display */}
+      <div className="col-12 col-md-8">
+        {!selectedOrg ? (
+          <div className="admin-panel">
+            <div className="admin-panel-body">
+              <div className="admin-empty-state" style={{ padding: '80px 24px'}}>
+                <BarChart3 size={40} strokeWidth={1.5} />
+                <p>Select an organization to view its analytics</p>
+              </div>
+            </div>
+          </div>
+        ) : loadingAnalytics ? (
+          <div className="admin-panel">
+            <div className="admin-panel-body d-flex justify-content-center py-5"><Loader /></div>
+          </div>
+        ) : analytics ? (
+          <>
+            {/* Org header */}
+            <div className="admin-analytics-header mb-4">
+              <div>
+                <h5 className="fw-bold mb-1" style={{ color: 'var(--text-primary)' }}>{capitalize(analytics.org_name)}</h5>
+                <span className="admin-type-badge">{analytics.org_type}</span>
+              </div>
+            </div>
+
+            {/* Stat cards */}
+            <div className="row g-3 mb-4">
+              <div className="col-6 col-md-4">
+                <div className="admin-stat-card">
+                  <div className="admin-stat-icon" style={{ background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' }}>
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <div className="admin-stat-value">{analytics.total_events}</div>
+                    <div className="admin-stat-label">Events</div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-6 col-md-4">
+                <div className="admin-stat-card">
+                  <div className="admin-stat-icon" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>
+                    <TrendingUp size={18} />
+                  </div>
+                  <div>
+                    <div className="admin-stat-value">{analytics.total_registrations}</div>
+                    <div className="admin-stat-label">Registrations</div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-12 col-md-4">
+                <div className="admin-stat-card">
+                  <div className="admin-stat-icon" style={{ background: 'var(--info-soft)', color: 'var(--info)' }}>
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <div className="admin-stat-value">{analytics.team?.length || 0}</div>
+                    <div className="admin-stat-label">Team Members</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Dept breakdown */}
+            {sortedDepts.length > 0 && (
+              <div className="admin-panel mb-4">
+                <div className="admin-panel-header">
+                  <h6 className="admin-panel-title"><BarChart3 size={15} /> Department Registrations</h6>
+                </div>
+                <div className="admin-panel-body">
+                  <div className="admin-bar-chart">
+                    {sortedDepts.map(([dept, count]) => (
+                      <div key={dept} className="admin-bar-row">
+                        <div className="admin-bar-label">{dept}</div>
+                        <div className="admin-bar-track">
+                          <div className="admin-bar-fill"
+                            style={{ width: `${(count / maxDeptCount) * 100}%` }} />
+                        </div>
+                        <div className="admin-bar-value">{count}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Team list */}
+            {analytics.team?.length > 0 && (
+              <div className="admin-panel">
+                <div className="admin-panel-header">
+                  <h6 className="admin-panel-title"><Users size={15} /> Team</h6>
+                </div>
+                <div className="admin-panel-body p-0">
+                  <table className="admin-table">
+                    <thead>
+                      <tr><th>Name</th><th>Email</th><th>Role</th></tr>
+                    </thead>
+                    <tbody>
+                      {analytics.team.map((m, i) => (
+                        <tr key={i}>
+                          <td className="admin-cell-name">{m.name}</td>
+                          <td><span className="admin-cell-mono">{m.email}</span></td>
+                          <td><span className="admin-type-badge">{m.role}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+};
+
+// ─── MAIN ADMIN DASHBOARD ─────────────────────────────────
+const AdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState('users');
+  const [users, setUsers] = useState([]);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [orgs, setOrgs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tabLoading, setTabLoading] = useState(false);
+  const [loadedTabs, setLoadedTabs] = useState({});
+
+  const fetchUsers = useCallback(async (skip = 0) => {
+    try {
+      const res = await api.get('/admin/users', { params: { skip, limit: 10 } });
+      if (skip === 0) {
+        setUsers(res.data.users);
+      } else {
+        setUsers(prev => [...prev, ...res.data.users]);
+      }
+      setTotalUsers(res.data.total);
+    } catch { toast.error("Failed to load users"); }
+  }, []);
+
+  const fetchOrgs = useCallback(async () => {
+    try {
+      const res = await api.get('/admin/orgs/');
+      setOrgs(res.data);
+    } catch { toast.error("Failed to load organizations"); }
+  }, []);
+
+  const loadMoreUsers = useCallback(async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    await fetchUsers(users.length);
+    setLoadingMore(false);
+  }, [loadingMore, users.length, fetchUsers]);
+
+  const hasMoreUsers = users.length < totalUsers;
+
+  const fetchTabData = async (tab) => {
+    if (loadedTabs[tab]) return;
+    const isFirstLoad = Object.keys(loadedTabs).length === 0;
+    if (isFirstLoad) setLoading(true); else setTabLoading(true);
+    try {
+      if (tab === 'users') {
+        await fetchUsers(0);
+      } else if (tab === 'orgs' || tab === 'analytics') {
+        if (orgs.length === 0) await fetchOrgs();
+      }
+      setLoadedTabs(prev => ({ ...prev, [tab]: true }));
+    } finally {
+      setLoading(false);
+      setTabLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchTabData(activeTab); }, [activeTab]);
+
+  const handleRefresh = async () => {
+    setLoadedTabs({});
+    setUsers([]);
+    setTotalUsers(0);
+    setLoading(true);
+    try {
+      await fetchUsers(0);
+      if (orgs.length > 0) await fetchOrgs();
+      const newLoaded = { users: true };
+      if (orgs.length > 0) { newLoaded.orgs = true; newLoaded.analytics = true; }
+      setLoadedTabs(newLoaded);
+    } finally { setLoading(false); }
+  };
+
+  if (loading && Object.keys(loadedTabs).length === 0) return <Loader />;
+
+  return (
+    <div className="container-fluid admin-dashboard">
+      {/* Header */}
+      <div className="admin-page-header">
+        <div>
+          <h2 className="admin-page-title">Admin Console</h2>
+          <p className="admin-page-subtitle">Manage users, organizations, and view analytics</p>
+        </div>
+      </div>
+
+      {/* Tab navigation */}
+      <div className="admin-tab-bar mb-4">
+        {TABS.map(tab => (
+          <button key={tab.key}
+            className={`admin-tab ${activeTab === tab.key ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.key)}>
+            <tab.icon size={16} />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      <div className="fade-in" key={activeTab}>
+        {tabLoading ? <Loader /> : (
+          <>
+            {activeTab === 'users' && (
+              <UsersTab users={users} totalUsers={totalUsers} orgs={orgs}
+                onRefresh={handleRefresh} onLoadMore={loadMoreUsers}
+                loadingMore={loadingMore} hasMore={hasMoreUsers}
+                onFetchOrgs={fetchOrgs} />
+            )}
+            {activeTab === 'orgs' && <OrgsTab orgs={orgs} onRefresh={handleRefresh} />}
+            {activeTab === 'analytics' && <AnalyticsTab orgs={orgs} />}
+          </>
+        )}
+      </div>
     </div>
   );
 };

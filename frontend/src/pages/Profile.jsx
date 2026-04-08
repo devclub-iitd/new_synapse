@@ -5,6 +5,7 @@ import Loader from '../components/UI/Loader';
 import toast from 'react-hot-toast';
 import { Camera, Edit3, Save, X, GraduationCap, MapPin, Calendar, Heart, Lock } from 'lucide-react';
 import { HOSTELS } from '../utils/constants';
+import SearchableDropdown from '../components/UI/SearchableDropdown';
 
 const ALL_INTERESTS = [
   "AI", "Web Development", "Machine Learning", "Robotics",
@@ -203,16 +204,12 @@ const Profile = () => {
                 {/* Hostel — editable */}
                 <div>
                   <label className="form-label-modern">Hostel</label>
-                  <select
-                    className="form-select modern-input"
+                  <SearchableDropdown
+                    options={HOSTELS}
                     value={form.hostel}
-                    onChange={e => setForm({ ...form, hostel: e.target.value })}
-                  >
-                    <option value="" disabled>Select your hostel</option>
-                    {HOSTELS.map(h => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setForm({ ...form, hostel: val })}
+                    placeholder="Select your hostel"
+                  />
                 </div>
                 {/* Year — auto-filled, read-only */}
                 <div>

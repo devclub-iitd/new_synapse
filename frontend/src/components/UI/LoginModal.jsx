@@ -5,8 +5,8 @@
 //   if (!isOpen) return null;
 
 //   const handleMicrosoftLogin = () => {
-//     const CLIENT_ID = process.env.REACT_APP_MS_CLIENT_ID;
-//     const REDIRECT_URI = process.env.REACT_APP_MS_REDIRECT_URI;
+//     const CLIENT_ID = import.meta.env.VITE_MS_CLIENT_ID;
+//     const REDIRECT_URI = import.meta.env.VITE_MS_REDIRECT_URI;
 //     const TENANT_ID = "624d5c4b-45c5-4122-8cd0-44f0f84e945d";
 
 //     const targetUrl =
@@ -77,8 +77,8 @@ const LoginModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const handleMicrosoftLogin = () => {
-    const CLIENT_ID = process.env.REACT_APP_MS_CLIENT_ID;
-    const REDIRECT_URI = process.env.REACT_APP_MS_REDIRECT_URI;
+    const CLIENT_ID = import.meta.env.VITE_MS_CLIENT_ID;
+    const REDIRECT_URI = import.meta.env.VITE_MS_REDIRECT_URI;
     const TENANT_ID = "624d5c4b-45c5-4122-8cd0-44f0f84e945d";
 
     const targetUrl =

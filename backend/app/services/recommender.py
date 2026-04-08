@@ -27,15 +27,12 @@ def get_event_recommendations(db: Session, user_id: int, limit: int = 5):
     query = db.query(Event).filter(Event.date >= now)
 
     # Visibility: public events + private events from user's orgs
-    if user.authorizations:
-        user_org_names = [
-            r.org_name.value if hasattr(r.org_name, 'value') else r.org_name
-            for r in user.authorizations
-        ]
+    if user.roles:
+        user_org_ids = [r.org_id for r in user.roles]
         query = query.filter(
             or_(
                 Event.is_private == False,
-                Event.org_name.in_(user_org_names)
+                Event.org_id.in_(user_org_ids)
             )
         )
     else:

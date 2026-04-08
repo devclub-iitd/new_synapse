@@ -1,31 +1,36 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, subqueryload
 from typing import List, Optional
 from app.api import deps
 from app.models.event import Event
+from app.models.organization import Organization
 from app.models.user import User
 from app.models.registration import Registration
 from app.schemas.event import EventOut, EventDetail
 from app.services.recommender import get_event_recommendations
-from sqlalchemy import func, case, String
+from sqlalchemy import or_, func, exists, select
 from datetime import datetime, timedelta, timezone
 from app.core.timezone import now_utc
 
 router = APIRouter()
 
-# Board → clubs mapping (mirrors FilterDrawer.jsx)
+# Board -> org names mapping (mirrors FilterDrawer.jsx)
 BOARD_CLUBS_MAPPING = {
     "CAIC": [
-        "DevClub", "iGEM", "Robotics Club", "Axlr8r Formula Racing",
-        "PAC", "BnC", "Aeromodelling Club", "Economics Club",
-        "ANCC", "Aries", "IGTS", "BlocSoc", "Hyperloop"
+        "devclub", "igem", "robotics club", "axlr8r formula racing",
+        "physics and astronomy club", "business and consulting club",
+        "aeromodelling club", "economics club",
+        "algorithms and computing club", "aries", "indian game theory society",
+        "blockchain society", "hyperloop club"
     ],
     "BRCA": [
-        "Drama", "Design", "PFC", "FACC", "Dance",
-        "Hindi Samiti", "Literary", "DebSoc", "QC",
-        "Music", "Spic Macay", "Envogue"
+        "dramatics club", "design club", "photography and films club",
+        "fine arts and crafts club", "dance club",
+        "hindi samiti", "literary club", "debating club", "quizzing club",
+        "music club", "spic macay", "envogue"
     ]
 }
+
 
 def check_user_eligibility(user: User, event: Event) -> bool:
     if not event.target_audience:
@@ -58,10 +63,10 @@ def check_user_eligibility(user: User, event: Event) -> bool:
 
     return True
 
+
 def normalize_org_type(org_type: str) -> str:
     if not org_type:
         return None
-
     mapping = {
         "Clubs": "club",
         "Fests": "fest",
@@ -79,8 +84,9 @@ def normalize_org_type(org_type: str) -> str:
 def get_events(
     db: Session = Depends(deps.get_db),
     current_user: Optional[User] = Depends(deps.get_current_user_optional),
-    sort_by: str = Query("date_desc", pattern="^(date_desc|date_asc|popularity)$"),    org_type: Optional[str] = None,
-    board: Optional[str] = None,       # ✅ NEW: board filter param
+    sort_by: str = Query("date_desc", pattern="^(date_desc|date_asc|popularity)$"),
+    org_type: Optional[str] = None,
+    board: Optional[str] = None,
     item: Optional[str] = None,
     search: Optional[str] = None,
     skip: int = 0,
@@ -88,14 +94,15 @@ def get_events(
 ):
     now = now_utc()
 
-    query = db.query(Event)
-    if current_user and current_user.authorizations:
-        user_org_names = [r.org_name.value if hasattr(r.org_name, 'value') else r.org_name for r in current_user.authorizations]
-        from sqlalchemy import or_
+    query = db.query(Event).options(joinedload(Event.organization))
+
+    # Visibility: show public events + private events from user's orgs
+    if current_user and current_user.roles:
+        user_org_ids = [r.org_id for r in current_user.roles]
         query = query.filter(
             or_(
                 Event.is_private == False,
-                Event.org_name.in_(user_org_names)
+                Event.org_id.in_(user_org_ids)
             )
         )
     else:
@@ -103,41 +110,59 @@ def get_events(
 
     query = query.filter(Event.date >= now)
 
-    # ✅ Org type filter
+    # Org type filter (join to Organization)
+    org_joined = False
     if org_type:
         clean_type = normalize_org_type(org_type)
-        query = query.filter(Event.org_type == clean_type)
+        query = query.join(Event.organization).filter(Organization.org_type == clean_type)
+        org_joined = True
 
-    # ✅ FIX: Board filter — cast to String first (org_name is a Postgres Enum)
+    # Board filter
     if board and not item:
         clubs_in_board = BOARD_CLUBS_MAPPING.get(board, [])
         if clubs_in_board:
+            if not org_joined:
+                query = query.join(Event.organization)
+                org_joined = True
             query = query.filter(
-                func.lower(Event.org_name.cast(String)).in_([c.lower() for c in clubs_in_board])
+                func.lower(Organization.name).in_(clubs_in_board)
             )
 
-    # ✅ Org name (item) filter — cast to String before lower()
+    # Specific org name filter
     if item:
-        query = query.filter(func.lower(Event.org_name.cast(String)) == item.lower())
+        if not org_joined:
+            query = query.join(Event.organization)
+        query = query.filter(
+            func.lower(Organization.name) == item.lower()
+        )
 
-    # ✅ Search
+    # Search
     if search:
         query = query.filter(Event.name.ilike(f"%{search}%"))
 
     if sort_by == "date_asc":
         query = query.order_by(Event.date.asc())
-    else:  # date_desc (default) — newest first
+    else:
         query = query.order_by(Event.date.desc())
+
+    # Apply eligibility filter in Python only for logged-in users with target audience
     all_filtered_events = query.all()
 
     if current_user:
         all_filtered_events = [e for e in all_filtered_events if check_user_eligibility(current_user, e)]
 
-    paginated_events = all_filtered_events[skip : skip + limit]
+    paginated_events = all_filtered_events[skip: skip + limit]
 
-    registered_ids = set()
+    # Batch-fetch registered event IDs in a single query instead of loading all registrations
     if current_user:
-        registered_ids = {r.event_id for r in current_user.registrations}
+        registered_ids = set(
+            r[0] for r in db.query(Registration.event_id).filter(
+                Registration.user_id == current_user.id,
+                Registration.event_id.in_([e.id for e in paginated_events])
+            ).all()
+        )
+    else:
+        registered_ids = set()
 
     for e in paginated_events:
         e.is_registered = e.id in registered_ids
@@ -165,14 +190,14 @@ def get_event_detail(
     db: Session = Depends(deps.get_db),
     current_user: Optional[User] = Depends(deps.get_current_user_optional)
 ):
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = db.query(Event).options(joinedload(Event.organization)).filter(Event.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
     if current_user:
-        event.is_registered = any(
-            r.event_id == event_id for r in current_user.registrations
-        )
+        event.is_registered = db.query(
+            exists().where(Registration.user_id == current_user.id).where(Registration.event_id == event_id)
+        ).scalar()
     else:
         event.is_registered = False
 
@@ -200,27 +225,17 @@ def register_for_event(
         event_date = event_date.replace(tzinfo=timezone.utc)
 
     if event_date < now:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot register for past events"
-        )
+        raise HTTPException(status_code=400, detail="Cannot register for past events")
 
-    # 🚫 BLOCK IF REGISTRATION DEADLINE PASSED
     if event.registration_deadline:
         deadline = event.registration_deadline
         if deadline.tzinfo is None:
             deadline = deadline.replace(tzinfo=timezone.utc)
         if deadline < now:
-            raise HTTPException(
-                status_code=400,
-                detail="Registration deadline has passed for this event"
-            )
+            raise HTTPException(status_code=400, detail="Registration deadline has passed for this event")
 
     if not check_user_eligibility(current_user, event):
-        raise HTTPException(
-            status_code=403,
-            detail="You are not eligible to register for this event based on its target audience restrictions."
-        )
+        raise HTTPException(status_code=403, detail="You are not eligible to register for this event based on its target audience restrictions.")
 
     existing = db.query(Registration).filter(
         Registration.user_id == current_user.id,
@@ -230,13 +245,7 @@ def register_for_event(
     if existing:
         raise HTTPException(status_code=400, detail="Already registered")
 
-    db.add(
-        Registration(
-            user_id=current_user.id,
-            event_id=event_id,
-            custom_answers=custom_answers
-        )
-    )
+    db.add(Registration(user_id=current_user.id, event_id=event_id, custom_answers=custom_answers))
     db.commit()
 
     return {"status": "success", "msg": "Registered successfully"}
@@ -275,7 +284,6 @@ def submit_feedback(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
-    """Submit a 1-10 rating for an event the user registered for."""
     rating = body.get("rating")
     if not rating or not isinstance(rating, int) or rating < 1 or rating > 10:
         raise HTTPException(status_code=422, detail="Rating must be an integer between 1 and 10")

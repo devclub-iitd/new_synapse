@@ -58,18 +58,19 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import LoginModal from '../UI/LoginModal';
 
 const Navbar = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="navbar-container navbar-container-responsive">
 
-      {/* ✅ MOBILE ONLY: Synapse logo/brand on the left */}
+      {/* MOBILE ONLY: Synapse logo/brand on the left */}
       <div className="d-flex d-md-none align-items-center">
         <NavLink to="/" className="text-decoration-none d-flex align-items-center gap-2">
           <img
@@ -102,8 +103,10 @@ const Navbar = () => {
         </button>
 
         {user ? (
-          <div className="d-flex align-items-center gap-2 gap-md-3">
-            {/* Hide text info on very small screens, show only avatar */}
+          <div className="d-flex align-items-center gap-2 gap-md-3"
+            onClick={() => navigate('/profile')}
+            style={{ cursor: 'pointer' }}
+            title="Go to profile">
             <div className="navbar-user-info d-none d-sm-block">
               <div className="navbar-user-name">{user.name}</div>
               <div className="navbar-user-entry">{user.entry_number}</div>

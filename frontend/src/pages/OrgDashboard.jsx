@@ -513,7 +513,7 @@
 
 // export default OrgDashboard;
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/axios';
 import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck } from 'lucide-react';
@@ -525,6 +525,8 @@ import toast from 'react-hot-toast';
 
 import { DEPARTMENTS, HOSTELS, YEARS, HEAD_ROLES, TEAM_ROLES } from '../utils/constants';
 import OrgBanner from '../components/UI/OrgBanner';
+import SearchableDropdown from '../components/UI/SearchableDropdown';
+import { capitalize } from '../utils/capitalize';
 
 const toLocalInputValue = (utcStr) => {
   if (!utcStr) return '';
@@ -561,23 +563,22 @@ const UserAvatar = ({ name, photoUrl, size = 38 }) => {
 
 // --- MultiSelect ---
 const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
-  const handleSelect = (e) => {
-    const value = e.target.value;
-    if (value && !selected.includes(value)) onChange([...selected, value]);
-    e.target.value = "";
+  const handleSelect = (val) => {
+    if (val && !selected.includes(val)) onChange([...selected, val]);
   };
   const removeOption = (v) => onChange(selected.filter(i => i !== v));
 
   return (
     <div className="mb-3">
       <label className="form-label-modern">{label}</label>
-      <select className="form-select modern-input mb-2" onChange={handleSelect} defaultValue="">
-        <option value="" disabled>{placeholder || "Select to add..."}</option>
-        {options.map(opt => (
-          <option key={opt} value={opt} disabled={selected.includes(opt)}>{opt}</option>
-        ))}
-      </select>
-      <div className="multiselect-chips">
+      <SearchableDropdown
+        options={options.filter(opt => !selected.includes(opt))}
+        value=""
+        onChange={handleSelect}
+        placeholder={placeholder || "Select to add..."}
+        searchable={true}
+      />
+      <div className="multiselect-chips mt-2">
         {selected.length > 0 ? selected.map(item => (
           <span key={item} className="multiselect-chip">
             {item}
@@ -757,6 +758,8 @@ const OrgDashboard = () => {
   const [events, setEvents] = useState([]);
   const [team, setTeam] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tabLoading, setTabLoading] = useState(false);
+  const [loadedTabs, setLoadedTabs] = useState({});
   const [editingEventId, setEditingEventId] = useState(null);
   const [regModalEvent, setRegModalEvent] = useState(null);
 
@@ -768,25 +771,71 @@ const OrgDashboard = () => {
   const [imageFile, setImageFile] = useState(null);
   const [newMember, setNewMember] = useState({ email:'',role:'coordinator' });
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [dashRes, eventsRes, teamRes] = await Promise.all([
-        api.get(`/org/${orgId}/dashboard`),
-        api.get(`/org/${orgId}/events`),
-        api.get(`/org/${orgId}/team`)
-      ]);
-      setStats(dashRes.data);
-      setEvents(eventsRes.data);
-      setTeam(teamRes.data);
-    } catch (err) {
-      toast.error("Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-    }
+  const loadedTabsRef = useRef({});
+
+  const fetchDashboard = useCallback(async () => {
+    const res = await api.get(`/org/${orgId}/dashboard`);
+    setStats(res.data);
   }, [orgId]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const fetchEvents = useCallback(async () => {
+    const res = await api.get(`/org/${orgId}/events`);
+    setEvents(res.data);
+  }, [orgId]);
+
+  const fetchTeam = useCallback(async () => {
+    const res = await api.get(`/org/${orgId}/team`);
+    setTeam(res.data);
+  }, [orgId]);
+
+  const fetchTabData = useCallback(async (tab) => {
+    if (loadedTabsRef.current[tab]) return;
+    const isFirstLoad = Object.keys(loadedTabsRef.current).length === 0;
+    isFirstLoad ? setLoading(true) : setTabLoading(true);
+    try {
+      if (tab === 'dashboard') {
+        await fetchDashboard();
+      } else if (tab === 'events' || tab === 'create') {
+        await fetchEvents();
+      } else if (tab === 'team') {
+        await fetchTeam();
+      }
+      loadedTabsRef.current = { ...loadedTabsRef.current, [tab]: true };
+      setLoadedTabs(prev => ({ ...prev, [tab]: true }));
+    } catch (err) {
+      toast.error("Failed to load data");
+    } finally {
+      setLoading(false);
+      setTabLoading(false);
+    }
+  }, [fetchDashboard, fetchEvents, fetchTeam]);
+
+  useEffect(() => { fetchTabData(activeTab); }, [activeTab, fetchTabData]);
+
+  // Reset and re-fetch when org changes
+  useEffect(() => {
+    loadedTabsRef.current = {};
+    setLoadedTabs({});
+    setStats(null);
+    setEvents([]);
+    setTeam([]);
+    fetchTabData(activeTab);
+  }, [orgId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Full refresh (after create/edit/delete)
+  const fetchData = useCallback(async () => {
+    loadedTabsRef.current = {};
+    setLoadedTabs({});
+    setLoading(true);
+    try {
+      await Promise.all([fetchDashboard(), fetchEvents(), fetchTeam()]);
+      const allLoaded = { dashboard: true, events: true, create: true, team: true };
+      loadedTabsRef.current = allLoaded;
+      setLoadedTabs(allLoaded);
+    } catch (err) {
+      toast.error("Failed to load dashboard data");
+    } finally { setLoading(false); }
+  }, [fetchDashboard, fetchEvents, fetchTeam]);
 
   useEffect(() => {
     if (!editingEventId && activeTab === 'create') {
@@ -890,8 +939,8 @@ const OrgDashboard = () => {
       <div className="org-header">
         <div className="org-header-top">
           <div>
-            <OrgBanner orgId={orgId} orgName={stats?.org_name} bannerUrl={stats?.org_banner} />
-            <h2 className="fw-bold mt-2" style={{ color:'var(--text-primary)' }}>{stats?.org_name} Dashboard</h2>
+            <OrgBanner orgId={orgId} orgName={capitalize(stats?.org_name)} bannerUrl={stats?.org_banner} />
+            <h2 className="fw-bold mt-2" style={{ color:'var(--text-primary)' }}>{capitalize(stats?.org_name)} Dashboard</h2>
             <p style={{ color:'var(--text-secondary)' }}>Role: <span className="badge bg-purple">{stats?.your_role}</span></p>
           </div>
           <div className="pill-tab-nav">
@@ -905,6 +954,7 @@ const OrgDashboard = () => {
 
       {/* ── OVERVIEW ── */}
       {activeTab === 'dashboard' && (
+        tabLoading ? <div className="d-flex justify-content-center py-5"><Loader /></div> :
         <div className="row g-3">
 
           {/* Stat Cards Row — compact, inline, auto-width */}
@@ -939,6 +989,7 @@ const OrgDashboard = () => {
 
       {/* ── EVENTS ── */}
       {activeTab === 'events' && (
+        tabLoading ? <div className="d-flex justify-content-center py-5"><Loader /></div> :
         <div className="glass-card p-4">
           <h5 className="fw-bold mb-4" style={{ color:'var(--text-primary)' }}>Your Events</h5>
           <div className="modern-table-wrapper">
@@ -996,6 +1047,7 @@ const OrgDashboard = () => {
 
       {/* ── TEAM ── */}
       {activeTab === 'team' && (
+        tabLoading ? <div className="d-flex justify-content-center py-5"><Loader /></div> :
         <div className="row g-4">
           {isHead && (
             <div className="col-12 col-md-4">
@@ -1011,9 +1063,13 @@ const OrgDashboard = () => {
                   </div>
                   <div className="mb-3">
                     <label className="form-label-modern">Role</label>
-                    <select className="form-select modern-input" value={newMember.role} onChange={e => setNewMember({...newMember,role:e.target.value})}>
-                      {TEAM_ROLES.map(role => <option key={role} value={role}>{role.charAt(0).toUpperCase()+role.slice(1)}</option>)}
-                    </select>
+                    <SearchableDropdown
+                      options={TEAM_ROLES.map(role => ({ label: role.charAt(0).toUpperCase()+role.slice(1), value: role }))}
+                      value={newMember.role}
+                      onChange={val => setNewMember({...newMember, role: val})}
+                      placeholder="Select role..."
+                      searchable={false}
+                    />
                   </div>
                   <button type="submit" className="btn btn-purple w-100">Add to Team</button>
                 </form>

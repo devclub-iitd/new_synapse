@@ -1,7 +1,9 @@
 import React from 'react';
-import { Calendar, MapPin, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, ExternalLink, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDate, isPast } from '../../utils/dateUtils';
+import { capitalize } from '../../utils/capitalize';
+import toast from 'react-hot-toast';
 
 const EventCard = ({ event, onRegisterClick }) => {
   const navigate = useNavigate();
@@ -19,6 +21,17 @@ const EventCard = ({ event, onRegisterClick }) => {
     navigate(`/events/${event.id}`);
   };
 
+  const handleShare = (e) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/events/${event.id}`;
+    if (navigator.share) {
+      navigator.share({ title: event.name, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success('Link copied to clipboard');
+    }
+  };
+
   return (
     <div className="col-md-4 mb-4">
       <div
@@ -32,12 +45,17 @@ const EventCard = ({ event, onRegisterClick }) => {
         />
 
         <div className="card-body p-0">
-          <div className="card-org-badge">
-            {event.org_name}
+          <div className="d-flex align-items-center justify-content-between mb-1">
+            <div className="card-org-badge">
+              {capitalize(event.organization?.name)}
+            </div>
+            <button className="btn-share-sm" onClick={handleShare} title="Share event">
+              <Share2 size={14} />
+            </button>
           </div>
 
           <h5 className="card-title fw-bold" style={{ color: 'var(--text-primary)' }}>
-            {event.name}
+            {capitalize(event.name)}
           </h5>
 
           <div className="card-meta-row">
@@ -50,7 +68,6 @@ const EventCard = ({ event, onRegisterClick }) => {
             {event.venue}
           </div>
 
-          {/* Deadline (only if backend provides it) */}
           {hasDeadline && (
             <p className="small mb-2" style={{ color: 'var(--text-muted)' }}>
               Register by:{" "}

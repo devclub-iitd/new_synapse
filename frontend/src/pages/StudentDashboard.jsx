@@ -188,17 +188,22 @@ const StudentDashboard = () => {
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [feedbackNeeded, setFeedbackNeeded] = useState([]);
+  const [recsLoading, setRecsLoading] = useState(true);
+  const [feedbackLoading, setFeedbackLoading] = useState(true);
 
   const [syncLink, setSyncLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
 
+  // Load calendar first (primary content), then side panels independently
   useEffect(() => {
-    fetchDashboardData();
+    fetchCalendar();
+    fetchRecommendations();
+    fetchFeedback();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchCalendar = async () => {
     try {
       setLoading(true);
       const calRes = await api.get('/user/calendar');
@@ -210,17 +215,35 @@ const StudentDashboard = () => {
         extendedProps: { venue: event.venue }
       }));
       setCalendarEvents(formattedEvents);
-
-      const recRes = await api.get('/events/recommendations');
-      setRecommendations(recRes.data);
-
-      const feedbackRes = await api.get('/user/feedback-pending');
-      setFeedbackNeeded(feedbackRes.data);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchRecommendations = async () => {
+    try {
+      setRecsLoading(true);
+      const recRes = await api.get('/events/recommendations');
+      setRecommendations(recRes.data);
+    } catch (err) { console.error(err); }
+    finally { setRecsLoading(false); }
+  };
+
+  const fetchFeedback = async () => {
+    try {
+      setFeedbackLoading(true);
+      const feedbackRes = await api.get('/user/feedback-pending');
+      setFeedbackNeeded(feedbackRes.data);
+    } catch (err) { console.error(err); }
+    finally { setFeedbackLoading(false); }
+  };
+
+  const fetchDashboardData = () => {
+    fetchCalendar();
+    fetchRecommendations();
+    fetchFeedback();
   };
 
   const downloadICS = () => {
@@ -341,7 +364,9 @@ const StudentDashboard = () => {
             <h5 className="section-heading-sm mb-3">
               <Star size={18} className="text-warning" /> Recommended For You
             </h5>
-            {recommendations.length > 0 ? (
+            {recsLoading ? (
+              <div className="d-flex justify-content-center py-4"><Loader /></div>
+            ) : recommendations.length > 0 ? (
               <div className="recommendation-list">
                 {recommendations.slice(0, 3).map(event => (
                   <div
@@ -368,7 +393,9 @@ const StudentDashboard = () => {
             <h5 className="section-heading-sm mb-3">
               <MessageSquare size={18} className="text-info" /> Feedback Needed
             </h5>
-            {feedbackNeeded.length > 0 ? (
+            {feedbackLoading ? (
+              <div className="d-flex justify-content-center py-4"><Loader /></div>
+            ) : feedbackNeeded.length > 0 ? (
               <div className="feedback-list">
                 {feedbackNeeded.map(event => (
                   <FeedbackCard

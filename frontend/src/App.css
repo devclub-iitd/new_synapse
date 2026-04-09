@@ -3661,3 +3661,73 @@ body {
     max-width: 100% !important;
   }
 }
+
+/* ─── API Key Modal ─────────────────────────────────────── */
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 20px;
+}
+.admin-modal {
+  background: var(--bg-elevated, #fff);
+  border: 1px solid var(--border-primary, #e5e7eb);
+  border-radius: 16px;
+  width: 100%;
+  box-shadow: var(--shadow-lg, 0 20px 60px rgba(0, 0, 0, 0.25));
+  overflow: hidden;
+  animation: adminModalIn 0.2s ease-out;
+}
+@keyframes adminModalIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.admin-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border-primary, #e5e7eb);
+}
+.admin-modal-body {
+  padding: 22px;
+}
+.admin-key-reveal {
+  background: var(--bg-input, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--warning, #f59e0b);
+  border-radius: 12px;
+  padding: 20px;
+}
+.admin-key-field {
+  margin-bottom: 4px;
+}
+.admin-key-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #71717a);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.admin-key-copy-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-key-code {
+  flex: 1;
+  background: var(--bg-primary, #f9fafb);
+  border: 1px solid var(--border-primary, #e5e7eb);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  word-break: break-all;
+  color: var(--text-primary, #111);
+}

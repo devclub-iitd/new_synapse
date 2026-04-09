@@ -142,6 +142,7 @@ def create_org_event(
     target_audience: str = Form("{}"),
     is_private: bool = Form(False),
     registration_deadline: str = Form(None),
+    duration_hours: float = Form(None),
     photo: UploadFile = File(None),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
@@ -206,7 +207,8 @@ def create_org_event(
         target_audience=audience_dict,
         is_private=is_private,
         org_id=org_id,
-        event_manager_email=current_user.email
+        event_manager_email=current_user.email,
+        duration_hours=duration_hours,
     )
 
     db.add(event)

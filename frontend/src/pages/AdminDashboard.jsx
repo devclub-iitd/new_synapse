@@ -3,12 +3,12 @@ import api from '../api/axios';
 import {
   Search, ShieldAlert, Trash2, UserCheck, PlusCircle, X, Users,
   Building2, BarChart3, Edit2, Plus, ChevronDown, ChevronRight,
-  AlertTriangle, TrendingUp, Calendar, UserX, Shield
+  AlertTriangle, TrendingUp, Calendar, UserX, Shield, Key, Copy, Eye, EyeOff
 } from 'lucide-react';
 import Loader from '../components/UI/Loader';
 import ConfirmationModal from '../components/UI/ConfirmationModal';
 import toast from 'react-hot-toast';
-import { capitalize } from '../utils/capitalize';
+import { capitalize, orgDisplayName } from '../utils/capitalize';
 
 import { ALL_ROLES, ORG_TYPES } from '../utils/constants';
 import SearchableDropdown from '../components/UI/SearchableDropdown';
@@ -223,7 +223,7 @@ const UsersTab = ({ users, totalUsers, orgs, onRefresh, onLoadMore, loadingMore,
                           <div className="d-flex flex-wrap gap-1">
                             {user.roles?.length > 0 ? user.roles.map(role => (
                               <span key={role.id} className="admin-role-chip">
-                                <span className="admin-role-org">{capitalize(role.organization?.name)}</span>
+                                <span className="admin-role-org">{orgDisplayName(role.organization?.name)}</span>
                                 <span className="admin-role-name">{role.role_name}</span>
                                 <button className="admin-role-revoke" onClick={e => {
                                   e.stopPropagation();
@@ -299,7 +299,7 @@ const UsersTab = ({ users, totalUsers, orgs, onRefresh, onLoadMore, loadingMore,
                       <div className="d-flex flex-wrap gap-1">
                         {selectedUser.roles.map(r => (
                           <span key={r.id} className="admin-role-chip">
-                            <span className="admin-role-org">{capitalize(r.organization?.name)}</span>
+                            <span className="admin-role-org">{orgDisplayName(r.organization?.name)}</span>
                             <span className="admin-role-name">{r.role_name}</span>
                           </span>
                         ))}
@@ -311,7 +311,7 @@ const UsersTab = ({ users, totalUsers, orgs, onRefresh, onLoadMore, loadingMore,
                     <label className="admin-form-label">Organization</label>
                     <SearchableDropdown
                       className="sd-admin"
-                      options={orgs.map(org => ({ label: `${capitalize(org.name)} (${org.org_type})`, value: org.id }))}
+                      options={orgs.map(org => ({ label: `${orgDisplayName(org.name)} (${org.org_type})`, value: org.id }))}
                       value={authForm.org_id}
                       onChange={(val) => setAuthForm({ ...authForm, org_id: val })}
                       placeholder="Select organization..."
@@ -349,6 +349,84 @@ const UsersTab = ({ users, totalUsers, orgs, onRefresh, onLoadMore, loadingMore,
   );
 };
 
+// ─── API KEY MODAL ────────────────────────────────────────
+const ApiKeyModal = ({ org, onClose }) => {
+  const [generating, setGenerating] = useState(false);
+  const [newKey, setNewKey] = useState(null);
+  const [copied, setCopied] = useState('');
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const res = await api.post(`/admin/orgs/${org.id}/api-keys`);
+      setNewKey(res.data);
+    } catch (err) { toast.error(err.response?.data?.detail || 'Failed to generate key'); }
+    setGenerating(false);
+  };
+
+  const copyToClipboard = (text, field) => {
+    navigator.clipboard.writeText(text);
+    setCopied(field);
+    setTimeout(() => setCopied(''), 2000);
+  };
+
+  return (
+    <div className="admin-modal-overlay" onClick={onClose}>
+      <div className="admin-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+        <div className="admin-modal-header">
+          <h6 className="admin-panel-title"><Key size={16} /> API Key — {org.name}</h6>
+          <button className="btn p-0 border-0 bg-transparent d-flex" onClick={onClose}><X size={16} style={{ color: 'var(--text-secondary)' }} /></button>
+        </div>
+        <div className="admin-modal-body">
+
+          {newKey ? (
+            <div className="admin-key-reveal">
+              <div className="d-flex align-items-center gap-2 mb-3">
+                <AlertTriangle size={16} style={{ color: 'var(--warning)' }} />
+                <strong style={{ color: 'var(--warning)', fontSize: '0.85rem' }}>Copy now — this key will not be shown again!</strong>
+              </div>
+              <div className="admin-key-field mb-3">
+                <span className="admin-key-label">Organization ID</span>
+                <div className="admin-key-copy-row">
+                  <code className="admin-key-code">{org.id}</code>
+                  <button className="admin-btn-sm primary" onClick={() => copyToClipboard(String(org.id), 'orgId')}>
+                    {copied === 'orgId' ? '✓' : <Copy size={13} />}
+                  </button>
+                </div>
+              </div>
+              <div className="admin-key-field">
+                <span className="admin-key-label">API Key</span>
+                <div className="admin-key-copy-row">
+                  <code className="admin-key-code">{newKey.key}</code>
+                  <button className="admin-btn-sm primary" onClick={() => copyToClipboard(newKey.key, 'apiKey')}>
+                    {copied === 'apiKey' ? '✓' : <Copy size={13} />}
+                  </button>
+                </div>
+              </div>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 14, marginBottom: 0 }}>
+                Any previously active key for this organization has been revoked.
+              </p>
+            </div>
+          ) : (
+            <div className="text-center" style={{ padding: '24px 0' }}>
+              <Key size={36} strokeWidth={1.5} style={{ color: 'var(--text-muted)', marginBottom: 12 }} />
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: 20 }}>
+                Generate a new API key for external integrations.<br/>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>This will revoke any existing key.</span>
+              </p>
+              <button className="admin-btn-primary" onClick={handleGenerate} disabled={generating}
+                style={{ minWidth: 180 }}>
+                {generating ? 'Generating...' : <><Key size={14} /> Generate New Key</>}
+              </button>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── ORGANIZATIONS TAB ────────────────────────────────────
 const OrgsTab = ({ orgs, onRefresh }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -358,6 +436,7 @@ const OrgsTab = ({ orgs, onRefresh }) => {
   const [form, setForm] = useState({ name: '', org_type: 'club' });
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [orgToDelete, setOrgToDelete] = useState(null);
+  const [apiKeyOrg, setApiKeyOrg] = useState(null);
 
   const filtered = useMemo(() => {
     return orgs.filter(o => {
@@ -495,7 +574,7 @@ const OrgsTab = ({ orgs, onRefresh }) => {
                   <th>Name</th>
                   <th>Type</th>
                   <th className="d-none d-md-table-cell">Created</th>
-                  <th style={{ width: 120 }}>Actions</th>
+                  <th style={{ width: 150 }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -509,7 +588,7 @@ const OrgsTab = ({ orgs, onRefresh }) => {
                           <Building2 size={16} />
                         </div>
                         <div>
-                          <div className="admin-cell-name">{capitalize(org.name)}</div>
+                          <div className="admin-cell-name">{orgDisplayName(org.name)}</div>
                           <div className="admin-cell-meta">ID: {org.id}</div>
                         </div>
                       </div>
@@ -522,6 +601,10 @@ const OrgsTab = ({ orgs, onRefresh }) => {
                       <div className="d-flex gap-1">
                         <button className="admin-btn-sm primary" onClick={() => openEdit(org)} title="Edit">
                           <Edit2 size={14} />
+                        </button>
+                        <button className="admin-btn-sm" style={{ background: 'var(--warning-soft)', color: 'var(--warning)' }}
+                          onClick={() => setApiKeyOrg(org)} title="API Keys">
+                          <Key size={14} />
                         </button>
                         <button className="admin-btn-sm danger" title="Delete"
                           onClick={() => { setOrgToDelete(org); setDeleteModalOpen(true); }}>
@@ -543,6 +626,8 @@ const OrgsTab = ({ orgs, onRefresh }) => {
       <ConfirmationModal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)}
         onConfirm={handleDelete} title="Delete Organization"
         message={`Delete "${orgToDelete?.name}"? All associated roles and events will also be removed.`} />
+
+      {apiKeyOrg && <ApiKeyModal org={apiKeyOrg} onClose={() => setApiKeyOrg(null)} />}
     </>
   );
 };
@@ -592,7 +677,7 @@ const AnalyticsTab = ({ orgs }) => {
                   className={`admin-org-item ${selectedOrg?.id === org.id ? 'active' : ''}`}
                   onClick={() => fetchAnalytics(org)}>
                   <div style={{ minWidth: 0 }}>
-                    <div className="admin-cell-name">{capitalize(org.name)}</div>
+                    <div className="admin-cell-name">{orgDisplayName(org.name)}</div>
                     <div className="admin-cell-meta">{org.org_type}</div>
                   </div>
                   <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
@@ -623,7 +708,7 @@ const AnalyticsTab = ({ orgs }) => {
             {/* Org header */}
             <div className="admin-analytics-header mb-4">
               <div>
-                <h5 className="fw-bold mb-1" style={{ color: 'var(--text-primary)' }}>{capitalize(analytics.org_name)}</h5>
+                <h5 className="fw-bold mb-1" style={{ color: 'var(--text-primary)' }}>{orgDisplayName(analytics.org_name)}</h5>
                 <span className="admin-type-badge">{analytics.org_type}</span>
               </div>
             </div>
@@ -744,7 +829,7 @@ const AdminDashboard = () => {
 
   const fetchOrgs = useCallback(async () => {
     try {
-      const res = await api.get('/admin/orgs/');
+      const res = await api.get('/admin/orgs');
       setOrgs(res.data);
     } catch { toast.error("Failed to load organizations"); }
   }, []);

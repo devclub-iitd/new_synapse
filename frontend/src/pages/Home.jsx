@@ -298,7 +298,7 @@ const Home = () => {
       if (selectedItem) params.item = selectedItem;
       if (debouncedSearch) params.search = debouncedSearch;
 
-      const res = await api.get("/events", { params });
+      const res = await api.get("/events/", { params });
 
       if (reset) {
         setEvents(res.data);

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import api from '../api/axios';
+import api, { setAccessToken, clearAccessToken } from '../api/axios';
 
 const AuthContext = createContext(null);
 
@@ -19,24 +19,39 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data);
     } catch (error) {
       console.error("Failed to fetch user", error);
-      localStorage.removeItem('access_token');
+      clearAccessToken();
       setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
+  // On page load, attempt a silent refresh via the httpOnly cookie
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      fetchUser();
-    } else {
-      setLoading(false);
-    }
+    const silentRefresh = async () => {
+      try {
+        // Read CSRF token from cookie
+        const csrfMatch = document.cookie.match(/(^| )csrf_token=([^;]+)/);
+        const csrfToken = csrfMatch ? decodeURIComponent(csrfMatch[2]) : null;
+
+        const res = await api.post('/auth/refresh', {}, {
+          headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
+        });
+        setAccessToken(res.data.access_token);
+        await fetchUser();
+      } catch (_) {
+        // No valid refresh cookie — user is not logged in
+        clearAccessToken();
+        setUser(null);
+        setLoading(false);
+      }
+    };
+
+    silentRefresh();
   }, []);
 
   const login = (token) => {
-    localStorage.setItem('access_token', token);
+    setAccessToken(token);
     fetchUser();
     closeLoginModal(); // close modal after successful login
   };
@@ -45,7 +60,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await api.post('/auth/logout');
     } catch (_) { /* ignore */ }
-    localStorage.removeItem('access_token');
+    clearAccessToken();
     setUser(null);
     window.location.href = '/';
   };

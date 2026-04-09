@@ -81,7 +81,7 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, User, Calendar, LogOut, Shield, Layout, X, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { capitalize } from '../../utils/capitalize';
+import { capitalize, orgDisplayName } from '../../utils/capitalize';
 
 const MobileNav = ({ user, hasManagementAccess, logout }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -133,7 +133,7 @@ const MobileNav = ({ user, hasManagementAccess, logout }) => {
                     <img src={role.organization.banner_url} alt="" className="sidebar-org-img" />
                   ) : (
                     <Layout size={18} />
-                  )} {capitalize(role.organization?.name)}
+                  )} {orgDisplayName(role.organization?.name)}
                 </NavLink>
               ))}
               {user && (
@@ -212,7 +212,7 @@ const Sidebar = ({ mobileOnly = false, collapsed, onToggle }) => {
                   ) : (
                     <Layout size={19} />
                   )}
-                  {!collapsed && <span>{capitalize(role.organization?.name)}</span>}
+                  {!collapsed && <span>{orgDisplayName(role.organization?.name)}</span>}
                 </NavLink>
               ))}
             </>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Calendar, MapPin, ExternalLink, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDate, isPast } from '../../utils/dateUtils';
-import { capitalize } from '../../utils/capitalize';
+import { capitalize, orgDisplayName } from '../../utils/capitalize';
 import toast from 'react-hot-toast';
 
 const EventCard = ({ event, onRegisterClick }) => {
@@ -47,7 +47,7 @@ const EventCard = ({ event, onRegisterClick }) => {
         <div className="card-body p-0">
           <div className="d-flex align-items-center justify-content-between mb-1">
             <div className="card-org-badge">
-              {capitalize(event.organization?.name)}
+              {orgDisplayName(event.organization?.name)}
             </div>
             <button className="btn-share-sm" onClick={handleShare} title="Share event">
               <Share2 size={14} />

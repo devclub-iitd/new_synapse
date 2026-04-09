@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, JSON, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, JSON, Text, DateTime, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from datetime import datetime
@@ -27,6 +27,7 @@ class Event(Base):
     target_audience = Column(JSON, default=dict)
     is_private = Column(Boolean, default=False, index=True)
     custom_form_schema = Column(JSON, default=list)
+    duration_hours = Column(Float, nullable=True)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)

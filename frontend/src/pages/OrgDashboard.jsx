@@ -526,7 +526,7 @@ import toast from 'react-hot-toast';
 import { DEPARTMENTS, HOSTELS, YEARS, HEAD_ROLES, TEAM_ROLES } from '../utils/constants';
 import OrgBanner from '../components/UI/OrgBanner';
 import SearchableDropdown from '../components/UI/SearchableDropdown';
-import { capitalize } from '../utils/capitalize';
+import { capitalize, orgDisplayName } from '../utils/capitalize';
 
 const toLocalInputValue = (utcStr) => {
   if (!utcStr) return '';
@@ -855,6 +855,7 @@ const OrgDashboard = () => {
     formData.append('tags', JSON.stringify(newEvent.tags.split(',').map(t => t.trim()).filter(Boolean)));
     formData.append('custom_form_schema', JSON.stringify(formSchema));
     formData.append('is_private', newEvent.isPrivate);
+    if (newEvent.duration_hours) formData.append('duration_hours', newEvent.duration_hours);
     if (imageFile) formData.append('photo', imageFile);
     formData.append('target_audience', JSON.stringify({ depts: targetDepts, hostels: targetHostels, years: targetYears.map(y => parseInt(y)) }));
 
@@ -866,7 +867,7 @@ const OrgDashboard = () => {
       } else {
         await api.post(`/org/${orgId}/events`, formData);
         toast.success("Event created successfully!");
-        setNewEvent({ name:'',date:'',venue:'',description:'',tags:'',isPrivate:false });
+        setNewEvent({ name:'',date:'',venue:'',description:'',tags:'',isPrivate:false,duration_hours:'' });
         setTargetDepts([]); setTargetHostels([]); setTargetYears([]); setFormSchema([]); setImageFile(null);
       }
       setActiveTab('events');
@@ -899,7 +900,7 @@ const OrgDashboard = () => {
 
   const handleEditEvent = (ev) => {
     setEditingEventId(ev.id);
-    setNewEvent({ name:ev.name, date:toLocalInputValue(ev.date), registration_deadline:toLocalInputValue(ev.registration_deadline), venue:ev.venue||'', description:ev.description||'', tags:(ev.tags||[]).join(', '), isPrivate:ev.is_private||false });
+    setNewEvent({ name:ev.name, date:toLocalInputValue(ev.date), registration_deadline:toLocalInputValue(ev.registration_deadline), venue:ev.venue||'', description:ev.description||'', tags:(ev.tags||[]).join(', '), isPrivate:ev.is_private||false, duration_hours:ev.duration_hours||'' });
     setTargetDepts(ev.target_audience?.depts||[]);
     setTargetHostels(ev.target_audience?.hostels||[]);
     setTargetYears((ev.target_audience?.years||[]).map(String));
@@ -939,8 +940,8 @@ const OrgDashboard = () => {
       <div className="org-header">
         <div className="org-header-top">
           <div>
-            <OrgBanner orgId={orgId} orgName={capitalize(stats?.org_name)} bannerUrl={stats?.org_banner} />
-            <h2 className="fw-bold mt-2" style={{ color:'var(--text-primary)' }}>{capitalize(stats?.org_name)} Dashboard</h2>
+            <OrgBanner orgId={orgId} orgName={orgDisplayName(stats?.org_name)} bannerUrl={stats?.org_banner} />
+            <h2 className="fw-bold mt-2" style={{ color:'var(--text-primary)' }}>{orgDisplayName(stats?.org_name)} Dashboard</h2>
             <p style={{ color:'var(--text-secondary)' }}>Role: <span className="badge bg-purple">{stats?.your_role}</span></p>
           </div>
           <div className="pill-tab-nav">
@@ -1150,6 +1151,11 @@ const OrgDashboard = () => {
                 <label className="form-label-modern">Registration Deadline <span style={{ color:'var(--text-muted)',fontSize:'0.8rem' }}>(optional)</span></label>
                 <input type="datetime-local" className="form-control modern-input"
                   value={newEvent.registration_deadline} onChange={e => setNewEvent({...newEvent,registration_deadline:e.target.value})} />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label-modern">Duration <span style={{ color:'var(--text-muted)',fontSize:'0.8rem' }}>(hours, optional)</span></label>
+                <input type="number" step="0.5" min="0" className="form-control modern-input" placeholder="e.g. 2"
+                  value={newEvent.duration_hours} onChange={e => setNewEvent({...newEvent,duration_hours:e.target.value})} />
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label-modern">Venue</label>

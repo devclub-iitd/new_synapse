@@ -5,12 +5,30 @@ const api = axios.create({
   withCredentials: true, // send cookies (refresh token) with every request
 });
 
+// ---- In-memory token store (never touches localStorage) ----
+let accessToken = null;
+
+export const setAccessToken = (token) => {
+  accessToken = token;
+};
+
+export const getAccessToken = () => accessToken;
+
+export const clearAccessToken = () => {
+  accessToken = null;
+};
+
+// Helper: read a cookie value by name
+function getCookie(name) {
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
@@ -58,19 +76,23 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        const csrfToken = getCookie('csrf_token');
         const res = await axios.post(
-          `${api.defaults.baseURL}/auth/refresh/`,
+          `${api.defaults.baseURL}/auth/refresh`,
           {},
-          { withCredentials: true }
+          {
+            withCredentials: true,
+            headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
+          }
         );
         const newToken = res.data.access_token;
-        localStorage.setItem('access_token', newToken);
+        setAccessToken(newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         processQueue(null, newToken);
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem('access_token');
+        clearAccessToken();
         window.location.href = '/';
         return Promise.reject(refreshError);
       } finally {

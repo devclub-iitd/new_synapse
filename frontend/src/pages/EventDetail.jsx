@@ -238,7 +238,7 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import { formatDateTime, isPast } from '../utils/dateUtils';
-import { capitalize } from '../utils/capitalize';
+import { capitalize, orgDisplayName } from '../utils/capitalize';
 
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
 
@@ -319,7 +319,7 @@ const EventDetail = () => {
         <div className="col-12 col-md-7">
 
           <span className="badge bg-purple-soft text-purple border-purple px-3 py-2 rounded-pill mb-3 d-inline-block">
-            {capitalize(event.organization?.name)}
+            {orgDisplayName(event.organization?.name)}
           </span>
 
           <div className="d-flex align-items-start justify-content-between gap-3 mb-3">

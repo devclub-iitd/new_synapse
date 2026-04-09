@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session, joinedload, subqueryload
 from typing import List, Optional
 from app.api import deps
@@ -11,8 +11,22 @@ from app.services.recommender import get_event_recommendations
 from sqlalchemy import or_, func, exists, select
 from datetime import datetime, timedelta, timezone
 from app.core.timezone import now_utc
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
+
+_SKIP_WORDS = {"of", "the", "and", "for", "in", "on", "at", "to", "a", "an"}
+
+def _org_abbreviation(name: str) -> str:
+    """Return the abbreviation for an org name (4+ words), else the full name."""
+    if not name:
+        return ""
+    words = name.strip().split()
+    if len(words) < 4:
+        return name
+    return "".join(w[0].upper() for w in words if w.lower() not in _SKIP_WORDS)
 
 # Board -> org names mapping (mirrors FilterDrawer.jsx)
 BOARD_CLUBS_MAPPING = {
@@ -138,7 +152,22 @@ def get_events(
 
     # Search
     if search:
-        query = query.filter(Event.name.ilike(f"%{search}%"))
+        if not org_joined:
+            query = query.join(Event.organization)
+            org_joined = True
+        # Find orgs whose abbreviation starts with the search term
+        search_lower = search.strip().lower()
+        abbrev_org_ids = [
+            o.id for o in db.query(Organization).all()
+            if _org_abbreviation(o.name).lower().startswith(search_lower)
+        ]
+        search_conditions = [
+            Event.name.ilike(f"%{search}%"),
+            Organization.name.ilike(f"%{search}%"),
+        ]
+        if abbrev_org_ids:
+            search_conditions.append(Event.org_id.in_(abbrev_org_ids))
+        query = query.filter(or_(*search_conditions))
 
     if sort_by == "date_asc":
         query = query.order_by(Event.date.asc())
@@ -208,7 +237,9 @@ def get_event_detail(
 # REGISTER FOR EVENT
 # ============================================================
 @router.post("/{event_id}/register")
+@limiter.limit("20/minute")
 def register_for_event(
+    request: Request,
     event_id: int,
     custom_answers: dict = {},
     db: Session = Depends(deps.get_db),
@@ -278,7 +309,9 @@ def deregister_from_event(
 # FEEDBACK
 # ============================================================
 @router.post("/{event_id}/feedback")
+@limiter.limit("10/minute")
 def submit_feedback(
+    request: Request,
     event_id: int,
     body: dict,
     db: Session = Depends(deps.get_db),

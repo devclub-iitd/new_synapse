@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from app.schemas.user import OrgBrief
@@ -13,6 +13,7 @@ class EventBase(BaseModel):
     org_id: int
     tags: List[str] = []
     is_private: bool = False
+    duration_hours: Optional[float] = None
 
 
 class EventCreate(EventBase):
@@ -37,9 +38,17 @@ class EventOut(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     target_audience: Optional[Dict[str, Any]] = {}
+    duration_hours: Optional[float] = None
+    event_manager_email: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+    @model_validator(mode="after")
+    def fallback_image(self):
+        if not self.image_url and self.organization:
+            self.image_url = self.organization.banner_url
+        return self
 
 
 class EventDetail(EventOut):

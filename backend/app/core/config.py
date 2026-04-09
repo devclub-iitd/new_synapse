@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     MS_TENANT_ID: str
     MS_REDIRECT_URI: str
 
+    # Environment
+    ENVIRONMENT: str = "development"  # "development" or "production"
+
     class Config:
         env_file = ".env"
 

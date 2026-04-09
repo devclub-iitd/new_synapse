@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile, Request
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.event import Event
@@ -9,8 +9,11 @@ from app.core.timezone import now_utc
 from datetime import datetime, timedelta, timezone
 import json
 import re
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 # Kerberos ID pattern: 2 letters + 1 alphanumeric + 2 digits + 4 digits (e.g. cs1240020)
 KERBEROS_PATTERN = re.compile(r"^[a-zA-Z]{2}[a-zA-Z0-9]\d{6}$")
@@ -61,7 +64,9 @@ def authenticate_by_kerberos(
 
 
 @router.post("/create-event", response_model=EventOut)
+@limiter.limit("5/minute")
 def create_caic_event(
+    request: Request,
     kerberos_id: str = Form(...),
     name: str = Form(...),
     description: str = Form(...),
@@ -73,6 +78,7 @@ def create_caic_event(
     is_private: bool = Form(False),
     registration_deadline: str = Form(None),
     event_manager_email: str = Form(...),
+    duration_hours: float = Form(None),
     photo: UploadFile = File(None),
     db: Session = Depends(deps.get_db),
 ):
@@ -144,6 +150,7 @@ def create_caic_event(
         is_private=is_private,
         org_id=role.org_id,
         event_manager_email=event_manager_email,
+        duration_hours=duration_hours,
     )
 
     db.add(event)

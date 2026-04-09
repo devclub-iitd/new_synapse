@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload, subqueryload
 from sqlalchemy import func
+import secrets, hashlib
 from app.api import deps
 from app.models.user import User
 from app.models.organization import Organization
 from app.models.role import Role
 from app.models.event import Event
 from app.models.registration import Registration
+from app.models.api_key import ApiKey
 from app.schemas.user import RoleCreate, UserOut, UserListResponse
 from app.schemas.organization import OrganizationCreate, OrganizationUpdate, OrganizationOut
 
@@ -224,3 +226,46 @@ def get_org_analytics(
         "dept_analytics": dept_counts,
         "team": [{"user_id": r.user_id, "name": r.user.name, "email": r.user.email, "role": r.role_name} for r in team],
     }
+
+
+# ------------------------------------------------------------------
+# API KEY MANAGEMENT (Superuser only)
+# ------------------------------------------------------------------
+@router.post("/orgs/{org_id}/api-keys")
+def generate_org_api_key(
+    org_id: int,
+    db: Session = Depends(deps.get_db),
+    admin: User = Depends(get_superuser),
+):
+    """Generate a new API key for the org. Revokes any existing active keys first."""
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    # Revoke all existing active keys for this org
+    db.query(ApiKey).filter(ApiKey.org_id == org_id, ApiKey.is_active == True).update(
+        {"is_active": False}
+    )
+
+    raw_key = f"syn_{secrets.token_urlsafe(32)}"
+    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+
+    api_key = ApiKey(
+        org_id=org_id,
+        key_hash=key_hash,
+        key_prefix=raw_key[:8],
+        label="default",
+    )
+    db.add(api_key)
+    db.commit()
+    db.refresh(api_key)
+
+    return {
+        "id": api_key.id,
+        "org_id": org_id,
+        "key": raw_key,
+        "key_prefix": api_key.key_prefix,
+        "msg": "Store this key securely. It will NOT be shown again.",
+    }
+    db.commit()
+    return {"msg": "API key revoked"}

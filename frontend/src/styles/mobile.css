@@ -285,6 +285,7 @@
     padding-bottom: 80px !important;
     padding-left: 16px !important;
     padding-right: 16px !important;
+    overflow-x: hidden !important;
   }
 
   /* ===== HOME PAGE ===== */
@@ -556,71 +557,9 @@
     min-width: unset !important;
   }
 
-  .org-header-top { flex-direction: column; align-items: flex-start; }
-  .glass-form-card { padding: 20px 16px; }
-
   /* ===== FILTER DRAWER ===== */
   .filter-sidebar { width: 100% !important; right: -100% !important; }
   .filter-sidebar.open { right: 0 !important; }
-
-  /* ===== STUDENT DASHBOARD ===== */
-  .calendar-shell { padding: 0 !important; }
-
-  /* Toolbar: wrap cleanly */
-  .fc .fc-toolbar {
-    flex-wrap: wrap !important;
-    gap: 6px !important;
-    margin-bottom: 8px !important;
-  }
-
-  .fc .fc-toolbar-chunk {
-    display: flex;
-    align-items: center;
-  }
-
-  .fc .fc-toolbar-title {
-    font-size: 1rem !important;
-    white-space: nowrap;
-  }
-
-  .fc .fc-button {
-    padding: 3px 8px !important;
-    font-size: 0.72rem !important;
-  }
-
-  /* Day cells — ensure they have minimum height */
-  .fc .fc-daygrid-day {
-    min-height: 44px !important;
-  }
-
-  .fc .fc-daygrid-day-frame {
-    min-height: 44px !important;
-  }
-
-  /* Day number */
-  .fc .fc-daygrid-day-number {
-    font-size: 0.78rem !important;
-    padding: 3px 5px !important;
-  }
-
-  /* Column headers (SUN MON etc) */
-  .fc .fc-col-header-cell-cushion {
-    font-size: 0.68rem !important;
-    padding: 4px 2px !important;
-  }
-
-  /* Events in cells */
-  .fc-daygrid-event {
-    font-size: 0.65rem !important;
-  }
-
-  /* Section header row: keep inline on mobile */
-  .dashboard-calendar-header {
-    flex-direction: row !important;
-    align-items: center !important;
-    flex-wrap: wrap;
-    gap: 8px !important;
-  }
 
   /* Widget cards: reduce padding on mobile */
   .widget-card {
@@ -636,6 +575,148 @@
   .profile-hero-v2 { padding: 24px 20px; }
   .profile-avatar-ring { width: 90px; height: 90px; }
   .profile-name { font-size: 1.3rem; }
+
+  /* ===== ORG DASHBOARD — MOBILE OVERHAUL ===== */
+
+  /* Stack header: banner + title on top, tabs below */
+  .org-header-top {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  /* Shrink the banner circle on mobile */
+  .org-header-top label > div {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  /* Org title */
+  .org-header-top h2 {
+    font-size: 1.15rem !important;
+    margin-top: 8px !important;
+  }
+
+  /* Pill tabs: horizontal scroll, no wrap */
+  .pill-tab-nav {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px !important;
+    padding-bottom: 4px;
+  }
+  .pill-tab-nav::-webkit-scrollbar { display: none; }
+
+  .pill-tab {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    font-size: 0.78rem !important;
+    padding: 6px 14px !important;
+  }
+
+  /* Glass form card: tighter padding */
+  .glass-form-card {
+    padding: 16px 14px !important;
+  }
+
+  /* Tables: horizontal scroll */
+  .modern-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modern-table {
+    min-width: 500px;
+  }
+
+  /* Team tab: stack columns */
+  .org-header ~ .row .col-md-4,
+  .org-header ~ .row .col-md-8 {
+    width: 100% !important;
+  }
+
+  /* Create form fields: single column */
+  .glass-form-card .row.g-3 > [class*="col-md-"] {
+    width: 100% !important;
+  }
+
+  /* ===== STUDENT DASHBOARD — CALENDAR FIX ===== */
+
+  /* Let both columns stack and be full width */
+  .student-dashboard .col-12.col-lg-8,
+  .student-dashboard .col-12.col-lg-4 {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+
+  /* Calendar container: no side padding squeeze */
+  .student-dashboard .calendar-shell {
+    padding: 8px !important;
+    overflow-x: auto;
+  }
+
+  /* FullCalendar: force list view dimensions */
+  .student-dashboard .fc {
+    font-size: 0.75rem !important;
+  }
+
+  .student-dashboard .fc .fc-toolbar {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    justify-content: center !important;
+    margin-bottom: 8px !important;
+  }
+
+  .student-dashboard .fc .fc-toolbar-title {
+    font-size: 0.95rem !important;
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
+
+  .student-dashboard .fc .fc-toolbar-chunk {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .student-dashboard .fc .fc-button {
+    padding: 3px 8px !important;
+    font-size: 0.7rem !important;
+  }
+
+  /* Day grid: compact cells */
+  .student-dashboard .fc .fc-daygrid-day {
+    min-height: 40px !important;
+  }
+
+  .student-dashboard .fc .fc-daygrid-day-number {
+    font-size: 0.72rem !important;
+    padding: 2px 4px !important;
+  }
+
+  .student-dashboard .fc .fc-col-header-cell-cushion {
+    font-size: 0.65rem !important;
+    padding: 4px 2px !important;
+  }
+
+  .student-dashboard .fc .fc-daygrid-event {
+    font-size: 0.6rem !important;
+    padding: 1px 3px !important;
+  }
+
+  /* Sync modal: full-width on small screens */
+  .student-dashboard .modal-content {
+    width: 95% !important;
+    max-width: 95% !important;
+  }
+
+  /* Widgets: stack with proper spacing */
+  .student-dashboard .col-12.col-lg-4 {
+    gap: 12px !important;
+  }
 
   /* ===== GENERAL ===== */
   h1 { font-size: 1.5rem !important; }

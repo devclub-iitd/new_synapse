@@ -79,7 +79,7 @@ const LoginModal = ({ isOpen, onClose }) => {
   const handleMicrosoftLogin = () => {
     const CLIENT_ID = import.meta.env.VITE_MS_CLIENT_ID;
     const REDIRECT_URI = import.meta.env.VITE_MS_REDIRECT_URI;
-    const TENANT_ID = "624d5c4b-45c5-4122-8cd0-44f0f84e945d";
+    const TENANT_ID = import.meta.env.VITE_MS_TENANT_ID;
 
     const targetUrl =
       `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/authorize` +

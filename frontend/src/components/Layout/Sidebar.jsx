@@ -14,7 +14,7 @@
 //         <div className="sidebar-brand-minimal d-flex flex-column align-items-center mb-5 px-3 pt-2">
 //           <NavLink to="/" className="text-decoration-none d-flex flex-column align-items-center">
 //             <img
-//               src="http://localhost:8000/static/asset/logo_nobgn.png" 
+//               src="/assets/logo_nobgn.png" 
 //               alt="Synapse"
 //               className="sidebar-logo-standalone mb-3"
 //             />
@@ -164,7 +164,7 @@ const Sidebar = ({ mobileOnly = false, collapsed, onToggle }) => {
         <div className="sidebar-v2-header">
           {!collapsed && (
             <NavLink to="/" className="sidebar-v2-brand">
-              <img src="http://localhost:8000/static/asset/logo_nobgn.png" alt="Synapse" className="sidebar-v2-logo" />
+              <img src="/assets/logo_nobgn.png" alt="Synapse" className="sidebar-v2-logo" />
               <span className="sidebar-v2-brand-text">SYNAPSE</span>
             </NavLink>
           )}

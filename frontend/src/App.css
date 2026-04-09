@@ -1143,7 +1143,7 @@ body {
   /* Chalkboard image with purple brand overlay */
   background:
     linear-gradient(135deg, rgba(124, 58, 237, 0.72) 0%, rgba(15, 17, 24, 0.88) 100%),
-    url('http://localhost:8000/static/asset/main_bg.png') center / cover no-repeat;
+    url('/assets/main_bg.png') center / cover no-repeat;
 
   padding: 40px;
   display: flex;

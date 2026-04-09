@@ -74,7 +74,7 @@ const Navbar = () => {
       <div className="d-flex d-md-none align-items-center">
         <NavLink to="/" className="text-decoration-none d-flex align-items-center gap-2">
           <img
-            src="http://localhost:8000/static/asset/logo_nobgn.png"
+            src="/assets/logo_nobgn.png"
             alt="Synapse"
             style={{ width: '32px', height: '32px', objectFit: 'contain' }}
           />

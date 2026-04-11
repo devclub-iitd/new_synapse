@@ -6,7 +6,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, isLoadi
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="glass-card p-4 rounded-4" style={{ background: 'var(--bg-elevated)', width: '400px', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={e => e.stopPropagation()}>
+      <div className="glass-card p-4 rounded-4" style={{ background: 'var(--bg-elevated)', width: '90vw', maxWidth: '400px', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={e => e.stopPropagation()}>
         
         <div className="d-flex align-items-center gap-3 mb-3">
           <div className="bg-danger bg-opacity-25 p-2 rounded-circle text-danger">

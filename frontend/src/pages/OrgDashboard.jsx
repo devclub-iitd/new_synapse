@@ -527,6 +527,7 @@ import { DEPARTMENTS, HOSTELS, YEARS, HEAD_ROLES, TEAM_ROLES } from '../utils/co
 import OrgBanner from '../components/UI/OrgBanner';
 import SearchableDropdown from '../components/UI/SearchableDropdown';
 import { capitalize, orgDisplayName } from '../utils/capitalize';
+import ConfirmationModal from '../components/UI/ConfirmationModal';
 
 const toLocalInputValue = (utcStr) => {
   if (!utcStr) return '';
@@ -770,6 +771,7 @@ const OrgDashboard = () => {
   const [formSchema, setFormSchema] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [newMember, setNewMember] = useState({ email:'',role:'coordinator' });
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null, loading: false });
 
   const loadedTabsRef = useRef({});
 
@@ -889,13 +891,22 @@ const OrgDashboard = () => {
     }
   };
 
-  const handleRemoveMember = async (userId) => {
-    if (!window.confirm("Remove this member?")) return;
-    try {
-      await api.delete(`/org/${orgId}/team/${userId}`);
-      toast.success("Member removed");
-      fetchData();
-    } catch (err) { toast.error("Failed to remove member"); }
+  const handleRemoveMember = (userId) => {
+    setConfirmModal({
+      open: true,
+      title: 'Remove Member',
+      message: 'Are you sure you want to remove this member? This action cannot be undone.',
+      loading: false,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, loading: true }));
+        try {
+          await api.delete(`/org/${orgId}/team/${userId}`);
+          toast.success('Member removed');
+          fetchData();
+        } catch (err) { toast.error('Failed to remove member'); }
+        setConfirmModal({ open: false, title: '', message: '', onConfirm: null, loading: false });
+      },
+    });
   };
 
   const handleEditEvent = (ev) => {
@@ -920,13 +931,22 @@ const OrgDashboard = () => {
     } catch (err) { toast.error("Failed to download CSV"); }
   };
 
-  const handleDeleteEvent = async (eventId) => {
-    if (!window.confirm("Delete this event?")) return;
-    try {
-      await api.delete(`/org/${orgId}/events/${eventId}`);
-      toast.success("Event deleted");
-      fetchData();
-    } catch (err) { toast.error("Failed to delete event"); }
+  const handleDeleteEvent = (eventId) => {
+    setConfirmModal({
+      open: true,
+      title: 'Delete Event',
+      message: 'Are you sure you want to delete this event? All registrations will be lost. This action cannot be undone.',
+      loading: false,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, loading: true }));
+        try {
+          await api.delete(`/org/${orgId}/events/${eventId}`);
+          toast.success('Event deleted');
+          fetchData();
+        } catch (err) { toast.error('Failed to delete event'); }
+        setConfirmModal({ open: false, title: '', message: '', onConfirm: null, loading: false });
+      },
+    });
   };
 
   if (loading) return <Loader />;
@@ -936,6 +956,14 @@ const OrgDashboard = () => {
   return (
     <div className="container-fluid">
       {regModalEvent && <RegistrationsModal event={regModalEvent} orgId={orgId} onClose={() => setRegModalEvent(null)} />}
+      <ConfirmationModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, title: '', message: '', onConfirm: null, loading: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        isLoading={confirmModal.loading}
+      />
 
       <div className="org-header">
         <div className="org-header-top">

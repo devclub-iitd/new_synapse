@@ -1,17 +1,17 @@
 import React, { useState, useMemo } from 'react';
 
 const COLORS = [
-  '#7c3aed', '#6d28d9', '#5b21b6', '#4c1d95', '#2563eb',
-  '#ec4899', '#4f46e5', '#8b5cf6', '#a78bfa', '#0ea5e9',
-  '#14b8a6', '#f59e0b', '#ef4444', '#10b981', '#6366f1',
-  '#e879f9', '#06b6d4', '#f43f5e', '#8b5cf6', '#3b82f6',
+  '#5a9fcf', '#4a8bba', '#3d7fad', '#2e6a96', '#7eb8e0',
+  '#d85d4c', '#5a9e6f', '#8ec4e8', '#a0d0f0', '#6aadd0',
+  '#5a9e6f', '#d4a24a', '#d85d4c', '#3d8a55', '#b8862e',
+  '#8895a8', '#6aadd0', '#c0443a', '#8ec4e8', '#7eb8e0',
 ];
 
 const BG_COLORS = [
-  '#7c3aed', '#2563eb', '#0ea5e9', '#14b8a6', '#10b981',
-  '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#4f46e5',
-  '#06b6d4', '#f43f5e', '#8b5cf6', '#e879f9', '#3b82f6',
-  '#d946ef', '#0891b2', '#059669', '#dc2626', '#7c2d12',
+  '#5a9fcf', '#4a8bba', '#6aadd0', '#5a9e6f', '#3d8a55',
+  '#d4a24a', '#d85d4c', '#3d7fad', '#b8862e', '#8895a8',
+  '#7eb8e0', '#c0443a', '#8ec4e8', '#4a8bba', '#6aadd0',
+  '#2e6a96', '#3d8a55', '#5a9e6f', '#d85d4c', '#3d7fad',
 ];
 
 function hashStr(str) {

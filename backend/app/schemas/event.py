@@ -35,6 +35,7 @@ class EventOut(BaseModel):
     tags: List[str] = []
     genres: List[str] = []
     is_private: bool = False
+    is_live: bool = False
     image_url: Optional[str] = None
     is_registered: bool = False
     created_at: Optional[datetime] = None

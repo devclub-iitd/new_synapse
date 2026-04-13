@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, ExternalLink, Share2, Clock, ArrowRight } from 'lucide-react';
+import { Calendar, MapPin, ExternalLink, Share2, Clock, ArrowRight, Radio } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDate, isPast } from '../../utils/dateUtils';
 import { capitalize, orgDisplayName } from '../../utils/capitalize';
@@ -50,6 +50,7 @@ const EventCard = ({ event, onRegisterClick, index = 0 }) => {
         <div className="ec3-org-badge">
           {orgDisplayName(event.organization?.name)}
         </div>
+        {event.is_live && <span className="ec3-live-tag"><Radio size={10} /> LIVE</span>}
 
         {/* Share button */}
         <button className="ec3-share-btn" onClick={handleShare} title="Share">

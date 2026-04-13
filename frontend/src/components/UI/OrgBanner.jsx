@@ -193,7 +193,7 @@ export default function OrgBanner({ orgId, orgName, bannerUrl }) {
                 width: "30px",
                 height: "30px",
                 border: "4px solid #ccc",
-                borderTop: "4px solid #7c3aed",
+                borderTop: "4px solid #5a9fcf",
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite"
               }}

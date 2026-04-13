@@ -516,7 +516,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/axios';
-import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck, Tag, Upload, Save, Check, ChevronDown, Search } from 'lucide-react';
+import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck, Tag, Upload, Save, Check, ChevronDown, Search, Radio } from 'lucide-react';
 import DynamicFormBuilder from '../components/Forms/DynamicFormBuilder';
 import DemographicsChart from '../components/Charts/DemographicsChart';
 import Loader from '../components/UI/Loader';
@@ -696,17 +696,17 @@ const RegistrationsModal = ({ event, orgId, onClose }) => {
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'16px' }}>
             <div style={{ minWidth:0, flex:1 }}>
               <div style={{ display:'flex',alignItems:'center',gap:'10px',marginBottom:'4px' }}>
-                <div style={{ width:32,height:32,borderRadius:'9px',background:'rgba(139,92,246,0.15)',border:'1px solid rgba(139,92,246,0.3)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>
-                  <Users size={16} style={{ color:'#8b5cf6' }} />
+                <div style={{ width:32,height:32,borderRadius:'9px',background:'rgba(90,159,207,0.15)',border:'1px solid rgba(90,159,207,0.3)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>
+                  <Users size={16} style={{ color:'#5a9fcf' }} />
                 </div>
                 <h5 style={{ color:'var(--text-primary)',fontWeight:700,margin:0,fontSize: isMobile ? '1rem' : '1.1rem' }}>Registrations</h5>
               </div>
               <p style={{ color:'var(--text-secondary)',fontSize:'0.82rem',margin:0,paddingLeft:'42px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis' }}>{event.name}</p>
             </div>
             <div style={{ display:'flex',alignItems:'center',gap:'8px',flexShrink:0,marginLeft:'12px' }}>
-              <div style={{ display:'flex',alignItems:'center',gap:'5px',padding:'5px 10px',background:'rgba(139,92,246,0.12)',border:'1px solid rgba(139,92,246,0.25)',borderRadius:'20px' }}>
-                <UserCheck size={13} style={{ color:'#8b5cf6' }} />
-                <span style={{ color:'#a78bfa',fontWeight:700,fontSize:'0.85rem' }}>{registrants.length}</span>
+              <div style={{ display:'flex',alignItems:'center',gap:'5px',padding:'5px 10px',background:'rgba(90,159,207,0.12)',border:'1px solid rgba(90,159,207,0.25)',borderRadius:'20px' }}>
+                <UserCheck size={13} style={{ color:'#5a9fcf' }} />
+                <span style={{ color:'#8ec4e8',fontWeight:700,fontSize:'0.85rem' }}>{registrants.length}</span>
                 {!isMobile && <span style={{ color:'var(--text-muted)',fontSize:'0.75rem' }}>registered</span>}
               </div>
               <button onClick={onClose} style={{ width:32,height:32,background:'rgba(255,255,255,0.06)',border:'1px solid var(--border-primary)',borderRadius:'8px',color:'var(--text-secondary)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center' }}
@@ -773,7 +773,7 @@ const RegistrationsModal = ({ event, orgId, onClose }) => {
                   {/* Bottom row: email / dept / hostel pills */}
                   <div style={{ display:'flex',flexWrap:'wrap',gap:'6px' }}>
                     <span style={{ fontSize:'0.72rem',color:'var(--text-secondary)',background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-primary)',borderRadius:'6px',padding:'3px 8px',maxWidth:'100%',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{r.email}</span>
-                    {r.department && <span style={{ fontSize:'0.72rem',color:'#a78bfa',background:'rgba(139,92,246,0.1)',border:'1px solid rgba(139,92,246,0.2)',borderRadius:'6px',padding:'3px 8px' }}>{r.department}</span>}
+                    {r.department && <span style={{ fontSize:'0.72rem',color:'#8ec4e8',background:'rgba(90,159,207,0.1)',border:'1px solid rgba(90,159,207,0.2)',borderRadius:'6px',padding:'3px 8px' }}>{r.department}</span>}
                     {r.hostel && <span style={{ fontSize:'0.72rem',color:'var(--text-secondary)',background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-primary)',borderRadius:'6px',padding:'3px 8px' }}>{r.hostel}</span>}
                   </div>
                 </div>
@@ -1155,6 +1155,19 @@ const OrgDashboard = () => {
                         </button>
                         <button className="btn-action success" onClick={() => handleDownloadCSV(ev.id)} title="Download CSV">
                           <Download size={13} /><span className="d-none d-lg-inline"> CSV</span>
+                        </button>
+                        <button
+                          className={`btn-action ${ev.is_live ? 'live-on' : 'secondary'}`}
+                          title={ev.is_live ? 'Live — click to turn off' : 'Not Live — click to turn on'}
+                          onClick={async () => {
+                            try {
+                              const res = await api.patch(`/events/${ev.id}/live`, { is_live: !ev.is_live });
+                              setEvents(prev => prev.map(e => e.id === ev.id ? { ...e, is_live: res.data.is_live } : e));
+                              toast.success(res.data.is_live ? 'Event is now Live!' : 'Event taken off Live');
+                            } catch { toast.error('Failed to toggle live'); }
+                          }}
+                        >
+                          <Radio size={13} /><span className="d-none d-lg-inline"> {ev.is_live ? 'Live' : 'Go Live'}</span>
                         </button>
                         {isHead && (
                           <>

@@ -104,12 +104,17 @@ def get_events(
     item: Optional[str] = None,
     search: Optional[str] = None,
     genres: Optional[str] = None,
+    live: Optional[bool] = None,
     skip: int = 0,
     limit: int = 20
 ):
     now = now_utc()
 
     query = db.query(Event).options(joinedload(Event.organization))
+
+    # Live filter
+    if live is not None:
+        query = query.filter(Event.is_live == live)
 
     # Visibility: show public events + private events from user's orgs
     if current_user and current_user.roles:
@@ -245,6 +250,35 @@ def get_event_detail(
         event.is_registered = False
 
     return event
+
+
+# ============================================================
+# TOGGLE LIVE STATUS
+# ============================================================
+@router.patch("/{event_id}/live")
+def toggle_event_live(
+    event_id: int,
+    body: dict,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    # Check permission: superuser or org member
+    if not current_user.is_superuser:
+        user_org_ids = [r.org_id for r in (current_user.roles or [])]
+        if event.org_id not in user_org_ids:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
+    is_live = body.get("is_live")
+    if is_live is None:
+        raise HTTPException(status_code=400, detail="is_live field required")
+
+    event.is_live = bool(is_live)
+    db.commit()
+    return {"is_live": event.is_live}
 
 
 # ============================================================

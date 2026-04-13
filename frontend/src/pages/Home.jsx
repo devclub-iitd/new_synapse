@@ -250,6 +250,7 @@ const Home = () => {
     const g = searchParams.get('genres');
     return g ? g.split(',').map(s => s.trim()).filter(Boolean) : [];
   };
+  const initLive = () => searchParams.get('live') === 'true';
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -265,6 +266,7 @@ const Home = () => {
   const [selectedBoard, setSelectedBoard] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
   const [selectedGenres, setSelectedGenres] = useState(initGenres);
+  const [liveOnly, setLiveOnly] = useState(initLive);
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -288,7 +290,7 @@ const Home = () => {
     setHasMore(true);
     fetchEvents(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgType, selectedBoard, selectedItem, debouncedSearch, sortBy, selectedGenres]);
+  }, [orgType, selectedBoard, selectedItem, debouncedSearch, sortBy, selectedGenres, liveOnly]);
 
   const fetchEvents = async (reset = false) => {
     try {
@@ -307,6 +309,7 @@ const Home = () => {
       if (selectedItem) params.item = selectedItem;
       if (debouncedSearch) params.search = debouncedSearch;
       if (selectedGenres.length > 0) params.genres = selectedGenres.join(',');
+      if (liveOnly) params.live = true;
 
       const res = await api.get("/events/", { params });
 
@@ -351,9 +354,9 @@ const Home = () => {
     <div className="home-page-v3">
       <AnimatedBackground />
 
-      {/* Hero Section */}
-      <div className="home-hero-v3">
-        <div className="container">
+      <div className="home-content-wrapper">
+        {/* Hero Section */}
+        <div className="home-hero-v3">
           <div className="hero-content-v3 hero-compact">
             <h1 className="hero-title-v3">
               Discover <span className="gradient-text">Events</span>
@@ -383,22 +386,21 @@ const Home = () => {
               </button>
 
               <button
-                className={`filter-btn-v3 ${orgType || selectedGenres.length ? 'active' : ''}`}
+                className={`filter-btn-v3 ${orgType || selectedGenres.length || liveOnly ? 'active' : ''}`}
                 onClick={() => setIsFilterOpen(true)}
               >
                 <Filter size={18} />
                 <span className="filter-btn-label">Filters</span>
-                {(orgType || selectedBoard || selectedItem || selectedGenres.length > 0) && (
+                {(orgType || selectedBoard || selectedItem || selectedGenres.length > 0 || liveOnly) && (
                   <span className="filter-active-dot" />
                 )}
               </button>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Events Grid */}
-      <div className="container events-section-v3">
+        {/* Events Grid */}
+        <div className="events-section-v3">
         {loading ? (
           <div className="d-flex justify-content-center py-5">
             <Loader />
@@ -440,6 +442,7 @@ const Home = () => {
             )}
           </>
         )}
+        </div>
       </div>
 
       <FilterDrawer
@@ -453,6 +456,8 @@ const Home = () => {
         setSelectedItem={setSelectedItem}
         selectedGenres={selectedGenres}
         setSelectedGenres={setSelectedGenres}
+        liveOnly={liveOnly}
+        setLiveOnly={setLiveOnly}
       />
 
       <LoginModal

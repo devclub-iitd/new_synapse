@@ -68,7 +68,7 @@ const FloatingParticles = ({ count = 60 }) => {
   return (
     <instancedMesh ref={meshRef} args={[null, null, count]}>
       <sphereGeometry args={[1, 8, 8]} />
-      <meshBasicMaterial color="#a78bfa" transparent opacity={0.4} />
+      <meshBasicMaterial color="#8ec4e8" transparent opacity={0.4} />
     </instancedMesh>
   );
 };
@@ -76,14 +76,14 @@ const FloatingParticles = ({ count = 60 }) => {
 const Scene = () => {
   const orbs = useMemo(
     () => [
-      { position: [-7, 3, -3], color: '#8b5cf6', speed: 0.55, size: 2.0 },
-      { position: [6, -2, -4], color: '#6d28d9', speed: 0.45, size: 2.5 },
-      { position: [0, 5, -5], color: '#a78bfa', speed: 0.6, size: 1.8 },
-      { position: [-5, -4, -2], color: '#7c3aed', speed: 0.4, size: 1.5 },
-      { position: [7, 2, -6], color: '#c084fc', speed: 0.5, size: 2.2 },
-      { position: [-2, -5, -4], color: '#8b5cf6', speed: 0.55, size: 1.8 },
-      { position: [3, 6, -3], color: '#a78bfa', speed: 0.48, size: 1.6 },
-      { position: [-6, 0, -5], color: '#c084fc', speed: 0.52, size: 2.0 },
+      { position: [-7, 3, -3], color: '#5a9fcf', speed: 0.55, size: 2.0 },
+      { position: [6, -2, -4], color: '#4a8bba', speed: 0.45, size: 2.5 },
+      { position: [0, 5, -5], color: '#8ec4e8', speed: 0.6, size: 1.8 },
+      { position: [-5, -4, -2], color: '#3d7fad', speed: 0.4, size: 1.5 },
+      { position: [7, 2, -6], color: '#a0d0f0', speed: 0.5, size: 2.2 },
+      { position: [-2, -5, -4], color: '#5a9fcf', speed: 0.55, size: 1.8 },
+      { position: [3, 6, -3], color: '#8ec4e8', speed: 0.48, size: 1.6 },
+      { position: [-6, 0, -5], color: '#a0d0f0', speed: 0.52, size: 2.0 },
     ],
     []
   );
@@ -91,7 +91,7 @@ const Scene = () => {
   return (
     <>
       <ambientLight intensity={0.3} />
-      <pointLight position={[0, 5, 5]} intensity={0.5} color="#a78bfa" />
+      <pointLight position={[0, 5, 5]} intensity={0.5} color="#8ec4e8" />
       {orbs.map((orb, i) => (
         <FloatingOrb key={i} {...orb} />
       ))}

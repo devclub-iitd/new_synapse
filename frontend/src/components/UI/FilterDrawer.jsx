@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Search, Monitor, FlaskConical, Music, Camera, BookOpen, Trophy, Briefcase, Leaf } from "lucide-react";
+import { X, Search, Monitor, FlaskConical, Music, Camera, BookOpen, Trophy, Briefcase, Leaf, Radio } from "lucide-react";
 import { GENRE_CATEGORIES } from "../../utils/constants";
 
 const CATEGORY_ICONS = { Monitor, FlaskConical, Music, Camera, BookOpen, Trophy, Briefcase, Leaf };
@@ -36,6 +36,8 @@ const FilterDrawer = ({
   setSelectedItem,
   selectedGenres = [],
   setSelectedGenres,
+  liveOnly = false,
+  setLiveOnly,
 }) => {
   const [genreSearch, setGenreSearch] = useState('');
 
@@ -65,6 +67,21 @@ const FilterDrawer = ({
             </div>
 
             <div className="filter-popup-body">
+
+          {/* LIVE TOGGLE */}
+          {setLiveOnly && (
+            <div className="mb-4">
+              <label className="text-secondary small fw-bold mb-3 d-block">
+                LIVE EVENTS
+              </label>
+              <button
+                className={`filter-chip live-filter-chip ${liveOnly ? 'active' : ''}`}
+                onClick={() => setLiveOnly(prev => !prev)}
+              >
+                <Radio size={13} /> Live Only
+              </button>
+            </div>
+          )}
 
           {/* BY ORGANIZATION */}
           <div className="mb-4">
@@ -223,6 +240,7 @@ const FilterDrawer = ({
                   setSelectedBoard("");
                   setSelectedItem("");
                   if (setSelectedGenres) setSelectedGenres([]);
+                  if (setLiveOnly) setLiveOnly(false);
                 }}
               >
                 Reset All

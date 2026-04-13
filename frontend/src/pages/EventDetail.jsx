@@ -246,6 +246,7 @@ import AnimatedBackground from "../components/UI/AnimatedBackground";
 import SharePopup from "../components/UI/SharePopup";
 import EventBanner, { useImageFallback } from "../components/UI/EventBanner";
 import OrgLogo from "../components/UI/OrgLogo";
+import Loader from "../components/UI/Loader";
 
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
 import CalendarPopup from "../components/UI/CalendarPopup";
@@ -301,7 +302,7 @@ const EventDetail = () => {
   };
 
   if (error) return <div className="text-center mt-5 text-danger">{error}</div>;
-  if (!event) return <div className="text-center mt-5 text-white">Loading...</div>;
+  if (!event) return <Loader />;
 
   const hasDeadline = !!event.registration_deadline;
   const deadlinePassed = hasDeadline ? isPast(event.registration_deadline) : false;

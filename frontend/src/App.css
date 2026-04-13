@@ -5031,6 +5031,7 @@ body {
 /* Genres */
 .ed3-genres {
   margin-top: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 .ed3-genre-tags {
   display: flex;

@@ -4129,6 +4129,10 @@ body {
     padding: 10px;
     font-size: 0.8rem;
   }
+  .admin-cell-name {
+    white-space: normal;
+    word-break: break-word;
+  }
   .admin-btn-sm {
     width: 28px;
     height: 28px;

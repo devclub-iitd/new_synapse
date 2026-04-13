@@ -237,7 +237,7 @@ const UsersTab = ({ users, totalUsers, orgs, onRefresh, onLoadMore, loadingMore,
                           </div>
                         </td>
                         <td>
-                          <div className="d-flex gap-1">
+                          <div className="d-flex gap-1 flex-wrap">
                             <button className="admin-btn-sm primary" onClick={() => setSelectedUser(user)} title="Assign role">
                               <UserCheck size={14} />
                             </button>

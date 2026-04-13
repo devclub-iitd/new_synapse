@@ -3628,6 +3628,7 @@ body {
   border-radius: var(--radius-md);
   transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
   animation: fadeInUp 0.4s cubic-bezier(0.23, 1, 0.32, 1) both;
+  height: 100%;
 }
 [data-theme="light"] .admin-stat-card {
   background: var(--bg-secondary);
@@ -4044,22 +4045,40 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
   .admin-tab-bar {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    display: flex;
+    width: 100%;
+    overflow-x: hidden;
   }
   .admin-tab {
-    padding: 10px 14px;
-    font-size: 0.8rem;
+    flex: 1;
+    justify-content: center;
+    padding: 10px 6px;
+    font-size: 0.75rem;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  .admin-tab svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
   }
   .admin-bar-label {
     width: 100px;
     font-size: 0.72rem;
   }
   .admin-stat-card {
-    padding: 14px 16px;
+    padding: 14px 12px;
+    gap: 10px;
+  }
+  .admin-stat-icon {
+    width: 36px;
+    height: 36px;
   }
   .admin-stat-value {
     font-size: 1.2rem;
+  }
+  .admin-stat-label {
+    font-size: 0.65rem;
   }
   .admin-panel-header {
     flex-direction: column;
@@ -4069,6 +4088,18 @@ body {
   .admin-panel-header .admin-search-bar {
     width: 100%;
     max-width: 100% !important;
+  }
+  .admin-table thead th {
+    padding: 8px 10px;
+    font-size: 0.65rem;
+  }
+  .admin-table tbody td {
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+  .admin-btn-sm {
+    width: 28px;
+    height: 28px;
   }
 }
 

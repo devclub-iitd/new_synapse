@@ -198,7 +198,7 @@ const UsersTab = ({ users, totalUsers, orgs, onRefresh, onLoadMore, loadingMore,
                       <th>User</th>
                       <th className="d-none d-md-table-cell">Email</th>
                       <th className="d-none d-lg-table-cell">Roles</th>
-                      <th style={{ width: 120 }}>Actions</th>
+                      <th style={{ width: 80 }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>

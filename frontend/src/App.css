@@ -4759,12 +4759,15 @@ body {
 .event-detail-v3 {
   position: relative;
   min-height: 100%;
+  overflow-x: hidden;
 }
 
 .ed3-container {
   position: relative;
   z-index: 1;
-  padding: 1.5rem 0 4rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
 }
 
 .ed3-back-btn {
@@ -4921,6 +4924,8 @@ body {
   color: var(--text-primary);
   letter-spacing: -1px;
   line-height: 1.15;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .ed3-share-btn {
@@ -5026,6 +5031,9 @@ body {
   font-size: 0.92rem;
   line-height: 1.7;
   white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 /* Genres */
@@ -5703,6 +5711,7 @@ body {
   .ed3-layout {
     grid-template-columns: 1fr;
     gap: 2rem;
+    min-width: 0;
   }
 
   .ed3-meta-grid {

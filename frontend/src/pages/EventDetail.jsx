@@ -260,6 +260,7 @@ const EventDetail = () => {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [showCalendarPopup, setShowCalendarPopup] = useState(false);
+  const [showImagePopup, setShowImagePopup] = useState(false);
   const { hasImage, onError } = useImageFallback(event?.image_url);
 
   useEffect(() => { fetchEvent(); }, [eventId]);
@@ -320,7 +321,7 @@ const EventDetail = () => {
         <div className="ed3-layout">
           {/* Left: Image */}
           <div className="ed3-image-section">
-            <div className="ed3-image-card">
+            <div className="ed3-image-card" onClick={() => setShowImagePopup(true)} style={{ cursor: 'pointer' }}>
               {hasImage ? (
                 <img
                   src={event.image_url}
@@ -340,7 +341,6 @@ const EventDetail = () => {
           {/* Right: Details */}
           <div className="ed3-details-section">
             <div className="ed3-org-pill">
-              <OrgLogo orgName={orgDisplayName(event.organization?.name)} size={18} />
               {orgDisplayName(event.organization?.name)}
             </div>
 
@@ -457,6 +457,19 @@ const EventDetail = () => {
         isOpen={showCalendarPopup}
         onClose={() => setShowCalendarPopup(false)}
       />
+
+      {showImagePopup && (
+        <div className="image-popup-overlay" onClick={() => setShowImagePopup(false)}>
+          <button className="image-popup-close" onClick={() => setShowImagePopup(false)}>&times;</button>
+          <div className="image-popup-content" onClick={(e) => e.stopPropagation()}>
+            {hasImage ? (
+              <img src={event.image_url} alt={event.name} />
+            ) : (
+              <EventBanner orgName={orgDisplayName(event.organization?.name)} className="image-popup-banner" />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

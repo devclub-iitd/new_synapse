@@ -516,14 +516,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/axios';
-import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck } from 'lucide-react';
+import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck, Tag, Upload, Save, Check, ChevronDown, Search } from 'lucide-react';
 import DynamicFormBuilder from '../components/Forms/DynamicFormBuilder';
 import DemographicsChart from '../components/Charts/DemographicsChart';
 import Loader from '../components/UI/Loader';
 import { formatDate } from '../utils/dateUtils';
 import toast from 'react-hot-toast';
 
-import { DEPARTMENTS, HOSTELS, YEARS, HEAD_ROLES, TEAM_ROLES } from '../utils/constants';
+import { DEPARTMENTS, HOSTELS, YEARS, HEAD_ROLES, TEAM_ROLES, GENRES } from '../utils/constants';
 import OrgBanner from '../components/UI/OrgBanner';
 import SearchableDropdown from '../components/UI/SearchableDropdown';
 import { capitalize, orgDisplayName } from '../utils/capitalize';
@@ -562,23 +562,79 @@ const UserAvatar = ({ name, photoUrl, size = 38 }) => {
   return <div style={style}>{name?.charAt(0) || '?'}</div>;
 };
 
-// --- MultiSelect ---
+// --- MultiSelect (with inline checklist dropdown) ---
 const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
-  const handleSelect = (val) => {
-    if (val && !selected.includes(val)) onChange([...selected, val]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+        setSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const toggleOption = (val) => {
+    if (selected.includes(val)) {
+      onChange(selected.filter(i => i !== val));
+    } else {
+      onChange([...selected, val]);
+    }
   };
   const removeOption = (v) => onChange(selected.filter(i => i !== v));
+
+  const filtered = options.filter(o => o.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="mb-3">
       <label className="form-label-modern">{label}</label>
-      <SearchableDropdown
-        options={options.filter(opt => !selected.includes(opt))}
-        value=""
-        onChange={handleSelect}
-        placeholder={placeholder || "Select to add..."}
-        searchable={true}
-      />
+      <div className="ms-container" ref={containerRef}>
+        <button
+          type="button"
+          className={`sd-trigger ${isOpen ? 'sd-open' : ''}`}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <span className="sd-placeholder">{placeholder || "Select..."}</span>
+          <ChevronDown size={15} className={`sd-chevron ${isOpen ? 'sd-chevron-up' : ''}`} />
+        </button>
+        {isOpen && (
+          <div className="ms-dropdown">
+            <div className="sd-search-wrap">
+              <Search size={14} className="sd-search-icon" />
+              <input
+                type="text"
+                className="sd-search-input"
+                placeholder="Search..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                autoFocus
+              />
+              {search && (
+                <button type="button" className="sd-search-clear" onClick={() => setSearch('')}><X size={12} /></button>
+              )}
+            </div>
+            <ul className="sd-options">
+              {filtered.length > 0 ? filtered.map(opt => (
+                <li
+                  key={opt}
+                  className={`sd-option ms-check-option ${selected.includes(opt) ? 'sd-selected' : ''}`}
+                  onClick={() => toggleOption(opt)}
+                >
+                  <span className="ms-check-box">{selected.includes(opt) && <Check size={13} />}</span>
+                  {opt}
+                </li>
+              )) : (
+                <li className="sd-no-results">No results found</li>
+              )}
+            </ul>
+          </div>
+        )}
+      </div>
       <div className="multiselect-chips mt-2">
         {selected.length > 0 ? selected.map(item => (
           <span key={item} className="multiselect-chip">
@@ -765,6 +821,10 @@ const OrgDashboard = () => {
   const [regModalEvent, setRegModalEvent] = useState(null);
 
   const [newEvent, setNewEvent] = useState({ name:'',date:'',registration_deadline:'',venue:'',description:'',tags:'',isPrivate:false });
+  const [eventGenres, setEventGenres] = useState([]);
+  const [orgGenres, setOrgGenres] = useState([]);
+  const [savingGenres, setSavingGenres] = useState(false);
+  const [showGenreModal, setShowGenreModal] = useState(false);
   const [targetDepts, setTargetDepts] = useState([]);
   const [targetHostels, setTargetHostels] = useState([]);
   const [targetYears, setTargetYears] = useState([]);
@@ -779,6 +839,8 @@ const OrgDashboard = () => {
   const fetchDashboard = useCallback(async () => {
     const res = await api.get(`/org/${orgId}/dashboard`);
     setStats(res.data);
+    const g = res.data.org_genres;
+    setOrgGenres(g ? g.split(',').map(s => s.trim()).filter(Boolean) : []);
   }, [orgId]);
 
   const fetchEvents = useCallback(async () => {
@@ -844,8 +906,22 @@ const OrgDashboard = () => {
     if (!editingEventId && activeTab === 'create') {
       setTargetDepts(DEPARTMENTS);
       setTargetHostels(HOSTELS);
+      setEventGenres([...orgGenres]);
     }
-  }, [activeTab, editingEventId]);
+  }, [activeTab, editingEventId, orgGenres]);
+
+  const handleSaveOrgGenres = async () => {
+    setSavingGenres(true);
+    try {
+      await api.patch(`/org/${orgId}/genres`, { genres: orgGenres });
+      toast.success("Genres updated!");
+      setShowGenreModal(false);
+    } catch (err) {
+      toast.error("Failed to update genres");
+    } finally {
+      setSavingGenres(false);
+    }
+  };
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
@@ -861,6 +937,7 @@ const OrgDashboard = () => {
     if (newEvent.duration_hours) formData.append('duration_hours', newEvent.duration_hours);
     if (imageFile) formData.append('photo', imageFile);
     formData.append('target_audience', JSON.stringify({ depts: targetDepts, hostels: targetHostels, years: targetYears.map(y => parseInt(y)) }));
+    formData.append('genres', JSON.stringify(eventGenres));
 
     try {
       if (editingEventId) {
@@ -871,7 +948,7 @@ const OrgDashboard = () => {
         await api.post(`/org/${orgId}/events`, formData);
         toast.success("Event created successfully!");
         setNewEvent({ name:'',date:'',venue:'',description:'',tags:'',isPrivate:false,duration_hours:'' });
-        setTargetDepts([]); setTargetHostels([]); setTargetYears([]); setFormSchema([]); setImageFile(null);
+        setTargetDepts([]); setTargetHostels([]); setTargetYears([]); setFormSchema([]); setImageFile(null); setEventGenres([]);
       }
       setActiveTab('events');
       fetchData();
@@ -913,6 +990,7 @@ const OrgDashboard = () => {
   const handleEditEvent = (ev) => {
     setEditingEventId(ev.id);
     setNewEvent({ name:ev.name, date:toLocalInputValue(ev.date), registration_deadline:toLocalInputValue(ev.registration_deadline), venue:ev.venue||'', description:ev.description||'', tags:(ev.tags||[]).join(', '), isPrivate:ev.is_private||false, duration_hours:ev.duration_hours||'' });
+    setEventGenres(ev.genres || []);
     setTargetDepts(ev.target_audience?.depts||[]);
     setTargetHostels(ev.target_audience?.hostels||[]);
     setTargetYears((ev.target_audience?.years||[]).map(String));
@@ -1012,6 +1090,29 @@ const OrgDashboard = () => {
             <div className="glass-card p-4">
               <h5 className="fw-bold mb-3" style={{ color: 'var(--text-primary)' }}>Audience by Department</h5>
               <DemographicsChart type="doughnut" title="" data={stats?.dept_analytics || {}} />
+            </div>
+          </div>
+
+          {/* Org Genres */}
+          <div className="col-12">
+            <div className="glass-card p-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="fw-bold mb-0 d-flex align-items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                  <Tag size={18} className="text-purple" /> Organisation Genres
+                </h5>
+                <button className="btn btn-purple btn-sm d-flex align-items-center gap-1" onClick={() => setShowGenreModal(true)}>
+                  <Edit size={14} /> Manage
+                </button>
+              </div>
+              {orgGenres.length > 0 ? (
+                <div className="d-flex flex-wrap gap-2">
+                  {orgGenres.map(g => (
+                    <span key={g} className="genre-display-tag">{g}</span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted small fst-italic mb-0">No genres added yet. Click Manage to add some.</p>
+              )}
             </div>
           </div>
         </div>
@@ -1237,6 +1338,9 @@ const OrgDashboard = () => {
                 <input type="text" className="form-control modern-input" placeholder="Tech, Fun"
                   value={newEvent.tags} onChange={e => setNewEvent({...newEvent,tags:e.target.value})} />
               </div>
+              <div className="col-12">
+                <MultiSelect label="Event Genres" options={GENRES} selected={eventGenres} onChange={setEventGenres} placeholder="Search & add genres..." />
+              </div>
             </div>
 
             <DynamicFormBuilder schema={formSchema} setSchema={setFormSchema} />
@@ -1245,6 +1349,30 @@ const OrgDashboard = () => {
               {editingEventId ? "Update Event" : "Publish Event"}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* ── GENRE MODAL ── */}
+      {showGenreModal && (
+        <div className="modal-backdrop-v2" onClick={() => setShowGenreModal(false)}>
+          <div className="modal-content-v2" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="fw-bold mb-0 d-flex align-items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <Tag size={18} className="text-purple" /> Manage Genres
+              </h5>
+              <button className="btn-close-modern" onClick={() => setShowGenreModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-secondary small mb-3">Select genres that describe your organisation. These will be pre-selected for new events.</p>
+            <MultiSelect label="" options={GENRES} selected={orgGenres} onChange={setOrgGenres} placeholder="Search & add genres..." />
+            <div className="d-flex justify-content-end gap-2 mt-3">
+              <button className="btn btn-outline-secondary btn-sm" onClick={() => setShowGenreModal(false)}>Cancel</button>
+              <button className="btn btn-purple btn-sm d-flex align-items-center gap-1" onClick={handleSaveOrgGenres} disabled={savingGenres}>
+                <Save size={14} /> {savingGenres ? 'Saving...' : 'Save Genres'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

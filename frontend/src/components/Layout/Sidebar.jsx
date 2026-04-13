@@ -79,7 +79,7 @@
 
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, User, Calendar, LogOut, Shield, Layout, X, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { LayoutDashboard, User, Calendar, LogOut, Shield, Layout, X, PanelLeftClose, PanelLeft, Home } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { capitalize, orgDisplayName } from '../../utils/capitalize';
 import OrgLogo from '../UI/OrgLogo';
@@ -91,7 +91,10 @@ const MobileNav = ({ user, hasManagementAccess, logout }) => {
   return (
     <>
       <nav className="mobile-bottom-nav">
-        <NavLink to="/" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
+        <NavLink to="/" end className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
+          <Home size={22} /><span>Home</span>
+        </NavLink>
+        <NavLink to="/events" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
           <LayoutDashboard size={22} /><span>Events</span>
         </NavLink>
         {user && (
@@ -152,7 +155,7 @@ const MobileNav = ({ user, hasManagementAccess, logout }) => {
 
 const Sidebar = ({ mobileOnly = false, collapsed, onToggle }) => {
   const { user, logout } = useAuth();
-  const hasManagementAccess = user?.is_superuser || (user?.roles && user.roles.length > 0);
+  const hasManagementAccess = user?.is_superuser === true || (Array.isArray(user?.roles) && user.roles.length > 0);
 
   if (mobileOnly) {
     return <MobileNav user={user} hasManagementAccess={hasManagementAccess} logout={logout} />;
@@ -177,6 +180,11 @@ const Sidebar = ({ mobileOnly = false, collapsed, onToggle }) => {
         {/* Navigation */}
         <nav className="sidebar-v2-nav">
           <NavLink to="/" end className={({ isActive }) => `sidebar-v2-link ${isActive ? 'active' : ''}`}>
+            <Home size={19} />
+            {!collapsed && <span>Home</span>}
+          </NavLink>
+
+          <NavLink to="/events" className={({ isActive }) => `sidebar-v2-link ${isActive ? 'active' : ''}`}>
             <LayoutDashboard size={19} />
             {!collapsed && <span>Events Feed</span>}
           </NavLink>

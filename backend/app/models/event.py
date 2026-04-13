@@ -28,6 +28,7 @@ class Event(Base):
     is_private = Column(Boolean, default=False, index=True)
     custom_form_schema = Column(JSON, default=list)
     duration_hours = Column(Float, nullable=True)
+    genres = Column(JSON, default=list)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)

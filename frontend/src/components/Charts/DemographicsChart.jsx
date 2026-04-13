@@ -34,8 +34,8 @@ const DemographicsChart = ({ type, data, title }) => {
     }],
   };
 
-  const textColor = getComputedStyle(document.documentElement)
-    .getPropertyValue('--text-primary').trim() || '#f1f5f9';
+  const theme = document.documentElement.getAttribute('data-theme');
+  const textColor = theme === 'light' ? '#1e293b' : '#f1f5f9';
   const gridColor = getComputedStyle(document.documentElement)
     .getPropertyValue('--border-primary').trim() || 'rgba(255,255,255,0.08)';
 
@@ -51,6 +51,11 @@ const DemographicsChart = ({ type, data, title }) => {
       legend: {
         position: 'right',
         align: 'center',
+        onClick: (evt, legendItem, legend) => {
+          const chart = legend.chart;
+          chart.toggleDataVisibility(legendItem.index);
+          chart.update();
+        },
         labels: {
           color: textColor,
           font: { size: isMobile ? 10 : 12 },
@@ -60,14 +65,19 @@ const DemographicsChart = ({ type, data, title }) => {
           // Prevent any truncation
           generateLabels: (chart) => {
             const datasets = chart.data.datasets;
-            return chart.data.labels.map((label, i) => ({
-              text: label,
-              fillStyle: datasets[0].backgroundColor[i],
-              strokeStyle: datasets[0].borderColor[i],
-              lineWidth: 1,
-              hidden: false,
-              index: i,
-            }));
+            return chart.data.labels.map((label, i) => {
+              const isHidden = !chart.getDataVisibility(i);
+              return {
+                text: label,
+                fillStyle: isHidden ? 'rgba(128,128,128,0.3)' : datasets[0].backgroundColor[i],
+                strokeStyle: isHidden ? 'rgba(128,128,128,0.3)' : datasets[0].borderColor[i],
+                lineWidth: 1,
+                hidden: isHidden,
+                fontColor: isHidden ? 'rgba(150,150,150,0.5)' : textColor,
+                textDecoration: isHidden ? 'line-through' : '',
+                index: i,
+              };
+            });
           },
         },
       },

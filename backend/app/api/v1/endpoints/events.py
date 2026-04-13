@@ -103,6 +103,7 @@ def get_events(
     board: Optional[str] = None,
     item: Optional[str] = None,
     search: Optional[str] = None,
+    genres: Optional[str] = None,
     skip: int = 0,
     limit: int = 20
 ):
@@ -169,6 +170,12 @@ def get_events(
             search_conditions.append(Event.org_id.in_(abbrev_org_ids))
         query = query.filter(or_(*search_conditions))
 
+    # Genres filter — Python-level filtering on JSON array
+    if genres:
+        genre_set = {g.strip().lower() for g in genres.split(",") if g.strip()}
+    else:
+        genre_set = None
+
     if sort_by == "date_asc":
         query = query.order_by(Event.date.asc())
     else:
@@ -179,6 +186,13 @@ def get_events(
 
     if current_user:
         all_filtered_events = [e for e in all_filtered_events if check_user_eligibility(current_user, e)]
+
+    # Genre filter (Python-level on JSON array)
+    if genre_set:
+        all_filtered_events = [
+            e for e in all_filtered_events
+            if e.genres and any(g.lower() in genre_set for g in e.genres)
+        ]
 
     paginated_events = all_filtered_events[skip: skip + limit]
 

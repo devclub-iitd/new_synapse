@@ -67,11 +67,9 @@
   background: var(--bg-elevated);
   border: 1px solid var(--border-glass, var(--border-primary));
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.05);
   animation: sdFadeIn 0.2s cubic-bezier(0.23, 1, 0.32, 1);
   overflow: hidden;
-  backdrop-filter: blur(20px) saturate(1.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
 }
 
 @keyframes sdFadeIn {

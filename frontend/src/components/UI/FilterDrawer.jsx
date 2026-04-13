@@ -1,5 +1,8 @@
-import React from "react";
-import { X } from "lucide-react";
+import React, { useState } from "react";
+import { X, Search, Monitor, FlaskConical, Music, Camera, BookOpen, Trophy, Briefcase, Leaf } from "lucide-react";
+import { GENRE_CATEGORIES } from "../../utils/constants";
+
+const CATEGORY_ICONS = { Monitor, FlaskConical, Music, Camera, BookOpen, Trophy, Briefcase, Leaf };
 
 const FILTER_MAPPING = {
   Clubs: {
@@ -30,21 +33,38 @@ const FilterDrawer = ({
   selectedBoard,
   setSelectedBoard,
   selectedItem,
-  setSelectedItem
+  setSelectedItem,
+  selectedGenres = [],
+  setSelectedGenres,
 }) => {
+  const [genreSearch, setGenreSearch] = useState('');
+
+  const toggleGenre = (genre) => {
+    if (!setSelectedGenres) return;
+    setSelectedGenres(prev =>
+      prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev, genre]
+    );
+  };
+
+  // Flatten all genres from categories for search
+  const allGenresFromCategories = GENRE_CATEGORIES.flatMap(c => c.genres);
+  const filteredGenres = genreSearch
+    ? allGenresFromCategories.filter(g => g.toLowerCase().includes(genreSearch.toLowerCase()))
+    : null;
+
   return (
     <>
-      {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
+      {isOpen && (
+        <div className="modal-backdrop-v2" onClick={onClose}>
+          <div className="filter-popup" onClick={e => e.stopPropagation()}>
+            <div className="filter-popup-header">
+              <h5 className="mb-0 fw-bold" style={{color: 'var(--text-primary)'}}>Filter Events</h5>
+              <button className="btn-close-modern" onClick={onClose}>
+                <X size={20} />
+              </button>
+            </div>
 
-      <div className={`filter-sidebar ${isOpen ? "open" : ""}`}>
-        <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
-          <h5 className="mb-0 fw-bold" style={{color: 'var(--text-primary)'}}>Filter Events</h5>
-          <button className="btn" style={{color: 'var(--text-primary)'}} onClick={onClose}>
-            <X size={22} />
-          </button>
-        </div>
-
-        <div className="p-4">
+            <div className="filter-popup-body">
 
           {/* BY ORGANIZATION */}
           <div className="mb-4">
@@ -119,25 +139,102 @@ const FilterDrawer = ({
             </div>
           )}
 
-          {/* FOOTER */}
-          <div className="mt-5 pt-4 border-top">
-            <button className="btn btn-purple w-100 mb-2" onClick={onClose}>
-              Apply Filters
-            </button>
-            <button
-              className="btn btn-link w-100 text-secondary"
-              onClick={() => {
-                setOrgType("");
-                setSelectedBoard("");
-                setSelectedItem("");
-              }}
-            >
-              Reset All
-            </button>
-          </div>
+          {/* BY GENRE */}
+          {setSelectedGenres && (
+            <div className="mb-4">
+              <label className="text-secondary small fw-bold mb-3 d-block">
+                BY GENRE
+              </label>
+              {/* Search */}
+              <div className="filter-genre-search mb-3">
+                <Search size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                <input
+                  type="text"
+                  placeholder="Search genres..."
+                  value={genreSearch}
+                  onChange={e => setGenreSearch(e.target.value)}
+                  style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)', fontSize: '0.82rem', flex: 1 }}
+                />
+                {genreSearch && (
+                  <button onClick={() => setGenreSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, display: 'flex' }}>
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
 
+              {filteredGenres ? (
+                /* Search results */
+                <div className="filter-options">
+                  {filteredGenres.map(genre => (
+                    <button
+                      key={genre}
+                      className={`filter-chip ${selectedGenres.includes(genre) ? "active" : ""}`}
+                      onClick={() => toggleGenre(genre)}
+                    >
+                      {genre}
+                    </button>
+                  ))}
+                  {filteredGenres.length === 0 && (
+                    <span className="text-muted small fst-italic">No genres match</span>
+                  )}
+                </div>
+              ) : (
+                /* Categorized view */
+                GENRE_CATEGORIES.map(cat => (
+                  <div key={cat.name} className="mb-3">
+                    <div className="d-flex align-items-center gap-2 mb-2">
+                      <span style={{ color: cat.color }}>{React.createElement(CATEGORY_ICONS[cat.icon], { size: 16 })}</span>
+                      <span className="small fw-semibold" style={{ color: 'var(--text-primary)' }}>{cat.name}</span>
+                    </div>
+                    <div className="filter-options">
+                      {cat.genres.map(genre => (
+                        <button
+                          key={genre}
+                          className={`filter-chip ${selectedGenres.includes(genre) ? "active" : ""}`}
+                          onClick={() => toggleGenre(genre)}
+                        >
+                          {genre}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+
+              {selectedGenres.length > 0 && (
+                <button
+                  className="btn btn-link btn-sm text-secondary p-0 mt-2"
+                  onClick={() => setSelectedGenres([])}
+                >
+                  Clear genres ({selectedGenres.length})
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* FOOTER */}
+            </div>
+
+            <div className="filter-popup-footer">
+              <button
+                className="btn btn-link text-secondary btn-sm"
+                onClick={() => {
+                  setOrgType("");
+                  setSelectedBoard("");
+                  setSelectedItem("");
+                  if (setSelectedGenres) setSelectedGenres([]);
+                }}
+              >
+                Reset All
+              </button>
+              <button className="btn btn-purple btn-sm px-4" onClick={onClose}>
+                Apply Filters
+              </button>
+            </div>
+
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 };

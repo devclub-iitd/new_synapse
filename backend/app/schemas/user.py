@@ -10,6 +10,7 @@ class OrgBrief(BaseModel):
     name: str
     org_type: str
     banner_url: Optional[str] = None
+    genres: Optional[str] = None
 
     class Config:
         from_attributes = True

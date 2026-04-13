@@ -3,19 +3,16 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Loader from '../components/UI/Loader';
 import toast from 'react-hot-toast';
-import { Camera, Edit3, Save, X, GraduationCap, MapPin, Calendar, Heart, Lock } from 'lucide-react';
-import { HOSTELS } from '../utils/constants';
+import { Camera, Edit3, Save, X, GraduationCap, MapPin, Calendar, Heart, Lock, Search, Mail, Hash, ChevronDown, Check, Plus } from 'lucide-react';
+import { HOSTELS, GENRES, GENRE_CATEGORIES } from '../utils/constants';
 import SearchableDropdown from '../components/UI/SearchableDropdown';
-
-const ALL_INTERESTS = [
-  "AI", "Web Development", "Machine Learning", "Robotics",
-  "Design", "Blockchain", "Competitive Programming", "Cyber Security"
-];
 
 const Profile = () => {
   const { user, setUser } = useAuth();
   const [editMode, setEditMode] = useState(false);
 
+  const [interestSearch, setInterestSearch] = useState('');
+  const [expandedCategory, setExpandedCategory] = useState(null);
   const [form, setForm] = useState({
     hostel: user?.hostel || "",
     interests: user?.interests || [],
@@ -84,44 +81,47 @@ const Profile = () => {
       remove_photo: false
     });
     setEditMode(false);
+    setInterestSearch('');
+    setExpandedCategory(null);
   };
 
+  // Filter genres for search mode
+  const searchFiltered = interestSearch
+    ? GENRES.filter(g => g.toLowerCase().includes(interestSearch.toLowerCase()))
+    : null;
+
   return (
-    <div className="container-fluid profile-page py-4">
+    <div className="container-fluid profile-page-v3 py-4">
 
-      {/* 1. HERO IDENTITY SECTION */}
-      <div className="profile-hero-v2 mb-4">
-        <div className="d-flex flex-column flex-md-row align-items-center gap-4">
+      {/* ── HERO CARD ── */}
+      <div className="profile-hero-v3">
+        <div className="profile-hero-bg" />
 
-          {/* AVATAR CONTAINER */}
-          <div className="position-relative">
-            <div className="profile-avatar-ring">
-              <div className="profile-avatar-inner">
-                {form.photo_url ? (
-                  <img src={form.photo_url} alt="profile" />
-                ) : (
-                  <span className="profile-avatar-initial">{user.name.charAt(0)}</span>
-                )}
-              </div>
+        <div className="profile-hero-content">
+          {/* Avatar */}
+          <div className="profile-avatar-wrap">
+            <div className="profile-avatar-v3">
+              {form.photo_url ? (
+                <img src={form.photo_url} alt="profile" />
+              ) : (
+                <span className="profile-avatar-letter">{user.name.charAt(0)}</span>
+              )}
             </div>
 
             {editMode && (
               <>
                 <button
-                  className="avatar-edit-fab shadow border-0"
+                  className="profile-avatar-edit-btn"
                   onClick={() => document.getElementById("photoInput").click()}
-                  style={{ position: 'absolute', bottom: '0', right: '0', zIndex: 2 }}
                 >
-                  <Camera size={18} />
+                  <Camera size={16} />
                 </button>
-
                 {form.photo_url && (
                   <button
-                    className="btn btn-danger btn-sm rounded-circle p-1 shadow"
-                    style={{ position: 'absolute', top: '-5px', right: '-5px', zIndex: 3, width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    className="profile-avatar-remove-btn"
                     onClick={() => setForm(prev => ({ ...prev, photo_url: "", photo_file: null, remove_photo: true }))}
                   >
-                    <X size={14} />
+                    <X size={12} />
                   </button>
                 )}
               </>
@@ -129,24 +129,28 @@ const Profile = () => {
             <input type="file" hidden id="photoInput" accept="image/*" onChange={handlePhotoChange} />
           </div>
 
-          <div className="text-center text-md-start flex-grow-1">
-            <h1 className="profile-name">{user.name}</h1>
-            <p className="profile-email">{user.email}</p>
-            <span className="entry-pill px-3 py-1">{user.entry_number}</span>
+          {/* Info */}
+          <div className="profile-hero-info">
+            <h1 className="profile-name-v3">{user.name}</h1>
+            <div className="profile-meta-row">
+              <span className="profile-meta-item"><Mail size={14} /> {user.email}</span>
+              <span className="profile-meta-item"><Hash size={14} /> {user.entry_number}</span>
+            </div>
           </div>
 
-          <div className="mt-3 mt-md-0">
+          {/* Edit / Save buttons */}
+          <div className="profile-hero-actions">
             {!editMode ? (
-              <button className="btn btn-purple-outline d-flex align-items-center gap-2 px-4 py-2" onClick={() => setEditMode(true)}>
-                <Edit3 size={18} /> Edit Profile
+              <button className="profile-edit-btn" onClick={() => setEditMode(true)}>
+                <Edit3 size={16} /> Edit
               </button>
             ) : (
               <div className="d-flex gap-2">
-                <button className="btn btn-outline-danger d-flex align-items-center gap-2" onClick={cancelEdit}>
-                  <X size={18} /> Discard
+                <button className="profile-cancel-btn" onClick={cancelEdit}>
+                  <X size={16} /> Discard
                 </button>
-                <button className="btn btn-purple d-flex align-items-center gap-2 px-4" onClick={saveProfile}>
-                  <Save size={18} /> Save Changes
+                <button className="profile-save-btn" onClick={saveProfile}>
+                  <Save size={16} /> Save
                 </button>
               </div>
             )}
@@ -154,114 +158,190 @@ const Profile = () => {
         </div>
       </div>
 
-      <div className="row g-4">
-        {/* 2. ACADEMIC DETAILS */}
-        <div className="col-lg-5">
-          <div className="profile-glass-card h-100 p-4">
-            <h5 className="section-title mb-4 d-flex align-items-center gap-2">
-              <GraduationCap size={20} className="text-purple" /> Academic Info
-            </h5>
+      {/* ── DETAILS GRID ── */}
+      <div className="profile-grid-v3">
 
-            {!editMode ? (
-              <div className="d-flex flex-column gap-3">
-                <div className="info-mini-card">
-                  <div className="info-mini-icon"><GraduationCap size={18} /></div>
-                  <div>
-                    <div className="info-mini-label">Department</div>
-                    <div className="info-mini-value">{user.department || "Not set"}</div>
-                  </div>
-                </div>
-                <div className="info-mini-card">
-                  <div className="info-mini-icon"><MapPin size={18} /></div>
-                  <div>
-                    <div className="info-mini-label">Hostel</div>
-                    <div className="info-mini-value">{user.hostel || "Not set"}</div>
-                  </div>
-                </div>
-                <div className="info-mini-card">
-                  <div className="info-mini-icon"><Calendar size={18} /></div>
-                  <div>
-                    <div className="info-mini-label">Current Year</div>
-                    <div className="info-mini-value">Year {user.current_year || "N/A"}</div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="d-flex flex-column gap-3">
-                {/* Department — auto-filled, read-only */}
-                <div>
-                  <label className="form-label-modern d-flex align-items-center gap-1">
-                    Department <Lock size={13} className="text-muted" />
-                  </label>
-                  <input
-                    className="form-control modern-input"
-                    value={user.department || "Not set"}
-                    readOnly
-                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', opacity: 0.7 }}
-                  />
-                  <div className="form-text" style={{ fontSize: '0.72rem' }}>Auto-filled from your entry number</div>
-                </div>
-                {/* Hostel — editable */}
-                <div>
-                  <label className="form-label-modern">Hostel</label>
-                  <SearchableDropdown
-                    options={HOSTELS}
-                    value={form.hostel}
-                    onChange={(val) => setForm({ ...form, hostel: val })}
-                    placeholder="Select your hostel"
-                  />
-                </div>
-                {/* Year — auto-filled, read-only */}
-                <div>
-                  <label className="form-label-modern d-flex align-items-center gap-1">
-                    Current Year <Lock size={13} className="text-muted" />
-                  </label>
-                  <input
-                    className="form-control modern-input"
-                    value={user.current_year ? `Year ${user.current_year}` : "Not set"}
-                    readOnly
-                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', opacity: 0.7 }}
-                  />
-                  <div className="form-text" style={{ fontSize: '0.72rem' }}>Auto-calculated from admission year</div>
-                </div>
-              </div>
-            )}
+        {/* LEFT: Academic Info */}
+        <div className="profile-card-v3">
+          <div className="profile-card-header">
+            <GraduationCap size={18} />
+            <span>Academic Details</span>
           </div>
+
+          {!editMode ? (
+            <div className="profile-info-list">
+              <div className="profile-info-row">
+                <GraduationCap size={16} className="profile-info-icon" />
+                <div>
+                  <div className="profile-info-label">Department</div>
+                  <div className="profile-info-value">{user.department || "Not set"}</div>
+                </div>
+              </div>
+              <div className="profile-info-row">
+                <MapPin size={16} className="profile-info-icon" />
+                <div>
+                  <div className="profile-info-label">Hostel</div>
+                  <div className="profile-info-value">{user.hostel || "Not set"}</div>
+                </div>
+              </div>
+              <div className="profile-info-row">
+                <Calendar size={16} className="profile-info-icon" />
+                <div>
+                  <div className="profile-info-label">Year</div>
+                  <div className="profile-info-value">{user.current_year ? `Year ${user.current_year}` : "N/A"}</div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="profile-edit-fields">
+              <div className="profile-field-group">
+                <label className="profile-field-label">
+                  Department <Lock size={11} style={{ opacity: 0.4 }} />
+                </label>
+                <input
+                  className="profile-field-input disabled"
+                  value={user.department || "Not set"}
+                  readOnly
+                />
+                <span className="profile-field-hint">Auto-filled from entry number</span>
+              </div>
+              <div className="profile-field-group">
+                <label className="profile-field-label">Hostel</label>
+                <SearchableDropdown
+                  options={HOSTELS}
+                  value={form.hostel}
+                  onChange={(val) => setForm({ ...form, hostel: val })}
+                  placeholder="Select your hostel"
+                />
+              </div>
+              <div className="profile-field-group">
+                <label className="profile-field-label">
+                  Year <Lock size={11} style={{ opacity: 0.4 }} />
+                </label>
+                <input
+                  className="profile-field-input disabled"
+                  value={user.current_year ? `Year ${user.current_year}` : "Not set"}
+                  readOnly
+                />
+                <span className="profile-field-hint">Auto-calculated from admission year</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* 3. INTERESTS SELECTION */}
-        <div className="col-lg-7">
-          <div className="profile-glass-card h-100 p-4">
-            <h5 className="section-title mb-4 d-flex align-items-center gap-2">
-              <Heart size={20} className="text-purple" /> Your Interests
-            </h5>
-            <p className="text-secondary small mb-3">
-              {editMode ? "Select topics to customize your campus experience." : "These interests help customize your event feed."}
-            </p>
+        {/* RIGHT: Interests */}
+        <div className="profile-card-v3 profile-interests-card">
+          <div className="profile-card-header">
+            <Heart size={18} />
+            <span>Your Interests</span>
+            {form.interests.length > 0 && (
+              <span className="profile-interest-count">{form.interests.length}</span>
+            )}
+          </div>
 
-            <div className="d-flex flex-wrap gap-2">
-              {(editMode ? ALL_INTERESTS : user.interests).map(interest => {
-                const isSelected = form.interests.includes(interest);
-                return (
-                  <button
-                    key={interest}
-                    disabled={!editMode}
-                    className={`interest-chip-v2 ${isSelected ? "active" : ""} ${!editMode ? "view-only" : ""}`}
-                    onClick={() => toggleInterest(interest)}
-                  >
-                    {editMode && <span>{isSelected ? "✓" : "+"}</span>}
-                    {interest}
-                  </button>
-                );
-              })}
-
-              {!editMode && user.interests.length === 0 && (
-                <div className="text-center w-100 py-4 opacity-50 fst-italic" style={{ color: 'var(--text-muted)' }}>
-                  No interests selected. Click edit to add some!
+          {!editMode ? (
+            /* ── View mode ── */
+            <div className="profile-interests-view">
+              {(user.interests || []).length > 0 ? (
+                <div className="profile-interest-chips">
+                  {user.interests.map(interest => (
+                    <span key={interest} className="profile-interest-tag">{interest}</span>
+                  ))}
+                </div>
+              ) : (
+                <div className="profile-interests-empty">
+                  <Heart size={32} style={{ opacity: 0.15 }} />
+                  <p>No interests selected yet</p>
+                  <span>Click Edit to personalise your event feed</span>
                 </div>
               )}
             </div>
-          </div>
+          ) : (
+            /* ── Edit mode ── */
+            <div className="profile-interests-edit">
+              {/* Selected chips */}
+              {form.interests.length > 0 && (
+                <div className="profile-selected-interests">
+                  {form.interests.map(interest => (
+                    <button key={interest} className="profile-selected-chip" onClick={() => toggleInterest(interest)}>
+                      {interest} <X size={13} />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Search bar */}
+              <div className="profile-interest-search-v3">
+                <Search size={15} />
+                <input
+                  type="text"
+                  placeholder="Search interests..."
+                  value={interestSearch}
+                  onChange={e => setInterestSearch(e.target.value)}
+                />
+                {interestSearch && (
+                  <button className="profile-search-clear" onClick={() => setInterestSearch('')}>
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Results / Categories */}
+              <div className="profile-interest-picker">
+                {searchFiltered ? (
+                  /* Search results */
+                  <div className="profile-interest-results">
+                    {searchFiltered.length > 0 ? searchFiltered.map(genre => {
+                      const sel = form.interests.includes(genre);
+                      return (
+                        <button key={genre} className={`profile-pick-chip ${sel ? 'picked' : ''}`} onClick={() => toggleInterest(genre)}>
+                          {sel ? <Check size={13} /> : <Plus size={13} />}
+                          {genre}
+                        </button>
+                      );
+                    }) : (
+                      <div className="profile-no-results">No interests match "{interestSearch}"</div>
+                    )}
+                  </div>
+                ) : (
+                  /* Categories accordion */
+                  <div className="profile-category-list">
+                    {GENRE_CATEGORIES.map(cat => {
+                      const isOpen = expandedCategory === cat.name;
+                      const selectedInCat = cat.genres.filter(g => form.interests.includes(g)).length;
+                      return (
+                        <div key={cat.name} className={`profile-category-item ${isOpen ? 'open' : ''}`}>
+                          <button
+                            className="profile-category-header"
+                            onClick={() => setExpandedCategory(isOpen ? null : cat.name)}
+                          >
+                            <span className="profile-cat-name" style={{ color: cat.color }}>{cat.name}</span>
+                            <div className="d-flex align-items-center gap-2">
+                              {selectedInCat > 0 && <span className="profile-cat-count">{selectedInCat}</span>}
+                              <ChevronDown size={15} className={`profile-cat-chevron ${isOpen ? 'rotated' : ''}`} />
+                            </div>
+                          </button>
+                          {isOpen && (
+                            <div className="profile-category-genres">
+                              {cat.genres.map(genre => {
+                                const sel = form.interests.includes(genre);
+                                return (
+                                  <button key={genre} className={`profile-pick-chip ${sel ? 'picked' : ''}`} onClick={() => toggleInterest(genre)}>
+                                    {sel ? <Check size={13} /> : <Plus size={13} />}
+                                    {genre}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

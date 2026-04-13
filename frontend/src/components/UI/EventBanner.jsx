@@ -8,8 +8,10 @@ const COLORS = [
 ];
 
 const BG_COLORS = [
-  '#1e1033', '#0f172a', '#1a0a2e', '#0c1222', '#170d29',
-  '#0d1117', '#1c1044', '#111827', '#0e0b1a', '#130f25',
+  '#7c3aed', '#2563eb', '#0ea5e9', '#14b8a6', '#10b981',
+  '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#4f46e5',
+  '#06b6d4', '#f43f5e', '#8b5cf6', '#e879f9', '#3b82f6',
+  '#d946ef', '#0891b2', '#059669', '#dc2626', '#7c2d12',
 ];
 
 function hashStr(str) {
@@ -132,18 +134,6 @@ const EventBanner = ({ orgName, className = '', style = {} }) => {
 
   const shapes = useMemo(() => generateShapes(seed, 400, 250), [seed]);
 
-  // random text styling per banner
-  const rng = useMemo(() => seededRandom(seed + 999), [seed]);
-  const textRotation = useMemo(() => -8 + rng() * 16, [rng]);
-  const textX = useMemo(() => 30 + rng() * 40, [rng]);
-  const textY = useMemo(() => 35 + rng() * 30, [rng]);
-  const textSize = useMemo(() => 1.1 + rng() * 0.7, [rng]);
-  const textColor = COLORS[seed % COLORS.length];
-  const textWeight = useMemo(() => (rng() > 0.5 ? 900 : 700), [rng]);
-  const textStyle = useMemo(() => (rng() > 0.7 ? 'italic' : 'normal'), [rng]);
-  const letterSpacing = useMemo(() => rng() > 0.5 ? `${2 + rng() * 8}px` : 'normal', [rng]);
-  const textTransform = useMemo(() => rng() > 0.4 ? 'uppercase' : 'none', [rng]);
-
   return (
     <div
       className={`event-banner-fallback ${className}`}
@@ -160,16 +150,15 @@ const EventBanner = ({ orgName, className = '', style = {} }) => {
         className="event-banner-text"
         style={{
           position: 'absolute',
-          left: `${textX}%`,
-          top: `${textY}%`,
-          transform: `translate(-50%, -50%) rotate(${textRotation}deg)`,
-          fontSize: `${textSize}rem`,
-          fontWeight: textWeight,
-          fontStyle: textStyle,
-          letterSpacing,
-          textTransform,
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          fontSize: '1.4rem',
+          fontWeight: 800,
+          letterSpacing: '1px',
+          textTransform: 'uppercase',
           color: '#fff',
-          textShadow: `0 0 20px ${textColor}, 0 2px 8px rgba(0,0,0,0.6)`,
+          textShadow: '0 2px 12px rgba(0,0,0,0.5), 0 0 30px rgba(0,0,0,0.3)',
           maxWidth: '85%',
           textAlign: 'center',
           lineHeight: 1.2,

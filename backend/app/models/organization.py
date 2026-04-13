@@ -11,6 +11,7 @@ class Organization(Base):
     name = Column(String, unique=True, nullable=False, index=True)
     org_type = Column(String, nullable=False, index=True)
     banner_url = Column(String, nullable=True)
+    genres = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships

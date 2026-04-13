@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../api/axios';
 import {
   Search, ShieldAlert, Trash2, UserCheck, PlusCircle, X, Users,
@@ -340,7 +341,7 @@ const UsersTab = ({ users, totalUsers, orgs, onRefresh, onLoadMore, loadingMore,
         </div>
 
         {/* Assign role modal — mobile only */}
-        {selectedUser && (
+        {selectedUser && createPortal(
           <div className="admin-modal-overlay d-lg-none" onClick={() => setSelectedUser(null)}>
             <div className="admin-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 440 }}>
               <div className="admin-modal-header">
@@ -403,7 +404,8 @@ const UsersTab = ({ users, totalUsers, orgs, onRefresh, onLoadMore, loadingMore,
                 </form>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
 

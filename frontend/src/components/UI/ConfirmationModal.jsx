@@ -1,10 +1,11 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, X } from 'lucide-react';
 
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, isLoading }) => {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="glass-card p-4 rounded-4" style={{ background: 'var(--bg-elevated)', width: '90vw', maxWidth: '400px', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={e => e.stopPropagation()}>
         
@@ -25,7 +26,8 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, isLoadi
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -12,6 +12,7 @@ class EventBase(BaseModel):
     venue: str
     org_id: int
     tags: List[str] = []
+    genres: List[str] = []
     is_private: bool = False
     duration_hours: Optional[float] = None
 
@@ -32,6 +33,7 @@ class EventOut(BaseModel):
     org_id: int
     organization: OrgBrief
     tags: List[str] = []
+    genres: List[str] = []
     is_private: bool = False
     image_url: Optional[str] = None
     is_registered: bool = False

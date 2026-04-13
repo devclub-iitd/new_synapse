@@ -105,6 +105,7 @@ def get_org_dashboard(
         "org_name": org.name,
         "org_type": org.org_type,
         "org_banner": org.banner_url,
+        "org_genres": org.genres,
         "your_role": role.role_name,
         "total_events": total_events,
         "total_registrations": total_regs,
@@ -138,6 +139,7 @@ def create_org_event(
     date: str = Form(...),
     venue: str = Form(...),
     tags: str = Form("[]"),
+    genres: str = Form("[]"),
     custom_form_schema: str = Form("[]"),
     target_audience: str = Form("{}"),
     is_private: bool = Form(False),
@@ -164,6 +166,7 @@ def create_org_event(
     # Parse JSON fields
     try:
         tags_list = json.loads(tags)
+        genres_list = json.loads(genres)
         schema_list = json.loads(custom_form_schema)
         audience_dict = json.loads(target_audience)
 
@@ -203,6 +206,7 @@ def create_org_event(
         venue=venue,
         image_url=image_url,
         tags=tags_list,
+        genres=genres_list,
         custom_form_schema=schema_list,
         target_audience=audience_dict,
         is_private=is_private,
@@ -241,6 +245,7 @@ def update_event(
     date: str = Form(None),
     venue: str = Form(None),
     tags: str = Form(None),
+    genres: str = Form(None),
     custom_form_schema: str = Form(None),
     target_audience: str = Form(None),
     is_private: bool = Form(None),
@@ -308,6 +313,8 @@ def update_event(
 
     if tags:
         event.tags = json.loads(tags)
+    if genres:
+        event.genres = json.loads(genres)
     if custom_form_schema:
         event.custom_form_schema = json.loads(custom_form_schema)
     if target_audience:
@@ -496,6 +503,26 @@ def upload_org_banner(
     db.commit()
     db.refresh(org)
     return {"banner_url": result["secure_url"]}
+
+
+@router.patch("/{org_id}/genres")
+def update_org_genres(
+    org_id: int,
+    body: dict,
+    db: Session = Depends(deps.get_db),
+    role: Role = Depends(get_org_role)
+):
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    genres_list = body.get("genres", [])
+    if not isinstance(genres_list, list):
+        raise HTTPException(status_code=400, detail="genres must be a list")
+    org.genres = ",".join(g.strip() for g in genres_list if g.strip())
+    db.commit()
+    db.refresh(org)
+    return {"genres": org.genres}
 
 
 # ------------------------------------------------------------------

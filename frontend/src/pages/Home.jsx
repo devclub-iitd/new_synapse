@@ -227,22 +227,29 @@
 // export default Home;
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../api/axios";
 import EventCard from "../components/UI/EventCard";
 import FilterDrawer from "../components/UI/FilterDrawer";
 import Loader from "../components/UI/Loader";
 import LoginModal from "../components/UI/LoginModal";
 import AnimatedBackground from "../components/UI/AnimatedBackground";
-import { Filter, Search, ArrowUpDown, Sparkles } from "lucide-react";
+import { Filter, Search, ArrowUpDown } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
-import SearchableDropdown from "../components/UI/SearchableDropdown";
 
 const LIMIT = 6;
 
 const Home = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  // Initialize genres from URL params immediately (avoid race with first fetch)
+  const initGenres = () => {
+    const g = searchParams.get('genres');
+    return g ? g.split(',').map(s => s.trim()).filter(Boolean) : [];
+  };
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -257,6 +264,7 @@ const Home = () => {
   const [orgType, setOrgType] = useState("");
   const [selectedBoard, setSelectedBoard] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState(initGenres);
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -280,7 +288,7 @@ const Home = () => {
     setHasMore(true);
     fetchEvents(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgType, selectedBoard, selectedItem, debouncedSearch, sortBy]);
+  }, [orgType, selectedBoard, selectedItem, debouncedSearch, sortBy, selectedGenres]);
 
   const fetchEvents = async (reset = false) => {
     try {
@@ -298,6 +306,7 @@ const Home = () => {
       if (selectedBoard) params.board = selectedBoard;
       if (selectedItem) params.item = selectedItem;
       if (debouncedSearch) params.search = debouncedSearch;
+      if (selectedGenres.length > 0) params.genres = selectedGenres.join(',');
 
       const res = await api.get("/events/", { params });
 
@@ -345,17 +354,10 @@ const Home = () => {
       {/* Hero Section */}
       <div className="home-hero-v3">
         <div className="container">
-          <div className="hero-content-v3">
-            <div className="hero-badge">
-              <Sparkles size={14} />
-              <span>Discover What's Happening</span>
-            </div>
+          <div className="hero-content-v3 hero-compact">
             <h1 className="hero-title-v3">
-              Upcoming <span className="gradient-text">Events</span>
+              Discover <span className="gradient-text">Events</span>
             </h1>
-            <p className="hero-subtitle-v3">
-              Find and register for club activities, fests & more
-            </p>
           </div>
 
           {/* Controls Bar */}
@@ -371,30 +373,22 @@ const Home = () => {
             </div>
 
             <div className="controls-right-v3">
-              <div className="sort-v3">
+              <button
+                className="sort-toggle-v3"
+                onClick={() => setSortBy(prev => prev === 'date_desc' ? 'date_asc' : 'date_desc')}
+                title={sortBy === 'date_desc' ? 'Showing Newest First' : 'Showing Oldest First'}
+              >
                 <ArrowUpDown size={16} />
-                <SearchableDropdown
-                  className="sd-compact"
-                  options={[
-                    { label: 'Newest First', value: 'date_desc' },
-                    { label: 'Oldest First', value: 'date_asc' },
-                  ]}
-                  value={sortBy}
-                  onChange={(val) => setSortBy(val)}
-                  searchable={false}
-                />
-                <span className="sort-mobile-label">
-                  {sortBy === "date_desc" ? "Newest" : "Oldest"}
-                </span>
-              </div>
+                <span>{sortBy === 'date_desc' ? 'Newest' : 'Oldest'}</span>
+              </button>
 
               <button
-                className={`filter-btn-v3 ${orgType ? 'active' : ''}`}
+                className={`filter-btn-v3 ${orgType || selectedGenres.length ? 'active' : ''}`}
                 onClick={() => setIsFilterOpen(true)}
               >
                 <Filter size={18} />
                 <span className="filter-btn-label">Filters</span>
-                {(orgType || selectedBoard || selectedItem) && (
+                {(orgType || selectedBoard || selectedItem || selectedGenres.length > 0) && (
                   <span className="filter-active-dot" />
                 )}
               </button>
@@ -457,6 +451,8 @@ const Home = () => {
         setSelectedBoard={setSelectedBoard}
         selectedItem={selectedItem}
         setSelectedItem={setSelectedItem}
+        selectedGenres={selectedGenres}
+        setSelectedGenres={setSelectedGenres}
       />
 
       <LoginModal

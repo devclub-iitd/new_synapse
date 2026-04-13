@@ -107,8 +107,10 @@ const AnimatedBackground = () => {
         camera={{ position: [0, 0, 10], fov: 65 }}
         dpr={[1, 1.5]}
         gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
-        style={{ background: 'transparent' }}
+        style={{ background: 'transparent', pointerEvents: 'none' }}
+        events={() => ({ enabled: false, priority: 0 })}
         onCreated={({ gl }) => {
+          gl.domElement.style.pointerEvents = 'none';
           gl.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault());
         }}
       >

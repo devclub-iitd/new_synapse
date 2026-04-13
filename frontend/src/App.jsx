@@ -297,6 +297,7 @@ import Navbar from './components/Layout/Navbar';
 import Sidebar from './components/Layout/Sidebar';
 
 // Pages
+import HomePage from './pages/HomePage';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
 import StudentDashboard from './pages/StudentDashboard';
@@ -367,7 +368,8 @@ const AppLayout = () => {
 
         <div className="flex-grow-1 overflow-y-auto custom-scrollbar px-md-4 py-4 main-content-area">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/events" element={<Home />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/events/:eventId" element={<EventDetail />} />
 

@@ -6,6 +6,7 @@ from app.models.event import Event
 from app.models.organization import Organization
 from app.models.user import User
 from app.models.registration import Registration
+from app.models.event_request import EventRequest
 from app.schemas.event import EventOut, EventDetail
 from app.services.recommender import get_event_recommendations
 from sqlalchemy import or_, func, exists, select
@@ -212,8 +213,31 @@ def get_events(
     else:
         registered_ids = set()
 
+    # Batch-fetch registration counts
+    event_ids = [e.id for e in paginated_events]
+    reg_count_rows = (
+        db.query(Registration.event_id, func.count(Registration.id))
+        .filter(Registration.event_id.in_(event_ids))
+        .group_by(Registration.event_id)
+        .all()
+    )
+    reg_counts = dict(reg_count_rows)
+
+    # Batch-fetch user request statuses
+    if current_user:
+        req_rows = (
+            db.query(EventRequest.event_id, EventRequest.status)
+            .filter(EventRequest.user_id == current_user.id, EventRequest.event_id.in_(event_ids))
+            .all()
+        )
+        user_request_map = dict(req_rows)
+    else:
+        user_request_map = {}
+
     for e in paginated_events:
         e.is_registered = e.id in registered_ids
+        e.registration_count = reg_counts.get(e.id, 0)
+        e.user_request_status = user_request_map.get(e.id)
 
     return paginated_events
 
@@ -242,12 +266,19 @@ def get_event_detail(
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
+    event.registration_count = db.query(func.count(Registration.id)).filter(Registration.event_id == event_id).scalar()
+
     if current_user:
         event.is_registered = db.query(
             exists().where(Registration.user_id == current_user.id).where(Registration.event_id == event_id)
         ).scalar()
+        req = db.query(EventRequest.status).filter(
+            EventRequest.user_id == current_user.id, EventRequest.event_id == event_id
+        ).first()
+        event.user_request_status = req[0] if req else None
     else:
         event.is_registered = False
+        event.user_request_status = None
 
     return event
 
@@ -315,6 +346,16 @@ def register_for_event(
 
     if not check_user_eligibility(current_user, event):
         raise HTTPException(status_code=403, detail="You are not eligible to register for this event based on its target audience restrictions.")
+
+    # Block direct registration if event is request-only
+    if event.request_only:
+        raise HTTPException(status_code=400, detail="This event requires a request. Please submit a request to join.")
+
+    # Check capacity
+    if event.capacity is not None:
+        current_count = db.query(func.count(Registration.id)).filter(Registration.event_id == event_id).scalar()
+        if current_count >= event.capacity:
+            raise HTTPException(status_code=400, detail="Event is full. No slots available.")
 
     existing = db.query(Registration).filter(
         Registration.user_id == current_user.id,
@@ -384,3 +425,59 @@ def submit_feedback(
     db.commit()
 
     return {"status": "success", "msg": "Feedback submitted"}
+
+
+# ============================================================
+# EVENT JOIN REQUEST (for request_only events or full-capacity events)
+# ============================================================
+@router.post("/{event_id}/request")
+@limiter.limit("20/minute")
+def submit_event_request(
+    request: Request,
+    event_id: int,
+    body: dict = {},
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    now = now_utc()
+    event_date = event.date
+    if event_date.tzinfo is None:
+        event_date = event_date.replace(tzinfo=timezone.utc)
+    if event_date < now:
+        raise HTTPException(status_code=400, detail="Cannot request for past events")
+
+    if not check_user_eligibility(current_user, event):
+        raise HTTPException(status_code=403, detail="You are not eligible for this event.")
+
+    existing = db.query(EventRequest).filter(
+        EventRequest.user_id == current_user.id,
+        EventRequest.event_id == event_id
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already submitted a request for this event")
+
+    # Already registered?
+    already_reg = db.query(Registration).filter(
+        Registration.user_id == current_user.id,
+        Registration.event_id == event_id
+    ).first()
+    if already_reg:
+        raise HTTPException(status_code=400, detail="You are already registered for this event")
+
+    form_response = body.get("form_response", "")
+
+    new_req = EventRequest(
+        event_id=event_id,
+        org_id=event.org_id,
+        user_id=current_user.id,
+        form_response=form_response,
+        status=0,
+    )
+    db.add(new_req)
+    db.commit()
+
+    return {"status": "success", "msg": "Request submitted successfully"}

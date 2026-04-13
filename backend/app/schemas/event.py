@@ -15,6 +15,8 @@ class EventBase(BaseModel):
     genres: List[str] = []
     is_private: bool = False
     duration_hours: Optional[float] = None
+    capacity: Optional[int] = None
+    request_only: bool = False
 
 
 class EventCreate(EventBase):
@@ -43,6 +45,10 @@ class EventOut(BaseModel):
     target_audience: Optional[Dict[str, Any]] = {}
     duration_hours: Optional[float] = None
     event_manager_email: Optional[str] = None
+    capacity: Optional[int] = None
+    request_only: bool = False
+    registration_count: int = 0
+    user_request_status: Optional[int] = None  # -1/0/1 or None
 
     class Config:
         from_attributes = True

@@ -30,6 +30,8 @@ class Event(Base):
     duration_hours = Column(Float, nullable=True)
     genres = Column(JSON, default=list)
     is_live = Column(Boolean, default=False, index=True)
+    capacity = Column(Integer, nullable=True)
+    request_only = Column(Boolean, default=False)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)

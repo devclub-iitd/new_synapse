@@ -396,6 +396,7 @@ function App() {
           <AppLayout />
           <Toaster
             position="top-right"
+            containerStyle={{ zIndex: 99999 }}
             toastOptions={{
               style: {
                 background: 'var(--bg-elevated)',

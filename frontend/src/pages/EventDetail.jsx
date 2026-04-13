@@ -237,6 +237,9 @@ import {
   Users,
   Sparkles,
   Tag,
+  Inbox,
+  X,
+  Check,
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -263,6 +266,9 @@ const EventDetail = () => {
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [showCalendarPopup, setShowCalendarPopup] = useState(false);
   const [showImagePopup, setShowImagePopup] = useState(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [requestText, setRequestText] = useState('');
+  const [submittingRequest, setSubmittingRequest] = useState(false);
   const { hasImage, onError } = useImageFallback(event?.image_url);
 
   useEffect(() => { fetchEvent(); }, [eventId]);
@@ -293,7 +299,29 @@ const EventDetail = () => {
       }
       return;
     }
+
+    // If request_only or full → open request modal
+    if (needsRequest) {
+      setIsRequestModalOpen(true);
+      return;
+    }
+
     setIsRegisterModalOpen(true);
+  };
+
+  const handleRequestSubmit = async () => {
+    setSubmittingRequest(true);
+    try {
+      await api.post(`/events/${eventId}/request`, { form_response: requestText });
+      toast.success("Request submitted! Awaiting approval.");
+      setIsRequestModalOpen(false);
+      setRequestText('');
+      fetchEvent();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to submit request");
+    } finally {
+      setSubmittingRequest(false);
+    }
   };
 
   const handleRegistrationSuccess = () => {
@@ -308,6 +336,13 @@ const EventDetail = () => {
   const hasDeadline = !!event.registration_deadline;
   const deadlinePassed = hasDeadline ? isPast(event.registration_deadline) : false;
   const eventPassed = isPast(event.date);
+
+  const hasCapacity = event.capacity !== null && event.capacity !== undefined;
+  const regCount = event.registration_count || 0;
+  const slotsLeft = hasCapacity ? Math.max(0, event.capacity - regCount) : null;
+  const isFull = hasCapacity && slotsLeft === 0;
+  const needsRequest = event.request_only || isFull;
+  const userRequestStatus = event.user_request_status; // -1, 0, 1, or null
 
   return (
     <div className="event-detail-v3">
@@ -429,16 +464,46 @@ const EventDetail = () => {
               </div>
             )}
 
-            {/* Register Button */}
+            {/* Capacity / Slots Label */}
+            {hasCapacity && !eventPassed && (
+              <div className="ed3-slots-info">
+                {isFull ? (
+                  <span className="ed3-slots-badge full">
+                    <Users size={14} /> Event Full — {regCount}/{event.capacity} registered
+                  </span>
+                ) : slotsLeft <= 5 ? (
+                  <span className="ed3-slots-badge low">
+                    <Users size={14} /> {slotsLeft} slot{slotsLeft !== 1 ? 's' : ''} left!
+                  </span>
+                ) : (
+                  <span className="ed3-slots-badge available">
+                    <Users size={14} /> {regCount}/{event.capacity} registered
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Request Status Banner */}
+            {userRequestStatus !== null && userRequestStatus !== undefined && !event.is_registered && (
+              <div className={`ed3-request-status ${userRequestStatus === 0 ? 'pending' : userRequestStatus === 1 ? 'accepted' : 'rejected'}`}>
+                {userRequestStatus === 0 && 'Your request is pending approval'}
+                {userRequestStatus === 1 && 'Your request was accepted!'}
+                {userRequestStatus === -1 && 'Your request was rejected'}
+              </div>
+            )}
+
+            {/* Register / Request Button */}
             <button
               className={`ed3-register-btn ${
                 eventPassed || deadlinePassed
                   ? 'disabled'
                   : event.is_registered
                     ? 'registered'
-                    : ''
+                    : needsRequest
+                      ? 'request-mode'
+                      : ''
               }`}
-              disabled={eventPassed || deadlinePassed}
+              disabled={eventPassed || deadlinePassed || (userRequestStatus === 0)}
               onClick={handleRegisterClick}
             >
               <span>
@@ -448,7 +513,11 @@ const EventDetail = () => {
                     ? "Deregister"
                     : deadlinePassed
                       ? "Registration Closed"
-                      : "Register Now"}
+                      : userRequestStatus === 0
+                        ? "Request Pending..."
+                        : needsRequest
+                          ? "Request to Join"
+                          : "Register Now"}
               </span>
               <div className="ed3-btn-shimmer" />
             </button>
@@ -474,6 +543,61 @@ const EventDetail = () => {
         isOpen={showCalendarPopup}
         onClose={() => setShowCalendarPopup(false)}
       />
+
+      {/* Request to Join Modal */}
+      {isRequestModalOpen && (
+        <div className="modal-overlay-v3">
+          <div className="modal-card-v3">
+            <div className="modal-header-v3">
+              <div className="modal-header-left">
+                <div className="modal-icon-v3">
+                  <Inbox size={20} />
+                </div>
+                <div>
+                  <h3>Request to Join</h3>
+                  <p>{event.request_only ? 'This event requires approval to join' : 'Event is full — submit a request'}</p>
+                </div>
+              </div>
+              <button className="modal-close-v3" onClick={() => setIsRequestModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-divider-v3" />
+            <div className="modal-body-v3">
+              <div className="form-field-v3">
+                <label className="form-label-v3">
+                  <span className="field-number">1</span>
+                  Why do you want to join? <span style={{ color:'var(--text-muted)',fontSize:'0.8rem' }}>(optional)</span>
+                </label>
+                <div className="input-wrapper-v3">
+                  <textarea
+                    className="form-input-v3"
+                    rows="5"
+                    placeholder="Write your message here..."
+                    value={requestText}
+                    onChange={e => setRequestText(e.target.value)}
+                    style={{ resize: 'vertical', minHeight: '100px' }}
+                  />
+                  <div className="input-focus-ring" />
+                </div>
+              </div>
+              <button
+                className="submit-btn-v3"
+                onClick={handleRequestSubmit}
+                disabled={submittingRequest}
+              >
+                {submittingRequest ? 'Submitting...' : (
+                  <>
+                    <Check size={18} />
+                    <span>Submit Request</span>
+                  </>
+                )}
+                <div className="btn-shimmer" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showImagePopup && (
         <div className="image-popup-overlay" onClick={() => setShowImagePopup(false)}>

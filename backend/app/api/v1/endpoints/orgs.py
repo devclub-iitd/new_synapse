@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Response
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Response, Query
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
+from typing import Optional
 from app.api import deps
 from app.models.user import User
 from app.models.event import Event
@@ -8,6 +9,7 @@ from app.models.organization import Organization
 from app.models.role import Role
 from app.models.registration import Registration
 from app.models.api_key import ApiKey
+from app.models.event_request import EventRequest
 from app.schemas.event import EventOut
 from app.schemas.user import TeamMemberCreate
 from app.schemas.organization import OrganizationOut
@@ -145,6 +147,8 @@ def create_org_event(
     is_private: bool = Form(False),
     registration_deadline: str = Form(None),
     duration_hours: float = Form(None),
+    capacity: int = Form(None),
+    request_only: bool = Form(False),
     photo: UploadFile = File(None),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
@@ -213,6 +217,8 @@ def create_org_event(
         org_id=org_id,
         event_manager_email=current_user.email,
         duration_hours=duration_hours,
+        capacity=capacity,
+        request_only=request_only,
     )
 
     db.add(event)
@@ -250,6 +256,8 @@ def update_event(
     target_audience: str = Form(None),
     is_private: bool = Form(None),
     registration_deadline: str = Form(None),
+    capacity: int = Form(None),
+    request_only: bool = Form(None),
     photo: UploadFile = File(None),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
@@ -319,6 +327,10 @@ def update_event(
         event.custom_form_schema = json.loads(custom_form_schema)
     if target_audience:
         event.target_audience = json.loads(target_audience)
+    if capacity is not None:
+        event.capacity = capacity if capacity > 0 else None
+    if request_only is not None:
+        event.request_only = request_only
 
     db.commit()
     db.refresh(event)
@@ -398,6 +410,91 @@ def get_event_feedback(
         "count": len(ratings),
         "distribution": {i: ratings.count(i) for i in range(1, 11)}
     }
+
+
+# ------------------------------------------------------------------
+# EVENT REQUESTS MANAGEMENT
+# ------------------------------------------------------------------
+@router.get("/{org_id}/requests")
+def get_org_requests(
+    org_id: int,
+    status: Optional[int] = None,
+    db: Session = Depends(deps.get_db),
+    role: Role = Depends(get_org_role)
+):
+    """List all event requests for this org. Optional ?status=0 for pending only."""
+    query = (
+        db.query(EventRequest)
+        .options(joinedload(EventRequest.user), joinedload(EventRequest.event))
+        .filter(EventRequest.org_id == org_id)
+    )
+    if status is not None:
+        query = query.filter(EventRequest.status == status)
+    requests = query.order_by(EventRequest.created_at.desc()).all()
+
+    return [{
+        "id": r.id,
+        "event_id": r.event_id,
+        "event_name": r.event.name,
+        "event_date": r.event.date,
+        "user_id": r.user_id,
+        "user_name": r.user.name,
+        "user_email": r.user.email,
+        "user_entry_number": r.user.entry_number,
+        "user_department": r.user.department.value if hasattr(r.user.department, 'value') else r.user.department,
+        "user_photo_url": r.user.photo_url,
+        "status": r.status,
+        "form_response": r.form_response,
+        "created_at": r.created_at,
+    } for r in requests]
+
+
+@router.patch("/{org_id}/requests/{request_id}")
+def handle_event_request(
+    org_id: int,
+    request_id: str,
+    body: dict,
+    db: Session = Depends(deps.get_db),
+    role: Role = Depends(get_org_role)
+):
+    """Accept (status=1) or reject (status=-1) a request."""
+    new_status = body.get("status")
+    if new_status not in (1, -1):
+        raise HTTPException(status_code=400, detail="status must be 1 (accept) or -1 (reject)")
+
+    req = db.query(EventRequest).filter(
+        EventRequest.id == request_id, EventRequest.org_id == org_id
+    ).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+
+    # Store info before deleting
+    req_user_id = req.user_id
+    req_event_id = req.event_id
+    msg = "rejected"
+
+    # If accepted, auto-register the user
+    if new_status == 1:
+        event = db.query(Event).filter(Event.id == req_event_id).first()
+        if event and event.capacity is not None:
+            current_count = db.query(func.count(Registration.id)).filter(Registration.event_id == req_event_id).scalar()
+            if current_count >= event.capacity:
+                db.delete(req)
+                db.commit()
+                return {"status": "accepted", "msg": "Request accepted but event is full. User was not auto-registered."}
+
+        existing = db.query(Registration).filter(
+            Registration.user_id == req_user_id, Registration.event_id == req_event_id
+        ).first()
+        if not existing:
+            db.add(Registration(user_id=req_user_id, event_id=req_event_id, custom_answers={}))
+        msg = "accepted"
+
+    # Delete the request entry
+    db.delete(req)
+    db.commit()
+
+    return {"status": "success", "msg": f"Request {msg}"}
 
 
 # ------------------------------------------------------------------

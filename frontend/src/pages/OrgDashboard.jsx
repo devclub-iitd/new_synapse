@@ -516,7 +516,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/axios';
-import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck, Tag, Upload, Save, Check, ChevronDown, Search, Radio, Building2 } from 'lucide-react';
+import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck, Tag, Upload, Save, Check, ChevronDown, Search, Radio, Building2, Inbox, CheckCircle, XCircle, FileText } from 'lucide-react';
 import DynamicFormBuilder from '../components/Forms/DynamicFormBuilder';
 import DemographicsChart from '../components/Charts/DemographicsChart';
 import Loader from '../components/UI/Loader';
@@ -819,8 +819,10 @@ const OrgDashboard = () => {
   const [loadedTabs, setLoadedTabs] = useState({});
   const [editingEventId, setEditingEventId] = useState(null);
   const [regModalEvent, setRegModalEvent] = useState(null);
+  const [requests, setRequests] = useState([]);
+  const [responsePopup, setResponsePopup] = useState(null);
 
-  const [newEvent, setNewEvent] = useState({ name:'',date:'',registration_deadline:'',venue:'',description:'',tags:'',isPrivate:false });
+  const [newEvent, setNewEvent] = useState({ name:'',date:'',registration_deadline:'',venue:'',description:'',tags:'',isPrivate:false,capacity:'',requestOnly:false });
   const [isLH, setIsLH] = useState(false);
   const [eventGenres, setEventGenres] = useState([]);
   const [orgGenres, setOrgGenres] = useState([]);
@@ -854,6 +856,11 @@ const OrgDashboard = () => {
     setTeam(res.data);
   }, [orgId]);
 
+  const fetchRequests = useCallback(async () => {
+    const res = await api.get(`/org/${orgId}/requests`);
+    setRequests(res.data);
+  }, [orgId]);
+
   const fetchTabData = useCallback(async (tab) => {
     if (loadedTabsRef.current[tab]) return;
     const isFirstLoad = Object.keys(loadedTabsRef.current).length === 0;
@@ -865,6 +872,8 @@ const OrgDashboard = () => {
         await fetchEvents();
       } else if (tab === 'team') {
         await fetchTeam();
+      } else if (tab === 'requests') {
+        await fetchRequests();
       }
       loadedTabsRef.current = { ...loadedTabsRef.current, [tab]: true };
       setLoadedTabs(prev => ({ ...prev, [tab]: true }));
@@ -874,7 +883,7 @@ const OrgDashboard = () => {
       setLoading(false);
       setTabLoading(false);
     }
-  }, [fetchDashboard, fetchEvents, fetchTeam]);
+  }, [fetchDashboard, fetchEvents, fetchTeam, fetchRequests]);
 
   useEffect(() => { fetchTabData(activeTab); }, [activeTab, fetchTabData]);
 
@@ -885,6 +894,7 @@ const OrgDashboard = () => {
     setStats(null);
     setEvents([]);
     setTeam([]);
+    setRequests([]);
     fetchTabData(activeTab);
   }, [orgId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -894,14 +904,14 @@ const OrgDashboard = () => {
     setLoadedTabs({});
     setLoading(true);
     try {
-      await Promise.all([fetchDashboard(), fetchEvents(), fetchTeam()]);
-      const allLoaded = { dashboard: true, events: true, create: true, team: true };
+      await Promise.all([fetchDashboard(), fetchEvents(), fetchTeam(), fetchRequests()]);
+      const allLoaded = { dashboard: true, events: true, create: true, team: true, requests: true };
       loadedTabsRef.current = allLoaded;
       setLoadedTabs(allLoaded);
     } catch (err) {
       toast.error("Failed to load dashboard data");
     } finally { setLoading(false); }
-  }, [fetchDashboard, fetchEvents, fetchTeam]);
+  }, [fetchDashboard, fetchEvents, fetchTeam, fetchRequests]);
 
   useEffect(() => {
     if (!editingEventId && activeTab === 'create') {
@@ -939,6 +949,8 @@ const OrgDashboard = () => {
     if (imageFile) formData.append('photo', imageFile);
     formData.append('target_audience', JSON.stringify({ depts: targetDepts, hostels: targetHostels, years: targetYears.map(y => parseInt(y)) }));
     formData.append('genres', JSON.stringify(eventGenres));
+    if (newEvent.capacity) formData.append('capacity', parseInt(newEvent.capacity));
+    formData.append('request_only', newEvent.requestOnly);
 
     try {
       if (editingEventId) {
@@ -948,7 +960,7 @@ const OrgDashboard = () => {
       } else {
         await api.post(`/org/${orgId}/events`, formData);
         toast.success("Event created successfully!");
-        setNewEvent({ name:'',date:'',venue:'',description:'',tags:'',isPrivate:false,duration_hours:'' });
+        setNewEvent({ name:'',date:'',venue:'',description:'',tags:'',isPrivate:false,duration_hours:'',capacity:'',requestOnly:false });
         setIsLH(false);
         setTargetDepts([]); setTargetHostels([]); setTargetYears([]); setFormSchema([]); setImageFile(null); setEventGenres([]);
       }
@@ -992,7 +1004,7 @@ const OrgDashboard = () => {
   const handleEditEvent = (ev) => {
     setEditingEventId(ev.id);
     setIsLH(isLhVenue(ev.venue));
-    setNewEvent({ name:ev.name, date:toLocalInputValue(ev.date), registration_deadline:toLocalInputValue(ev.registration_deadline), venue:ev.venue||'', description:ev.description||'', tags:(ev.tags||[]).join(', '), isPrivate:ev.is_private||false, duration_hours:ev.duration_hours||'' });
+    setNewEvent({ name:ev.name, date:toLocalInputValue(ev.date), registration_deadline:toLocalInputValue(ev.registration_deadline), venue:ev.venue||'', description:ev.description||'', tags:(ev.tags||[]).join(', '), isPrivate:ev.is_private||false, duration_hours:ev.duration_hours||'', capacity:ev.capacity||'', requestOnly:ev.request_only||false });
     setEventGenres(ev.genres || []);
     setTargetDepts(ev.target_audience?.depts||[]);
     setTargetHostels(ev.target_audience?.hostels||[]);
@@ -1033,6 +1045,18 @@ const OrgDashboard = () => {
 
   if (loading) return <Loader />;
 
+  const handleRequestAction = async (requestId, status) => {
+    try {
+      await api.patch(`/org/${orgId}/requests/${requestId}`, { status });
+      toast.success(status === 1 ? 'Request accepted' : 'Request rejected');
+      fetchRequests();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to update request');
+    }
+  };
+
+  const pendingRequests = requests;
+
   const isHead = stats?.your_role && HEAD_ROLES.includes(stats.your_role.toLowerCase());
 
   return (
@@ -1058,6 +1082,14 @@ const OrgDashboard = () => {
             <button className={`pill-tab ${activeTab==='dashboard'?'active':''}`} onClick={() => setActiveTab('dashboard')}><BarChart3 size={15} /> Overview</button>
             <button className={`pill-tab ${activeTab==='events'?'active':''}`} onClick={() => setActiveTab('events')}><Eye size={15} /> Events</button>
             <button className={`pill-tab ${activeTab==='team'?'active':''}`} onClick={() => setActiveTab('team')}><Users size={15} /> Team</button>
+            <button className={`pill-tab ${activeTab==='requests'?'active':''}`} onClick={() => setActiveTab('requests')}>
+              <Inbox size={15} /> Requests
+              {requests.length > 0 && (
+                <span className="badge bg-danger ms-1" style={{ fontSize: '0.65rem', padding: '2px 6px' }}>
+                  {requests.length}
+                </span>
+              )}
+            </button>
             <button className={`pill-tab ${activeTab==='create'?'active':''}`} onClick={() => { setEditingEventId(null); setActiveTab('create'); }}><Plus size={15} /> Create</button>
           </div>
         </div>
@@ -1274,6 +1306,128 @@ const OrgDashboard = () => {
         </div>
       )}
 
+      {/* ── REQUESTS ── */}
+      {activeTab === 'requests' && (
+        tabLoading ? <div className="d-flex justify-content-center py-5"><Loader /></div> :
+        <div className="glass-card p-4">
+          <h5 className="fw-bold mb-4 d-flex align-items-center gap-2" style={{ color:'var(--text-primary)' }}>
+            <Inbox size={18} className="text-purple" /> Event Requests
+          </h5>
+
+          {requests.length === 0 ? (
+            <p className="text-muted small fst-italic">No requests yet.</p>
+          ) : (
+            <>
+              {/* Pending Requests */}
+              {pendingRequests.length > 0 && (
+                <>
+                  <h6 className="fw-semibold mb-3" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Pending ({pendingRequests.length})</h6>
+                  <div className="modern-table-wrapper mb-4">
+                    <table className="modern-table">
+                      <thead>
+                        <tr>
+                          <th>Requester</th>
+                          <th className="d-none d-md-table-cell">Event</th>
+                          <th className="d-none d-lg-table-cell">Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingRequests.map(req => (
+                          <tr key={req.id}>
+                            <td>
+                              <div className="d-flex align-items-center gap-2">
+                                <UserAvatar name={req.user_name} photoUrl={req.user_photo_url} size={36} />
+                                <div>
+                                  <div className="fw-semibold" style={{ fontSize:'0.88rem' }}>{req.user_name}</div>
+                                  <div className="small" style={{ color:'var(--text-muted)',fontSize:'0.72rem' }}>{req.user_email}</div>
+                                  {req.user_entry_number && <div className="small" style={{ color:'var(--text-muted)',fontSize:'0.68rem' }}>{req.user_entry_number}</div>}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="d-none d-md-table-cell">
+                              <div className="fw-semibold" style={{ fontSize:'0.85rem' }}>{req.event_name}</div>
+                            </td>
+                            <td className="d-none d-lg-table-cell" style={{ color:'var(--text-secondary)', fontSize:'0.82rem' }}>
+                              {formatDate(req.created_at)}
+                            </td>
+                            <td>
+                              <div className="d-flex gap-1 flex-wrap">
+                                {req.form_response && (
+                                  <button className="btn-action primary" onClick={() => setResponsePopup(req)} title="View Response">
+                                    <FileText size={13} /><span className="d-none d-lg-inline"> Response</span>
+                                  </button>
+                                )}
+                                <button className="btn-action success" onClick={() => handleRequestAction(req.id, 1)} title="Accept">
+                                  <CheckCircle size={13} /><span className="d-none d-lg-inline"> Accept</span>
+                                </button>
+                                <button className="btn-action danger" onClick={() => handleRequestAction(req.id, -1)} title="Reject">
+                                  <XCircle size={13} /><span className="d-none d-lg-inline"> Reject</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── RESPONSE POPUP ── */}
+      {responsePopup && (
+        <div className="modal-backdrop-v2" onClick={() => setResponsePopup(null)}>
+          <div className="modal-content-v2" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="fw-bold mb-0 d-flex align-items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <FileText size={18} className="text-purple" /> Form Response
+              </h5>
+              <button className="btn-close-modern" onClick={() => setResponsePopup(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="mb-3">
+              <div className="small" style={{ color:'var(--text-muted)' }}>
+                <strong>{responsePopup.user_name}</strong> — {responsePopup.event_name}
+              </div>
+            </div>
+            <div className="response-content" style={{
+              background: 'var(--surface-secondary, rgba(255,255,255,0.03))',
+              borderRadius: '10px',
+              padding: '1rem 1.25rem',
+              maxHeight: '400px',
+              overflowY: 'auto',
+              color: 'var(--text-primary)',
+              fontSize: '0.9rem',
+              lineHeight: '1.6',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}>
+              {responsePopup.form_response}
+            </div>
+            <div className="d-flex justify-content-end gap-2 mt-3">
+              {responsePopup.status === 0 && (
+                <>
+                  <button className="btn btn-sm btn-outline-success d-flex align-items-center gap-1"
+                    onClick={() => { handleRequestAction(responsePopup.id, 1); setResponsePopup(null); }}>
+                    <CheckCircle size={14} /> Accept
+                  </button>
+                  <button className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
+                    onClick={() => { handleRequestAction(responsePopup.id, -1); setResponsePopup(null); }}>
+                    <XCircle size={14} /> Reject
+                  </button>
+                </>
+              )}
+              <button className="btn btn-outline-secondary btn-sm" onClick={() => setResponsePopup(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── CREATE / EDIT ── */}
       {activeTab === 'create' && (
         <div className="glass-form-card">
@@ -1358,6 +1512,22 @@ const OrgDashboard = () => {
                   <input className="form-check-input" type="checkbox" id="privateSwitch"
                     checked={newEvent.isPrivate} onChange={e => setNewEvent({...newEvent,isPrivate:e.target.checked})} />
                   <label className="form-check-label" style={{ color:'var(--text-primary)' }} htmlFor="privateSwitch">Member-Only (Hidden from feed)</label>
+                </div>
+              </div>
+
+              <div className="col-12 form-section">
+                <div className="form-section-title"><Users size={16} className="section-icon" /> Capacity & Requests</div>
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label-modern">Capacity <span style={{ color:'var(--text-muted)',fontSize:'0.8rem' }}>(optional, leave empty for unlimited)</span></label>
+                <input type="number" min="1" className="form-control modern-input" placeholder="e.g. 100"
+                  value={newEvent.capacity} onChange={e => setNewEvent({...newEvent,capacity:e.target.value})} />
+              </div>
+              <div className="col-12 col-md-6 d-flex align-items-center">
+                <div className="form-check form-switch mt-3">
+                  <input className="form-check-input" type="checkbox" id="requestOnlySwitch"
+                    checked={newEvent.requestOnly} onChange={e => setNewEvent({...newEvent,requestOnly:e.target.checked})} />
+                  <label className="form-check-label" style={{ color:'var(--text-primary)' }} htmlFor="requestOnlySwitch">Request-Only (Require approval to join)</label>
                 </div>
               </div>
 

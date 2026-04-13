@@ -66,7 +66,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--brand-primary);
   flex-shrink: 0;
 }
 
@@ -554,15 +554,15 @@
   }
 
   .modern-table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden !important;
   }
 
   /* Compact action buttons in tables */
   .btn-action {
-    padding: 5px 8px !important;
-    font-size: 0.72rem !important;
+    padding: 5px 6px !important;
+    font-size: 0.7rem !important;
     min-width: unset !important;
+    gap: 0 !important;
   }
 
   /* ===== FILTER DRAWER ===== */
@@ -628,14 +628,34 @@
     padding: 16px 14px !important;
   }
 
-  /* Tables: horizontal scroll */
+  /* Tables: fit within viewport, no horizontal scroll */
   .modern-table-wrapper {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden !important;
   }
 
   .modern-table {
-    min-width: 500px;
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: fixed;
+  }
+
+  .modern-table thead th {
+    padding: 10px 8px !important;
+    font-size: 0.65rem !important;
+  }
+
+  .modern-table tbody td {
+    padding: 10px 8px !important;
+    font-size: 0.8rem !important;
+    word-break: break-word;
+  }
+
+  /* Action buttons: icon-only compact squares */
+  .btn-action {
+    padding: 5px 6px !important;
+    font-size: 0.7rem !important;
+    min-width: unset !important;
+    gap: 0 !important;
   }
 
   /* Team tab: stack columns */

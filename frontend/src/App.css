@@ -3397,6 +3397,7 @@ body {
 .admin-btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 9px 18px;
   border-radius: var(--radius-sm);
@@ -3516,9 +3517,8 @@ body {
 .admin-org-icon {
   width: 34px;
   height: 34px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-input);
-  border: 1px solid var(--border-primary);
+  border-radius: 50%;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3671,7 +3671,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1050;
+  z-index: 9999;
   padding: 20px;
 }
 .admin-modal {
@@ -3697,6 +3697,40 @@ body {
 .admin-modal-body {
   padding: 22px;
 }
+
+/* Mobile org card list */
+.admin-mobile-cards {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-org-mobile-card {
+  padding: 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+}
+
+.admin-org-mobile-card .admin-btn-sm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 6px;
+  font-size: 0.72rem;
+}
+
+/* Fullscreen-ish modal for mobile analytics */
+.admin-modal-fullscreen {
+  max-width: 100%;
+  max-height: 90vh;
+  margin: auto 8px;
+  display: flex;
+  flex-direction: column;
+}
+
 .admin-key-reveal {
   background: var(--bg-input, rgba(255, 255, 255, 0.05));
   border: 1px solid var(--warning, #f59e0b);
@@ -5149,38 +5183,34 @@ body {
 }
 
 .share-platforms-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   padding: 0 22px 22px;
 }
 
 .share-platform-btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 14px 6px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-md);
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: none;
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .share-platform-btn:hover {
-  border-color: var(--platform-color);
-  background: color-mix(in srgb, var(--platform-color) 8%, transparent);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--platform-color) 20%, transparent);
+  transform: translateY(-3px) scale(1.1);
 }
 
 .share-platform-icon {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--platform-color) 10%, transparent);
+  background: color-mix(in srgb, var(--platform-color) 12%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5191,13 +5221,67 @@ body {
 .share-platform-btn:hover .share-platform-icon {
   background: var(--platform-color);
   color: #fff;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--platform-color) 35%, transparent);
 }
 
-.share-platform-btn span {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  letter-spacing: 0.02em;
+/* ===== CALENDAR POPUP ===== */
+.cal-popup-event-info {
+  padding: 0 22px 16px;
+}
+
+.cal-popup-event-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.cal-popup-event-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.cal-popup-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 22px 22px;
+}
+
+.cal-popup-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.cal-popup-btn:hover {
+  transform: translateY(-3px) scale(1.1);
+}
+
+.cal-popup-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--platform-color) 12%, transparent);
+  color: var(--platform-color);
+  transition: all 0.2s ease;
+}
+
+.cal-popup-btn:hover .cal-popup-icon {
+  background: var(--platform-color);
+  color: #fff;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--platform-color) 35%, transparent);
 }
 
 /* ===== LIGHT MODE V3 OVERRIDES ===== */
@@ -5308,17 +5392,38 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-[data-theme="light"] .share-platform-btn {
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-}
-
 [data-theme="light"] .share-link-box {
   background: rgba(255, 255, 255, 0.6);
 }
 
-@media (max-width: 480px) {
-  .share-platforms-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+/* ── Event Banner Fallback ── */
+.event-banner-fallback {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-banner-shapes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.event-banner-text {
+  pointer-events: none;
+}
+
+.ed3-banner {
+  min-height: 320px;
+  border-radius: 20px;
+}
+
+.ed3-banner .event-banner-text {
+  font-size: 1.6rem !important;
 }

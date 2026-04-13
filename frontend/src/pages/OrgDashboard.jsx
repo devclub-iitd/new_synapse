@@ -770,6 +770,7 @@ const OrgDashboard = () => {
   const [targetYears, setTargetYears] = useState([]);
   const [formSchema, setFormSchema] = useState([]);
   const [imageFile, setImageFile] = useState(null);
+  const posterInputRef = useRef(null);
   const [newMember, setNewMember] = useState({ email:'',role:'coordinator' });
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null, loading: false });
 
@@ -1221,8 +1222,15 @@ const OrgDashboard = () => {
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label-modern">Poster Image</label>
-                <input type="file" className="form-control modern-input" accept="image/*"
+                <input type="file" ref={posterInputRef} accept="image/*" style={{ display: 'none' }}
                   onChange={e => setImageFile(e.target.files[0])} />
+                <button type="button" className="modern-input d-flex align-items-center gap-2" style={{ cursor: 'pointer', textAlign: 'left' }}
+                  onClick={() => posterInputRef.current?.click()}>
+                  <Upload size={16} style={{ color: 'var(--brand-primary)', flexShrink: 0 }} />
+                  <span style={{ color: imageFile ? 'var(--text-primary)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {imageFile ? imageFile.name : 'Choose poster image...'}
+                  </span>
+                </button>
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label-modern">Tags (comma separated)</label>

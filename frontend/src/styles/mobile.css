@@ -175,6 +175,14 @@
   transition: all 0.15s ease;
 }
 
+.mobile-drawer-link img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .mobile-drawer-link:hover {
   background: var(--brand-primary-soft);
   border-color: var(--border-accent);

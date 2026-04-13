@@ -5,6 +5,8 @@ import { formatDate, isPast } from '../../utils/dateUtils';
 import { capitalize, orgDisplayName } from '../../utils/capitalize';
 import toast from 'react-hot-toast';
 import SharePopup from './SharePopup';
+import EventBanner, { useImageFallback } from './EventBanner';
+import OrgLogo from './OrgLogo';
 
 const EventCard = ({ event, onRegisterClick, index = 0 }) => {
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ const EventCard = ({ event, onRegisterClick, index = 0 }) => {
   const deadlinePassed = hasDeadline ? isPast(event.registration_deadline) : false;
 
   const [showSharePopup, setShowSharePopup] = useState(false);
+  const { hasImage, onError } = useImageFallback(event.image_url);
 
   const goToDetail = () => navigate(`/events/${event.id}`);
 
@@ -32,10 +35,15 @@ const EventCard = ({ event, onRegisterClick, index = 0 }) => {
     >
       {/* Image Section */}
       <div className="ec3-image-wrapper">
-        <img
-          src={event.image_url || "https://via.placeholder.com/400x220"}
-          alt={event.name}
-        />
+        {hasImage ? (
+          <img
+            src={event.image_url}
+            alt={event.name}
+            onError={onError}
+          />
+        ) : (
+          <EventBanner orgName={orgDisplayName(event.organization?.name)} />
+        )}
         <div className="ec3-image-overlay" />
 
         {/* Floating org badge on image */}

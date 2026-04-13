@@ -116,9 +116,10 @@
 // }
 
 import { useState } from "react";
-import { FiUpload, FiEdit2, FiX } from "react-icons/fi";
+import { FiUpload, FiX } from "react-icons/fi";
 import api from "../../api/axios";
 import toast from "react-hot-toast";
+import OrgLogo from "./OrgLogo";
 
 export default function OrgBanner({ orgId, orgName, bannerUrl }) {
 
@@ -209,38 +210,9 @@ export default function OrgBanner({ orgId, orgName, bannerUrl }) {
               }}
             />
           ) : (
-            // Initials fallback instead of blank white circle
-            <div style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "6px",
-              color: "#666"
-            }}>
-              <span style={{ fontSize: "2rem", fontWeight: 700, color: "var(--text-secondary)" }}>
-                {initials}
-              </span>
-              <FiUpload size={16} color="#666" />
-            </div>
+            <OrgLogo orgName={orgName} size={130} style={{ borderRadius: '50%' }} />
           )}
         </div>
-
-        {/* Edit icon — shows when image is displayed */}
-        {showImage && !loading && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: "5px",
-              right: "5px",
-              background: "#7c3aed",
-              borderRadius: "50%",
-              padding: "6px",
-              boxShadow: "0 0 6px rgba(0,0,0,0.3)"
-            }}
-          >
-            <FiEdit2 size={14} color="#fff" />
-          </div>
-        )}
 
         <input
           type="file"

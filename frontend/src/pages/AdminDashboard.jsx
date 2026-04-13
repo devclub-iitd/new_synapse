@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import Loader from '../components/UI/Loader';
 import ConfirmationModal from '../components/UI/ConfirmationModal';
+import OrgLogo from '../components/UI/OrgLogo';
 import toast from 'react-hot-toast';
 import { capitalize, orgDisplayName } from '../utils/capitalize';
 
@@ -267,8 +268,8 @@ const UsersTab = ({ users, totalUsers, orgs, onRefresh, onLoadMore, loadingMore,
           </div>
         </div>
 
-        {/* Assign role panel */}
-        <div className="col-12 col-lg-4">
+        {/* Assign role panel — desktop sidebar */}
+        <div className="col-12 col-lg-4 d-none d-lg-block">
           <div className="admin-panel">
             <div className="admin-panel-header">
               <h6 className="admin-panel-title"><ShieldAlert size={16} /> Assign Role</h6>
@@ -337,6 +338,73 @@ const UsersTab = ({ users, totalUsers, orgs, onRefresh, onLoadMore, loadingMore,
             </div>
           </div>
         </div>
+
+        {/* Assign role modal — mobile only */}
+        {selectedUser && (
+          <div className="admin-modal-overlay d-lg-none" onClick={() => setSelectedUser(null)}>
+            <div className="admin-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 440 }}>
+              <div className="admin-modal-header">
+                <h6 className="fw-bold m-0" style={{ color: 'var(--text-primary)' }}>
+                  <ShieldAlert size={16} style={{ marginRight: 6 }} /> Assign Role
+                </h6>
+                <button className="btn p-0 border-0 bg-transparent d-flex" onClick={() => setSelectedUser(null)}>
+                  <X size={18} style={{ color: 'var(--text-muted)' }} />
+                </button>
+              </div>
+              <div className="admin-modal-body">
+                <form onSubmit={handleAuthorize}>
+                  <div className="selected-user-card mb-3">
+                    <UserAvatar name={selectedUser.name} photoUrl={selectedUser.photo_url} size={38} />
+                    <div className="selected-user-info">
+                      <div className="selected-user-name">{selectedUser.name}</div>
+                      <div className="selected-user-email">{selectedUser.email}</div>
+                    </div>
+                  </div>
+
+                  {selectedUser.roles?.length > 0 && (
+                    <div className="mb-3">
+                      <label className="admin-form-label">Current Roles</label>
+                      <div className="d-flex flex-wrap gap-1">
+                        {selectedUser.roles.map(r => (
+                          <span key={r.id} className="admin-role-chip">
+                            <span className="admin-role-org">{orgDisplayName(r.organization?.name)}</span>
+                            <span className="admin-role-name">{r.role_name}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mb-3">
+                    <label className="admin-form-label">Organization</label>
+                    <SearchableDropdown
+                      className="sd-admin"
+                      options={orgs.map(org => ({ label: `${orgDisplayName(org.name)} (${org.org_type})`, value: org.id }))}
+                      value={authForm.org_id}
+                      onChange={(val) => setAuthForm({ ...authForm, org_id: val })}
+                      placeholder="Select organization..."
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="admin-form-label">Role</label>
+                    <SearchableDropdown
+                      className="sd-admin"
+                      options={ALL_ROLES}
+                      value={authForm.role_name}
+                      onChange={(val) => setAuthForm({ ...authForm, role_name: val })}
+                      placeholder="Select role..."
+                    />
+                  </div>
+
+                  <button type="submit" className="admin-btn-primary w-100">
+                    <PlusCircle size={16} /> Assign Role
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <ConfirmationModal isOpen={revokeModalOpen} onClose={() => setRevokeModalOpen(false)}
@@ -514,44 +582,46 @@ const OrgsTab = ({ orgs, onRefresh }) => {
         </button>
       </div>
 
-      {/* Inline create/edit form */}
+      {/* Inline create/edit form — as modal */}
       {showForm && (
-        <div className="admin-panel mb-4">
-          <div className="admin-panel-header">
-            <h6 className="admin-panel-title">
-              {editingOrg ? <><Edit2 size={15} /> Edit Organization</> : <><Plus size={15} /> New Organization</>}
-            </h6>
-            <button className="btn p-0 border-0 bg-transparent d-flex" onClick={() => setShowForm(false)}>
-              <X size={16} style={{ color: 'var(--text-muted)' }} />
-            </button>
-          </div>
-          <div className="admin-panel-body">
-            <form onSubmit={handleSubmit} className="row g-3 align-items-end">
-              <div className="col-12 col-md-5">
-                <label className="admin-form-label">Name</label>
-                <input className="admin-input" placeholder="Organization name" value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })} required />
-              </div>
-              <div className="col-12 col-md-4">
-                <label className="admin-form-label">Type</label>
-                <SearchableDropdown
-                  className="sd-admin"
-                  options={ORG_TYPES.map(t => ({ label: t.label, value: t.value }))}
-                  value={form.org_type}
-                  onChange={(val) => setForm({ ...form, org_type: val })}
-                  placeholder="Select type..."
-                  searchable={false}
-                />
-              </div>
-              <div className="col-12 col-md-3 d-flex gap-2">
-                <button type="submit" className="admin-btn-primary flex-grow-1">
-                  {editingOrg ? 'Update' : 'Create'}
-                </button>
-                <button type="button" className="admin-btn-ghost" onClick={() => setShowForm(false)}>
-                  Cancel
-                </button>
-              </div>
-            </form>
+        <div className="admin-modal-overlay" onClick={() => setShowForm(false)}>
+          <div className="admin-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+            <div className="admin-modal-header">
+              <h6 className="fw-bold m-0" style={{ color: 'var(--text-primary)' }}>
+                {editingOrg ? <><Edit2 size={15} /> Edit Organization</> : <><Plus size={15} /> New Organization</>}
+              </h6>
+              <button className="btn p-0 border-0 bg-transparent d-flex" onClick={() => setShowForm(false)}>
+                <X size={18} style={{ color: 'var(--text-muted)' }} />
+              </button>
+            </div>
+            <div className="admin-modal-body">
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label className="admin-form-label">Name</label>
+                  <input className="admin-input" placeholder="Organization name" value={form.name}
+                    onChange={e => setForm({ ...form, name: e.target.value })} required />
+                </div>
+                <div className="mb-3">
+                  <label className="admin-form-label">Type</label>
+                  <SearchableDropdown
+                    className="sd-admin"
+                    options={ORG_TYPES.map(t => ({ label: t.label, value: t.value }))}
+                    value={form.org_type}
+                    onChange={(val) => setForm({ ...form, org_type: val })}
+                    placeholder="Select type..."
+                    searchable={false}
+                  />
+                </div>
+                <div className="d-flex gap-2 mt-4">
+                  <button type="submit" className="admin-btn-primary flex-grow-1">
+                    {editingOrg ? 'Update' : 'Create'}
+                  </button>
+                  <button type="button" className="admin-btn-ghost" onClick={() => setShowForm(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -567,13 +637,14 @@ const OrgsTab = ({ orgs, onRefresh }) => {
           </div>
         </div>
         <div className="admin-panel-body p-0">
-          <div className="admin-table-scroll">
+          {/* Desktop table */}
+          <div className="admin-table-scroll d-none d-md-block">
             <table className="admin-table">
               <thead>
                 <tr>
                   <th>Name</th>
                   <th>Type</th>
-                  <th className="d-none d-md-table-cell">Created</th>
+                  <th>Created</th>
                   <th style={{ width: 150 }}>Actions</th>
                 </tr>
               </thead>
@@ -585,7 +656,11 @@ const OrgsTab = ({ orgs, onRefresh }) => {
                     <td>
                       <div className="d-flex align-items-center gap-2">
                         <div className="admin-org-icon">
-                          <Building2 size={16} />
+                          {org.banner_url ? (
+                            <img src={org.banner_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                          ) : (
+                            <OrgLogo orgName={orgDisplayName(org.name)} size={32} />
+                          )}
                         </div>
                         <div>
                           <div className="admin-cell-name">{orgDisplayName(org.name)}</div>
@@ -594,7 +669,7 @@ const OrgsTab = ({ orgs, onRefresh }) => {
                       </div>
                     </td>
                     <td><span className="admin-type-badge">{org.org_type}</span></td>
-                    <td className="d-none d-md-table-cell">
+                    <td>
                       <span className="admin-cell-meta">{org.created_at ? new Date(org.created_at).toLocaleDateString() : '--'}</span>
                     </td>
                     <td>
@@ -617,6 +692,44 @@ const OrgsTab = ({ orgs, onRefresh }) => {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile card list */}
+          <div className="d-md-none admin-mobile-cards">
+            {filtered.length === 0 ? (
+              <div className="text-center py-5" style={{ color: 'var(--text-muted)' }}>No organizations found</div>
+            ) : filtered.map(org => (
+              <div key={org.id} className="admin-org-mobile-card">
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <div className="admin-org-icon">
+                    {org.banner_url ? (
+                      <img src={org.banner_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                    ) : (
+                      <OrgLogo orgName={orgDisplayName(org.name)} size={32} />
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="admin-cell-name">{orgDisplayName(org.name)}</div>
+                    <div className="admin-cell-meta">ID: {org.id}</div>
+                  </div>
+                  <span className="admin-type-badge">{org.org_type}</span>
+                </div>
+                <div className="d-flex gap-2">
+                  <button className="admin-btn-sm primary flex-grow-1" onClick={() => openEdit(org)}>
+                    <Edit2 size={13} /> Edit
+                  </button>
+                  <button className="admin-btn-sm flex-grow-1" style={{ background: 'var(--warning-soft)', color: 'var(--warning)' }}
+                    onClick={() => setApiKeyOrg(org)}>
+                    <Key size={13} /> Key
+                  </button>
+                  <button className="admin-btn-sm danger" title="Delete"
+                    onClick={() => { setOrgToDelete(org); setDeleteModalOpen(true); }}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
           <div className="admin-table-footer">
             Showing {filtered.length} of {orgs.length} organizations
           </div>
@@ -657,6 +770,103 @@ const AnalyticsTab = ({ orgs }) => {
     .sort(([, a], [, b]) => b - a) : [];
   const maxDeptCount = sortedDepts.length > 0 ? sortedDepts[0][1] : 0;
 
+  const analyticsContent = analytics ? (
+    <>
+      {/* Org header */}
+      <div className="admin-analytics-header mb-4">
+        <div>
+          <h5 className="fw-bold mb-1" style={{ color: 'var(--text-primary)' }}>{orgDisplayName(analytics.org_name)}</h5>
+          <span className="admin-type-badge">{analytics.org_type}</span>
+        </div>
+      </div>
+
+      {/* Stat cards */}
+      <div className="row g-3 mb-4">
+        <div className="col-6 col-md-4">
+          <div className="admin-stat-card">
+            <div className="admin-stat-icon" style={{ background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' }}>
+              <Calendar size={18} />
+            </div>
+            <div>
+              <div className="admin-stat-value">{analytics.total_events}</div>
+              <div className="admin-stat-label">Events</div>
+            </div>
+          </div>
+        </div>
+        <div className="col-6 col-md-4">
+          <div className="admin-stat-card">
+            <div className="admin-stat-icon" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>
+              <TrendingUp size={18} />
+            </div>
+            <div>
+              <div className="admin-stat-value">{analytics.total_registrations}</div>
+              <div className="admin-stat-label">Registrations</div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-md-4">
+          <div className="admin-stat-card">
+            <div className="admin-stat-icon" style={{ background: 'var(--info-soft)', color: 'var(--info)' }}>
+              <Users size={18} />
+            </div>
+            <div>
+              <div className="admin-stat-value">{analytics.team?.length || 0}</div>
+              <div className="admin-stat-label">Team Members</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dept breakdown */}
+      {sortedDepts.length > 0 && (
+        <div className="admin-panel mb-4">
+          <div className="admin-panel-header">
+            <h6 className="admin-panel-title"><BarChart3 size={15} /> Department Registrations</h6>
+          </div>
+          <div className="admin-panel-body">
+            <div className="admin-bar-chart">
+              {sortedDepts.map(([dept, count]) => (
+                <div key={dept} className="admin-bar-row">
+                  <div className="admin-bar-label">{dept}</div>
+                  <div className="admin-bar-track">
+                    <div className="admin-bar-fill"
+                      style={{ width: `${(count / maxDeptCount) * 100}%` }} />
+                  </div>
+                  <div className="admin-bar-value">{count}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Team list */}
+      {analytics.team?.length > 0 && (
+        <div className="admin-panel">
+          <div className="admin-panel-header">
+            <h6 className="admin-panel-title"><Users size={15} /> Team</h6>
+          </div>
+          <div className="admin-panel-body p-0">
+            <table className="admin-table">
+              <thead>
+                <tr><th>Name</th><th>Email</th><th>Role</th></tr>
+              </thead>
+              <tbody>
+                {analytics.team.map((m, i) => (
+                  <tr key={i}>
+                    <td className="admin-cell-name">{m.name}</td>
+                    <td><span className="admin-cell-mono">{m.email}</span></td>
+                    <td><span className="admin-type-badge">{m.role}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </>
+  ) : null;
+
   return (
     <div className="row g-4">
       {/* Org selector */}
@@ -676,9 +886,16 @@ const AnalyticsTab = ({ orgs }) => {
                 <button key={org.id}
                   className={`admin-org-item ${selectedOrg?.id === org.id ? 'active' : ''}`}
                   onClick={() => fetchAnalytics(org)}>
-                  <div style={{ minWidth: 0 }}>
-                    <div className="admin-cell-name">{orgDisplayName(org.name)}</div>
-                    <div className="admin-cell-meta">{org.org_type}</div>
+                  <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
+                    {org.banner_url ? (
+                      <img src={org.banner_url} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                    ) : (
+                      <OrgLogo orgName={orgDisplayName(org.name)} size={24} />
+                    )}
+                    <div style={{ minWidth: 0 }}>
+                      <div className="admin-cell-name">{orgDisplayName(org.name)}</div>
+                      <div className="admin-cell-meta">{org.org_type}</div>
+                    </div>
                   </div>
                   <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                 </button>
@@ -688,8 +905,8 @@ const AnalyticsTab = ({ orgs }) => {
         </div>
       </div>
 
-      {/* Analytics display */}
-      <div className="col-12 col-md-8">
+      {/* Analytics display — desktop */}
+      <div className="col-12 col-md-8 d-none d-md-block">
         {!selectedOrg ? (
           <div className="admin-panel">
             <div className="admin-panel-body">
@@ -703,103 +920,29 @@ const AnalyticsTab = ({ orgs }) => {
           <div className="admin-panel">
             <div className="admin-panel-body d-flex justify-content-center py-5"><Loader /></div>
           </div>
-        ) : analytics ? (
-          <>
-            {/* Org header */}
-            <div className="admin-analytics-header mb-4">
-              <div>
-                <h5 className="fw-bold mb-1" style={{ color: 'var(--text-primary)' }}>{orgDisplayName(analytics.org_name)}</h5>
-                <span className="admin-type-badge">{analytics.org_type}</span>
-              </div>
-            </div>
-
-            {/* Stat cards */}
-            <div className="row g-3 mb-4">
-              <div className="col-6 col-md-4">
-                <div className="admin-stat-card">
-                  <div className="admin-stat-icon" style={{ background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' }}>
-                    <Calendar size={18} />
-                  </div>
-                  <div>
-                    <div className="admin-stat-value">{analytics.total_events}</div>
-                    <div className="admin-stat-label">Events</div>
-                  </div>
-                </div>
-              </div>
-              <div className="col-6 col-md-4">
-                <div className="admin-stat-card">
-                  <div className="admin-stat-icon" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>
-                    <TrendingUp size={18} />
-                  </div>
-                  <div>
-                    <div className="admin-stat-value">{analytics.total_registrations}</div>
-                    <div className="admin-stat-label">Registrations</div>
-                  </div>
-                </div>
-              </div>
-              <div className="col-12 col-md-4">
-                <div className="admin-stat-card">
-                  <div className="admin-stat-icon" style={{ background: 'var(--info-soft)', color: 'var(--info)' }}>
-                    <Users size={18} />
-                  </div>
-                  <div>
-                    <div className="admin-stat-value">{analytics.team?.length || 0}</div>
-                    <div className="admin-stat-label">Team Members</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Dept breakdown */}
-            {sortedDepts.length > 0 && (
-              <div className="admin-panel mb-4">
-                <div className="admin-panel-header">
-                  <h6 className="admin-panel-title"><BarChart3 size={15} /> Department Registrations</h6>
-                </div>
-                <div className="admin-panel-body">
-                  <div className="admin-bar-chart">
-                    {sortedDepts.map(([dept, count]) => (
-                      <div key={dept} className="admin-bar-row">
-                        <div className="admin-bar-label">{dept}</div>
-                        <div className="admin-bar-track">
-                          <div className="admin-bar-fill"
-                            style={{ width: `${(count / maxDeptCount) * 100}%` }} />
-                        </div>
-                        <div className="admin-bar-value">{count}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Team list */}
-            {analytics.team?.length > 0 && (
-              <div className="admin-panel">
-                <div className="admin-panel-header">
-                  <h6 className="admin-panel-title"><Users size={15} /> Team</h6>
-                </div>
-                <div className="admin-panel-body p-0">
-                  <table className="admin-table">
-                    <thead>
-                      <tr><th>Name</th><th>Email</th><th>Role</th></tr>
-                    </thead>
-                    <tbody>
-                      {analytics.team.map((m, i) => (
-                        <tr key={i}>
-                          <td className="admin-cell-name">{m.name}</td>
-                          <td><span className="admin-cell-mono">{m.email}</span></td>
-                          <td><span className="admin-type-badge">{m.role}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </>
-        ) : null}
+        ) : analyticsContent}
       </div>
+
+      {/* Analytics modal — mobile */}
+      {selectedOrg && (
+        <div className="admin-modal-overlay d-md-none" onClick={() => setSelectedOrg(null)}>
+          <div className="admin-modal admin-modal-fullscreen" onClick={e => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h6 className="fw-bold m-0" style={{ color: 'var(--text-primary)' }}>
+                <BarChart3 size={16} style={{ marginRight: 6 }} /> Analytics
+              </h6>
+              <button className="btn p-0 border-0 bg-transparent d-flex" onClick={() => setSelectedOrg(null)}>
+                <X size={18} style={{ color: 'var(--text-muted)' }} />
+              </button>
+            </div>
+            <div className="admin-modal-body" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
+              {loadingAnalytics ? (
+                <div className="d-flex justify-content-center py-5"><Loader /></div>
+              ) : analyticsContent}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

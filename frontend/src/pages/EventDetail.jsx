@@ -228,6 +228,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   Calendar,
+  CalendarPlus,
   MapPin,
   ArrowLeft,
   Clock,
@@ -243,8 +244,11 @@ import { formatDateTime, isPast } from '../utils/dateUtils';
 import { capitalize, orgDisplayName } from '../utils/capitalize';
 import AnimatedBackground from "../components/UI/AnimatedBackground";
 import SharePopup from "../components/UI/SharePopup";
+import EventBanner, { useImageFallback } from "../components/UI/EventBanner";
+import OrgLogo from "../components/UI/OrgLogo";
 
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
+import CalendarPopup from "../components/UI/CalendarPopup";
 
 const EventDetail = () => {
   const { eventId } = useParams();
@@ -255,6 +259,8 @@ const EventDetail = () => {
   const [error, setError] = useState("");
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
+  const [showCalendarPopup, setShowCalendarPopup] = useState(false);
+  const { hasImage, onError } = useImageFallback(event?.image_url);
 
   useEffect(() => { fetchEvent(); }, [eventId]);
 
@@ -315,10 +321,18 @@ const EventDetail = () => {
           {/* Left: Image */}
           <div className="ed3-image-section">
             <div className="ed3-image-card">
-              <img
-                src={event.image_url || "https://via.placeholder.com/600x400"}
-                alt={event.name}
-              />
+              {hasImage ? (
+                <img
+                  src={event.image_url}
+                  alt={event.name}
+                  onError={onError}
+                />
+              ) : (
+                <EventBanner
+                  orgName={orgDisplayName(event.organization?.name)}
+                  className="ed3-banner"
+                />
+              )}
               <div className="ed3-image-glow" />
             </div>
           </div>
@@ -326,19 +340,30 @@ const EventDetail = () => {
           {/* Right: Details */}
           <div className="ed3-details-section">
             <div className="ed3-org-pill">
-              <Sparkles size={14} />
+              <OrgLogo orgName={orgDisplayName(event.organization?.name)} size={18} />
               {orgDisplayName(event.organization?.name)}
             </div>
 
             <div className="ed3-title-row">
               <h1 className="ed3-title">{capitalize(event.name)}</h1>
-              <button
-                className="ed3-share-btn"
-                onClick={() => setShowSharePopup(true)}
-                title="Share event"
-              >
-                <Share2 size={18} />
-              </button>
+              <div className="d-flex gap-2 align-items-center flex-shrink-0">
+                {event.is_registered && (
+                  <button
+                    className="ed3-share-btn"
+                    onClick={() => setShowCalendarPopup(true)}
+                    title="Add to calendar"
+                  >
+                    <CalendarPlus size={18} />
+                  </button>
+                )}
+                <button
+                  className="ed3-share-btn"
+                  onClick={() => setShowSharePopup(true)}
+                  title="Share event"
+                >
+                  <Share2 size={18} />
+                </button>
+              </div>
             </div>
 
             {/* Meta Cards */}
@@ -425,6 +450,12 @@ const EventDetail = () => {
         event={event}
         isOpen={showSharePopup}
         onClose={() => setShowSharePopup(false)}
+      />
+
+      <CalendarPopup
+        event={event}
+        isOpen={showCalendarPopup}
+        onClose={() => setShowCalendarPopup(false)}
       />
     </div>
   );

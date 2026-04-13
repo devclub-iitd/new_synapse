@@ -80,7 +80,7 @@ const SharePopup = ({ event, isOpen, onClose }) => {
     },
     {
       name: 'X',
-      color: '#000000',
+      color: '#9ca3af',
       lightColor: '#14171a',
       url: `https://x.com/intent/tweet?text=${encodeURIComponent(`🎉 ${eventName} | 📅 ${dateStr} | 📍 ${venue}`)}&url=${encodedUrl}`,
       icon: (
@@ -162,10 +162,10 @@ const SharePopup = ({ event, isOpen, onClose }) => {
               rel="noopener noreferrer"
               className="share-platform-btn"
               onClick={(e) => e.stopPropagation()}
+              title={p.name}
               style={{ '--platform-color': p.color }}
             >
               <div className="share-platform-icon">{p.icon}</div>
-              <span>{p.name}</span>
             </a>
           ))}
         </div>

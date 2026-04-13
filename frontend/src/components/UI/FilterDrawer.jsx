@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { X, Search, Monitor, FlaskConical, Music, Camera, BookOpen, Trophy, Briefcase, Leaf, Radio } from "lucide-react";
-import { GENRE_CATEGORIES } from "../../utils/constants";
+import { X, Search, Monitor, FlaskConical, Music, Camera, BookOpen, Trophy, Briefcase, Leaf, Radio, Building2 } from "lucide-react";
+import { GENRE_CATEGORIES, LH_ROOMS } from "../../utils/constants";
 
 const CATEGORY_ICONS = { Monitor, FlaskConical, Music, Camera, BookOpen, Trophy, Briefcase, Leaf };
 
@@ -38,6 +38,8 @@ const FilterDrawer = ({
   setSelectedGenres,
   liveOnly = false,
   setLiveOnly,
+  selectedLhRooms = [],
+  setSelectedLhRooms,
 }) => {
   const [genreSearch, setGenreSearch] = useState('');
 
@@ -80,6 +82,42 @@ const FilterDrawer = ({
               >
                 <Radio size={13} /> Live Only
               </button>
+            </div>
+          )}
+
+          {/* LH TOGGLE */}
+          {setSelectedLhRooms && (
+            <div className="mb-4">
+              <label className="text-secondary small fw-bold mb-3 d-block">
+                LECTURE HALL COMPLEX
+              </label>
+              <div className="filter-options">
+                <button
+                  className={`filter-chip lh-filter-chip ${selectedLhRooms.length === LH_ROOMS.length ? 'active' : ''}`}
+                  onClick={() => setSelectedLhRooms(prev => prev.length === LH_ROOMS.length ? [] : [...LH_ROOMS])}
+                >
+                  <Building2 size={13} /> All LH Events
+                </button>
+                {LH_ROOMS.map(room => (
+                  <button
+                    key={room}
+                    className={`filter-chip ${selectedLhRooms.includes(room) ? 'active' : ''}`}
+                    onClick={() => setSelectedLhRooms(prev =>
+                      prev.includes(room) ? prev.filter(r => r !== room) : [...prev, room]
+                    )}
+                  >
+                    {room}
+                  </button>
+                ))}
+              </div>
+              {selectedLhRooms.length > 0 && (
+                <button
+                  className="btn btn-link btn-sm text-secondary p-0 mt-2"
+                  onClick={() => setSelectedLhRooms([])}
+                >
+                  Clear LH ({selectedLhRooms.length})
+                </button>
+              )}
             </div>
           )}
 
@@ -241,6 +279,7 @@ const FilterDrawer = ({
                   setSelectedItem("");
                   if (setSelectedGenres) setSelectedGenres([]);
                   if (setLiveOnly) setLiveOnly(false);
+                  if (setSelectedLhRooms) setSelectedLhRooms([]);
                 }}
               >
                 Reset All

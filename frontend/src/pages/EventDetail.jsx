@@ -236,6 +236,7 @@ import {
   Share2,
   Users,
   Sparkles,
+  Tag,
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -412,6 +413,21 @@ const EventDetail = () => {
                 {event.description}
               </div>
             </div>
+
+            {/* Genres */}
+            {event.genres && event.genres.length > 0 && (
+              <div className="ed3-genres">
+                <div className="ed3-about-header">
+                  <Tag size={18} />
+                  <span>Genres</span>
+                </div>
+                <div className="ed3-genre-tags">
+                  {event.genres.map(g => (
+                    <span key={g} className="ed3-genre-tag">{g}</span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Register Button */}
             <button

@@ -516,14 +516,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/axios';
-import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck, Tag, Upload, Save, Check, ChevronDown, Search, Radio } from 'lucide-react';
+import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck, Tag, Upload, Save, Check, ChevronDown, Search, Radio, Building2 } from 'lucide-react';
 import DynamicFormBuilder from '../components/Forms/DynamicFormBuilder';
 import DemographicsChart from '../components/Charts/DemographicsChart';
 import Loader from '../components/UI/Loader';
 import { formatDate } from '../utils/dateUtils';
 import toast from 'react-hot-toast';
 
-import { DEPARTMENTS, HOSTELS, YEARS, HEAD_ROLES, TEAM_ROLES, GENRES } from '../utils/constants';
+import { DEPARTMENTS, HOSTELS, YEARS, HEAD_ROLES, TEAM_ROLES, GENRES, LH_ROOMS, isLhVenue, detectLhInput, findLhRoom } from '../utils/constants';
 import OrgBanner from '../components/UI/OrgBanner';
 import SearchableDropdown from '../components/UI/SearchableDropdown';
 import { capitalize, orgDisplayName } from '../utils/capitalize';
@@ -821,6 +821,7 @@ const OrgDashboard = () => {
   const [regModalEvent, setRegModalEvent] = useState(null);
 
   const [newEvent, setNewEvent] = useState({ name:'',date:'',registration_deadline:'',venue:'',description:'',tags:'',isPrivate:false });
+  const [isLH, setIsLH] = useState(false);
   const [eventGenres, setEventGenres] = useState([]);
   const [orgGenres, setOrgGenres] = useState([]);
   const [savingGenres, setSavingGenres] = useState(false);
@@ -929,7 +930,7 @@ const OrgDashboard = () => {
     formData.append('name', newEvent.name);
     formData.append('date', new Date(newEvent.date).toISOString());
     if (newEvent.registration_deadline) formData.append('registration_deadline', new Date(newEvent.registration_deadline).toISOString());
-    formData.append('venue', newEvent.venue);
+    formData.append('venue', newEvent.venue); // venue already holds LH room name or free text
     formData.append('description', newEvent.description);
     formData.append('tags', JSON.stringify(newEvent.tags.split(',').map(t => t.trim()).filter(Boolean)));
     formData.append('custom_form_schema', JSON.stringify(formSchema));
@@ -948,6 +949,7 @@ const OrgDashboard = () => {
         await api.post(`/org/${orgId}/events`, formData);
         toast.success("Event created successfully!");
         setNewEvent({ name:'',date:'',venue:'',description:'',tags:'',isPrivate:false,duration_hours:'' });
+        setIsLH(false);
         setTargetDepts([]); setTargetHostels([]); setTargetYears([]); setFormSchema([]); setImageFile(null); setEventGenres([]);
       }
       setActiveTab('events');
@@ -989,6 +991,7 @@ const OrgDashboard = () => {
 
   const handleEditEvent = (ev) => {
     setEditingEventId(ev.id);
+    setIsLH(isLhVenue(ev.venue));
     setNewEvent({ name:ev.name, date:toLocalInputValue(ev.date), registration_deadline:toLocalInputValue(ev.registration_deadline), venue:ev.venue||'', description:ev.description||'', tags:(ev.tags||[]).join(', '), isPrivate:ev.is_private||false, duration_hours:ev.duration_hours||'' });
     setEventGenres(ev.genres || []);
     setTargetDepts(ev.target_audience?.depts||[]);
@@ -1302,8 +1305,35 @@ const OrgDashboard = () => {
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label-modern">Venue</label>
-                <input type="text" className="form-control modern-input" required
-                  value={newEvent.venue} onChange={e => setNewEvent({...newEvent,venue:e.target.value})} />
+                <div className="lh-venue-row">
+                  <button type="button" className={`lh-toggle-btn ${isLH ? 'active' : ''}`}
+                    onClick={() => { setIsLH(prev => !prev); setNewEvent({...newEvent, venue:''}); }}
+                    title="Lecture Hall Complex">
+                    <Building2 size={14} /> LH
+                  </button>
+                  {isLH ? (
+                    <SearchableDropdown
+                      options={LH_ROOMS.map(r => ({ label: r, value: r }))}
+                      value={newEvent.venue}
+                      onChange={val => setNewEvent({...newEvent, venue: val})}
+                      placeholder="Select room..."
+                    />
+                  ) : (
+                    <input type="text" className="form-control modern-input" required
+                      placeholder="e.g. Seminar Hall, Dogra Hall"
+                      value={newEvent.venue}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setNewEvent({...newEvent, venue: val});
+                        const det = detectLhInput(val);
+                        if (det.match) {
+                          const room = findLhRoom(det.fragment);
+                          setIsLH(true);
+                          setNewEvent(prev => ({...prev, venue: room}));
+                        }
+                      }} />
+                  )}
+                </div>
               </div>
               <div className="col-12">
                 <label className="form-label-modern">Description</label>

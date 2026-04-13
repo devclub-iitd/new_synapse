@@ -5028,6 +5028,27 @@ body {
   white-space: pre-wrap;
 }
 
+/* Genres */
+.ed3-genres {
+  margin-top: 1.25rem;
+}
+.ed3-genre-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.ed3-genre-tag {
+  padding: 5px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 20px;
+  background: rgba(90, 159, 207, 0.1);
+  border: 1px solid rgba(90, 159, 207, 0.2);
+  color: var(--brand-primary);
+  letter-spacing: 0.2px;
+}
+
 /* Register Button */
 .ed3-register-btn {
   position: relative;
@@ -6216,6 +6237,90 @@ body {
   background: rgba(239, 68, 68, 0.15);
   border-color: #ef4444;
   color: #ef4444;
+}
+
+/* ===== LH (LECTURE HALL) ===== */
+.filter-chip.lh-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.filter-chip.lh-filter-chip.active {
+  background: rgba(90, 159, 207, 0.15);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+/* LH venue toggle in event create form */
+.lh-venue-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.lh-venue-row .sd-container,
+.lh-venue-row .form-control {
+  flex: 1;
+  min-width: 0;
+}
+.lh-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.lh-toggle-btn:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+.lh-toggle-btn.active {
+  background: rgba(90, 159, 207, 0.12);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  box-shadow: 0 0 12px rgba(90, 159, 207, 0.15);
+}
+
+/* LH tiles on homepage */
+.lh-tile-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+  max-width: 66%;
+}
+@media (max-width: 768px) {
+  .lh-tile-grid {
+    max-width: 100%;
+  }
+}
+.lh-tile {
+  border-color: rgba(90, 159, 207, 0.2);
+}
+.lh-tile:hover {
+  border-color: rgba(90, 159, 207, 0.45);
+}
+.lh-badge-tile {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #fff;
+  background: var(--brand-primary);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
 }
 
 /* ===== MULTISELECT DROPDOWN ===== */

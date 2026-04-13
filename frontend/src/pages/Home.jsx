@@ -236,6 +236,7 @@ import LoginModal from "../components/UI/LoginModal";
 import AnimatedBackground from "../components/UI/AnimatedBackground";
 import { Filter, Search, ArrowUpDown } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { isLhVenue, LH_ROOMS } from "../utils/constants";
 
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
 
@@ -251,6 +252,7 @@ const Home = () => {
     return g ? g.split(',').map(s => s.trim()).filter(Boolean) : [];
   };
   const initLive = () => searchParams.get('live') === 'true';
+  const initLh = () => searchParams.get('lh') === 'true' ? [...LH_ROOMS] : [];
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -267,6 +269,7 @@ const Home = () => {
   const [selectedItem, setSelectedItem] = useState("");
   const [selectedGenres, setSelectedGenres] = useState(initGenres);
   const [liveOnly, setLiveOnly] = useState(initLive);
+  const [selectedLhRooms, setSelectedLhRooms] = useState(initLh);
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -290,7 +293,7 @@ const Home = () => {
     setHasMore(true);
     fetchEvents(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgType, selectedBoard, selectedItem, debouncedSearch, sortBy, selectedGenres, liveOnly]);
+  }, [orgType, selectedBoard, selectedItem, debouncedSearch, sortBy, selectedGenres, liveOnly, selectedLhRooms]);
 
   const fetchEvents = async (reset = false) => {
     try {
@@ -311,17 +314,28 @@ const Home = () => {
       if (selectedGenres.length > 0) params.genres = selectedGenres.join(',');
       if (liveOnly) params.live = true;
 
+      // When LH filter active, fetch more to have enough after client-side filter
+      const lhActive = selectedLhRooms.length > 0;
+      if (lhActive) params.limit = LIMIT * 4;
+
       const res = await api.get("/events/", { params });
+      let fetched = res.data;
+
+      // Client-side LH venue filter
+      if (lhActive) {
+        const lhSet = new Set(selectedLhRooms.map(r => r.toUpperCase()));
+        fetched = fetched.filter(e => e.venue && lhSet.has(e.venue.trim().toUpperCase()));
+      }
 
       if (reset) {
-        setEvents(res.data);
+        setEvents(fetched);
       } else {
-        setEvents((prev) => [...prev, ...res.data]);
+        setEvents((prev) => [...prev, ...fetched]);
       }
 
       setSkip(currentSkip + res.data.length);
 
-      if (res.data.length < LIMIT) {
+      if (res.data.length < (lhActive ? LIMIT * 4 : LIMIT)) {
         setHasMore(false);
       }
     } catch (err) {
@@ -386,12 +400,12 @@ const Home = () => {
               </button>
 
               <button
-                className={`filter-btn-v3 ${orgType || selectedGenres.length || liveOnly ? 'active' : ''}`}
+                className={`filter-btn-v3 ${orgType || selectedGenres.length || liveOnly || selectedLhRooms.length ? 'active' : ''}`}
                 onClick={() => setIsFilterOpen(true)}
               >
                 <Filter size={18} />
                 <span className="filter-btn-label">Filters</span>
-                {(orgType || selectedBoard || selectedItem || selectedGenres.length > 0 || liveOnly) && (
+                {(orgType || selectedBoard || selectedItem || selectedGenres.length > 0 || liveOnly || selectedLhRooms.length > 0) && (
                   <span className="filter-active-dot" />
                 )}
               </button>
@@ -458,6 +472,8 @@ const Home = () => {
         setSelectedGenres={setSelectedGenres}
         liveOnly={liveOnly}
         setLiveOnly={setLiveOnly}
+        selectedLhRooms={selectedLhRooms}
+        setSelectedLhRooms={setSelectedLhRooms}
       />
 
       <LoginModal

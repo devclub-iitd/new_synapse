@@ -4,9 +4,9 @@ import api from "../api/axios";
 import Loader from "../components/UI/Loader";
 import LoginModal from "../components/UI/LoginModal";
 import AnimatedBackground from "../components/UI/AnimatedBackground";
-import { Sparkles, ArrowRight, ChevronRight, Monitor, FlaskConical, Music, Camera, BookOpen, Trophy, Briefcase, Leaf, Radio } from "lucide-react";
+import { Sparkles, ArrowRight, ChevronRight, Monitor, FlaskConical, Music, Camera, BookOpen, Trophy, Briefcase, Leaf, Radio, Building2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { GENRE_CATEGORIES } from "../utils/constants";
+import { GENRE_CATEGORIES, isLhVenue } from "../utils/constants";
 import EventBanner from "../components/UI/EventBanner";
 import { orgDisplayName } from "../utils/capitalize";
 
@@ -19,6 +19,7 @@ const HomePage = () => {
 
   const [picks, setPicks] = useState([]);
   const [liveEvents, setLiveEvents] = useState([]);
+  const [lhEvents, setLhEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -62,8 +63,17 @@ const HomePage = () => {
         console.error(err);
       }
     };
+    const fetchLhEvents = async () => {
+      try {
+        const res = await api.get("/events/", { params: { limit: 20, sort_by: "date_desc" } });
+        setLhEvents((res.data || []).filter(e => isLhVenue(e.venue)).slice(0, 4));
+      } catch (err) {
+        console.error(err);
+      }
+    };
     fetchPicks();
     fetchLiveEvents();
+    fetchLhEvents();
   }, [user]);
 
   const handleRegisterClick = (event) => {
@@ -188,6 +198,45 @@ const HomePage = () => {
                     <EventBanner orgName={orgDisplayName(event.organization?.name)} className="pick-tile-fallback-banner" />
                   )}
                   <span className="live-badge-tile"><Radio size={10} /> LIVE</span>
+                  <div className="pick-tile-overlay">
+                    <span className="pick-tile-date">{formatDate(event.date)}</span>
+                    <h4 className="pick-tile-name">{event.name}</h4>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Genre Categories */}
+
+      {/* LH Events */}
+      {lhEvents.length > 0 && (
+        <div className="container homepage-section">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h2 className="homepage-section-title">
+              <Building2 size={20} className="text-purple" />
+              Lecture Hall Complex
+            </h2>
+            <button className="btn-view-more" onClick={() => navigate("/events?lh=true")}>
+              View All <ArrowRight size={16} />
+            </button>
+          </div>
+          <div className="picks-tile-grid lh-tile-grid">
+            {lhEvents.map((event) => (
+              <div
+                key={event.id}
+                className="pick-tile-v2 lh-tile"
+                onClick={() => navigate(`/events/${event.id}`)}
+              >
+                <div className="pick-tile-banner">
+                  {event.image_url ? (
+                    <img src={event.image_url} alt="" />
+                  ) : (
+                    <EventBanner orgName={orgDisplayName(event.organization?.name)} className="pick-tile-fallback-banner" />
+                  )}
+                  <span className="lh-badge-tile"><Building2 size={10} /> {event.venue}</span>
                   <div className="pick-tile-overlay">
                     <span className="pick-tile-date">{formatDate(event.date)}</span>
                     <h4 className="pick-tile-name">{event.name}</h4>

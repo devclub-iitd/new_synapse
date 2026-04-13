@@ -203,3 +203,57 @@ export const GENRE_CATEGORIES = [
     genres: ["Environment & Sustainability", "Social Service", "Mental Health & Wellness", "Gaming & Esports"],
   },
 ];
+
+export const LH_ROOMS = [
+  "LH108","LH111","LH114","LH121",
+  "LH308","LH310","LH313.1","LH313.2","LH313.3","LH313.4","LH313.5","LH316","LH318","LH325",
+  "LH408","LH410","LH413.1","LH413.2","LH413.3","LH413.4","LH413.5","LH416","LH418","LH421","LH422",
+  "LH510","LH512","LH517","LH518","LH519","LH520","LH521","LH526","LH527",
+  "LH602","LH603","LH604","LH605","LH606","LH611","LH612","LH613","LH614","LH615","LH619","LH620","LH621","LH622","LH623",
+  "LH-ATR",
+];
+
+export const isLhVenue = (venue) => {
+  if (!venue) return false;
+  return /^LH[\d\-.]/i.test(venue.trim());
+};
+
+/**
+ * Detect if user is typing an LH-style venue and extract the numeric/id part.
+ * Matches: lh5, LH 325, lh313.2, LH-ATR, lecture hall 5, lecture hall complex 3,
+ * lhc 4, lhc325, Lecture Hall Complex 313.1, etc.
+ * Returns { match: true, fragment: "325" } or { match: false }
+ */
+export const detectLhInput = (text) => {
+  if (!text) return { match: false };
+  const t = text.trim();
+  // Pattern: (lh|lhc|lecture hall|lecture hall complex) + optional space + number/id part
+  const re = /^(?:lecture\s*hall\s*(?:complex)?|lhc|lh)\s*[-.]?\s*(.*)$/i;
+  const m = t.match(re);
+  if (!m) return { match: false };
+  const fragment = (m[1] || '').replace(/\s+/g, '').trim();
+  return { match: true, fragment };
+};
+
+/**
+ * Find the best matching LH room for a typed fragment.
+ * e.g. "3" -> first room starting with 3 (LH308), "325" -> LH325, "atr" -> LH-ATR
+ */
+export const findLhRoom = (fragment) => {
+  if (!fragment) return '';
+  const f = fragment.toLowerCase();
+  // Exact match first (fragment matches the part after "LH")
+  const exact = LH_ROOMS.find(r => {
+    const suffix = r.replace(/^LH[-.]?/i, '').toLowerCase();
+    return suffix === f;
+  });
+  if (exact) return exact;
+  // Prefix match
+  const prefix = LH_ROOMS.find(r => {
+    const suffix = r.replace(/^LH[-.]?/i, '').toLowerCase();
+    return suffix.startsWith(f);
+  });
+  if (prefix) return prefix;
+  // Contains match (for "atr" -> LH-ATR)
+  return LH_ROOMS.find(r => r.toLowerCase().includes(f)) || '';
+};

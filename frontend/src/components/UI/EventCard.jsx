@@ -1,110 +1,116 @@
-import React from 'react';
-import { Calendar, MapPin, ExternalLink, Share2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, MapPin, ExternalLink, Share2, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDate, isPast } from '../../utils/dateUtils';
 import { capitalize, orgDisplayName } from '../../utils/capitalize';
 import toast from 'react-hot-toast';
+import SharePopup from './SharePopup';
 
-const EventCard = ({ event, onRegisterClick }) => {
+const EventCard = ({ event, onRegisterClick, index = 0 }) => {
   const navigate = useNavigate();
 
   const isRegistered = event.is_registered;
   const eventPassed = isPast(event.date);
 
-
   const hasDeadline = !!event.registration_deadline;
-  const deadlinePassed = hasDeadline
-    ? isPast(event.registration_deadline)
-    : false;
+  const deadlinePassed = hasDeadline ? isPast(event.registration_deadline) : false;
 
-  const goToDetail = () => {
-    navigate(`/events/${event.id}`);
-  };
+  const [showSharePopup, setShowSharePopup] = useState(false);
+
+  const goToDetail = () => navigate(`/events/${event.id}`);
 
   const handleShare = (e) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/events/${event.id}`;
-    if (navigator.share) {
-      navigator.share({ title: event.name, url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url);
-      toast.success('Link copied to clipboard');
-    }
+    setShowSharePopup(true);
   };
 
   return (
-    <div className="col-md-4 mb-4">
-      <div
-        className="card event-card h-100 p-3 cursor-pointer"
-        onClick={goToDetail}
-      >
+    <div
+      className="event-card-v3"
+      style={{ animationDelay: `${index * 0.08}s` }}
+      onClick={goToDetail}
+    >
+      {/* Image Section */}
+      <div className="ec3-image-wrapper">
         <img
-          src={event.image_url || "https://via.placeholder.com/300x150"}
-          className="card-img-top rounded-4 mb-3"
-          alt="event"
+          src={event.image_url || "https://via.placeholder.com/400x220"}
+          alt={event.name}
         />
+        <div className="ec3-image-overlay" />
 
-        <div className="card-body p-0">
-          <div className="d-flex align-items-center justify-content-between mb-1">
-            <div className="card-org-badge">
-              {orgDisplayName(event.organization?.name)}
-            </div>
-            <button className="btn-share-sm" onClick={handleShare} title="Share event">
-              <Share2 size={14} />
-            </button>
-          </div>
+        {/* Floating org badge on image */}
+        <div className="ec3-org-badge">
+          {orgDisplayName(event.organization?.name)}
+        </div>
 
-          <h5 className="card-title fw-bold" style={{ color: 'var(--text-primary)' }}>
-            {capitalize(event.name)}
-          </h5>
+        {/* Share button */}
+        <button className="ec3-share-btn" onClick={handleShare} title="Share">
+          <Share2 size={14} />
+        </button>
 
-          <div className="card-meta-row">
+        {/* Status indicator */}
+        {eventPassed && <div className="ec3-status-pill past">Event Over</div>}
+        {!eventPassed && isRegistered && <div className="ec3-status-pill registered">Registered</div>}
+      </div>
+
+      {/* Content */}
+      <div className="ec3-content">
+        <h3 className="ec3-title">{capitalize(event.name)}</h3>
+
+        <div className="ec3-meta-list">
+          <div className="ec3-meta-item">
             <Calendar size={14} />
-            {formatDate(event.date)}
+            <span>{formatDate(event.date)}</span>
           </div>
-
-          <div className="card-meta-row mb-3">
+          <div className="ec3-meta-item">
             <MapPin size={14} />
-            {event.venue}
+            <span>{event.venue}</span>
           </div>
-
-          {hasDeadline && (
-            <p className="small mb-2" style={{ color: 'var(--text-muted)' }}>
-              Register by:{" "}
-              <strong style={{ color: 'var(--text-secondary)' }}>
-                {formatDate(event.registration_deadline)}
-              </strong>
-            </p>
+          {hasDeadline && !deadlinePassed && !eventPassed && (
+            <div className="ec3-meta-item deadline">
+              <Clock size={14} />
+              <span>Deadline: {formatDate(event.registration_deadline)}</span>
+            </div>
           )}
+        </div>
 
-          <button
-            className={`btn w-100 d-flex align-items-center justify-content-center gap-2 ${eventPassed || isRegistered || deadlinePassed
-                ? "btn-registered"
-                : "btn-purple"
-              }`}
-            disabled={eventPassed || isRegistered || deadlinePassed}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!eventPassed && !isRegistered && !deadlinePassed) {
-                onRegisterClick(event);
-              }
-            }}
-          >
+        {/* Action */}
+        <button
+          className={`ec3-action-btn ${
+            eventPassed || isRegistered || deadlinePassed ? 'disabled' : ''
+          }`}
+          disabled={eventPassed || isRegistered || deadlinePassed}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!eventPassed && !isRegistered && !deadlinePassed) {
+              onRegisterClick(event);
+            }
+          }}
+        >
+          <span>
             {eventPassed
               ? "Event Over"
               : isRegistered
                 ? "Registered"
                 : deadlinePassed
                   ? "Registration Closed"
-                  : "Register"}
-            {!eventPassed && !isRegistered && !deadlinePassed && (
-              <ExternalLink size={16} />
-            )}
-          </button>
-
-
-        </div>
+                  : "Register Now"}
+          </span>
+          {!eventPassed && !isRegistered && !deadlinePassed && (
+            <ArrowRight size={16} />
+          )}
+        </button>
       </div>
+
+      {/* Hover glow effect */}
+      <div className="ec3-glow" />
+
+      {/* Share Popup */}
+      <SharePopup
+        event={event}
+        isOpen={showSharePopup}
+        onClose={() => setShowSharePopup(false)}
+      />
     </div>
   );
 };

@@ -232,7 +232,8 @@ import EventCard from "../components/UI/EventCard";
 import FilterDrawer from "../components/UI/FilterDrawer";
 import Loader from "../components/UI/Loader";
 import LoginModal from "../components/UI/LoginModal";
-import { Filter, Search, ArrowUpDown } from "lucide-react";
+import AnimatedBackground from "../components/UI/AnimatedBackground";
+import { Filter, Search, ArrowUpDown, Sparkles } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
@@ -338,123 +339,138 @@ const Home = () => {
   };
 
   return (
-    <>
-      <div className="container mt-4 mb-4">
-        <div className="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
-          <div className="home-hero-header">
-            <h2>Upcoming <span>Events</span></h2>
-            <p>Find and register for club activities</p>
+    <div className="home-page-v3">
+      <AnimatedBackground />
+
+      {/* Hero Section */}
+      <div className="home-hero-v3">
+        <div className="container">
+          <div className="hero-content-v3">
+            <div className="hero-badge">
+              <Sparkles size={14} />
+              <span>Discover What's Happening</span>
+            </div>
+            <h1 className="hero-title-v3">
+              Upcoming <span className="gradient-text">Events</span>
+            </h1>
+            <p className="hero-subtitle-v3">
+              Find and register for club activities, fests & more
+            </p>
           </div>
 
-          <div className="d-flex align-items-center gap-3 flex-wrap home-controls-row">
-            <div className="search-glass">
-              <Search size={16} className="search-icon" />
+          {/* Controls Bar */}
+          <div className="controls-bar-v3">
+            <div className="search-v3">
+              <Search size={18} className="search-v3-icon" />
               <input
                 type="text"
-                placeholder="Search events..."
+                placeholder="Search events, clubs, fests..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
 
-            <div className="sort-glass">
-              <ArrowUpDown size={16} />
-              <SearchableDropdown
-                className="sd-compact"
-                options={[
-                  { label: 'Newest First', value: 'date_desc' },
-                  { label: 'Oldest First', value: 'date_asc' },
-                ]}
-                value={sortBy}
-                onChange={(val) => setSortBy(val)}
-                searchable={false}
-              />
-              {/* Mobile-only label shown when select is hidden */}
-              <span className="sort-mobile-label">
-                {sortBy === "date_desc" ? "Newest" : "Oldest"}
-              </span>
-            </div>
+            <div className="controls-right-v3">
+              <div className="sort-v3">
+                <ArrowUpDown size={16} />
+                <SearchableDropdown
+                  className="sd-compact"
+                  options={[
+                    { label: 'Newest First', value: 'date_desc' },
+                    { label: 'Oldest First', value: 'date_asc' },
+                  ]}
+                  value={sortBy}
+                  onChange={(val) => setSortBy(val)}
+                  searchable={false}
+                />
+                <span className="sort-mobile-label">
+                  {sortBy === "date_desc" ? "Newest" : "Oldest"}
+                </span>
+              </div>
 
-            <button
-              className={`btn d-flex align-items-center gap-2 ${
-                orgType ? "btn-purple" : "btn-outline-secondary"
-              }`}
-              onClick={() => setIsFilterOpen(true)}
-            >
-              <Filter size={18} />
-              <span className="filter-btn-label">Filter</span>
-              {(orgType || selectedBoard || selectedItem) && (
-                <span className="filter-active-dot" />
-              )}
-            </button>
+              <button
+                className={`filter-btn-v3 ${orgType ? 'active' : ''}`}
+                onClick={() => setIsFilterOpen(true)}
+              >
+                <Filter size={18} />
+                <span className="filter-btn-label">Filters</span>
+                {(orgType || selectedBoard || selectedItem) && (
+                  <span className="filter-active-dot" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
+      </div>
 
+      {/* Events Grid */}
+      <div className="container events-section-v3">
         {loading ? (
           <div className="d-flex justify-content-center py-5">
             <Loader />
           </div>
         ) : (
           <>
-            <div className="row g-4 grid-stagger">
+            <div className="events-grid-v3">
               {events.length > 0 ? (
-                events.map((event) => (
+                events.map((event, idx) => (
                   <EventCard
                     key={event.id}
                     event={event}
                     onRegisterClick={handleRegisterClick}
+                    index={idx}
                   />
                 ))
               ) : (
-                <div className="col-12">
-                  <div className="no-events">
-                    <h4>No events found</h4>
-                    <p style={{ color: "var(--text-muted)" }}>
-                      Try adjusting your filters or check back later.
-                    </p>
+                <div className="empty-state-v3">
+                  <div className="empty-icon">
+                    <Search size={48} />
                   </div>
+                  <h3>No events found</h3>
+                  <p>Try adjusting your filters or check back later.</p>
                 </div>
               )}
             </div>
 
             {hasMore && (
-              <div className="d-flex justify-content-center mt-5">
+              <div className="load-more-wrapper">
                 <button
-                  className="btn-load-more"
+                  className="btn-load-more-v3"
                   onClick={() => fetchEvents(false)}
                   disabled={loadingMore}
                 >
-                  {loadingMore ? "Loading..." : "Load more events"}
+                  <span>{loadingMore ? "Loading..." : "Load more events"}</span>
+                  <div className="btn-shimmer" />
                 </button>
               </div>
             )}
           </>
         )}
-
-        <FilterDrawer
-          isOpen={isFilterOpen}
-          onClose={() => setIsFilterOpen(false)}
-          orgType={orgType}
-          setOrgType={setOrgType}
-          selectedBoard={selectedBoard}
-          setSelectedBoard={setSelectedBoard}
-          selectedItem={selectedItem}
-          setSelectedItem={setSelectedItem}
-        />
-
-        <LoginModal
-          isOpen={isLoginOpen}
-          onClose={() => setIsLoginOpen(false)}
-        />
-
-        <EventRegistrationModal
-          isOpen={isRegisterModalOpen}
-          onClose={() => setIsRegisterModalOpen(false)}
-          eventId={selectedEventId}
-          onSuccess={handleRegistrationSuccess}
-        />
       </div>
-    </>
+
+      <FilterDrawer
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        orgType={orgType}
+        setOrgType={setOrgType}
+        selectedBoard={selectedBoard}
+        setSelectedBoard={setSelectedBoard}
+        selectedItem={selectedItem}
+        setSelectedItem={setSelectedItem}
+      />
+
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+      />
+
+      <EventRegistrationModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        eventId={selectedEventId}
+        onSuccess={handleRegistrationSuccess}
+      />
+    </div>
   );
 };
 

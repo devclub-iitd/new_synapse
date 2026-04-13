@@ -233,12 +233,16 @@ import {
   Clock,
   Info,
   Share2,
+  Users,
+  Sparkles,
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import { formatDateTime, isPast } from '../utils/dateUtils';
 import { capitalize, orgDisplayName } from '../utils/capitalize';
+import AnimatedBackground from "../components/UI/AnimatedBackground";
+import SharePopup from "../components/UI/SharePopup";
 
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
 
@@ -250,6 +254,7 @@ const EventDetail = () => {
   const [event, setEvent] = useState(null);
   const [error, setError] = useState("");
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [showSharePopup, setShowSharePopup] = useState(false);
 
   useEffect(() => { fetchEvent(); }, [eventId]);
 
@@ -296,109 +301,116 @@ const EventDetail = () => {
   const eventPassed = isPast(event.date);
 
   return (
-    <div className="container event-detail-container">
+    <div className="event-detail-v3">
+      <AnimatedBackground />
 
-      {/* BACK */}
-      <button onClick={() => navigate(-1)} className="btn-back mb-4">
-        <ArrowLeft size={18} /> Back to events
-      </button>
+      <div className="container ed3-container">
+        {/* Back */}
+        <button onClick={() => navigate(-1)} className="ed3-back-btn">
+          <ArrowLeft size={18} />
+          <span>Back to events</span>
+        </button>
 
-      <div className="row g-4">
-
-        {/* IMAGE */}
-        <div className="col-12 col-md-5 mb-2">
-          <div className="event-detail-image-wrapper">
-            <img
-              src={event.image_url || "https://via.placeholder.com/300x150"}
-              alt={event.name}
-            />
-          </div>
-        </div>
-
-        {/* DETAILS */}
-        <div className="col-12 col-md-7">
-
-          <span className="badge bg-purple-soft text-purple border-purple px-3 py-2 rounded-pill mb-3 d-inline-block">
-            {orgDisplayName(event.organization?.name)}
-          </span>
-
-          <div className="d-flex align-items-start justify-content-between gap-3 mb-3">
-            <h1 className="event-detail-title fw-bold m-0">
-              {capitalize(event.name)}
-            </h1>
-            <button className="btn-share" onClick={() => {
-              const url = `${window.location.origin}/events/${event.id}`;
-              if (navigator.share) {
-                navigator.share({ title: event.name, url }).catch(() => {});
-              } else {
-                navigator.clipboard.writeText(url);
-                toast.success('Link copied to clipboard');
-              }
-            }} title="Share event">
-              <Share2 size={18} />
-            </button>
+        <div className="ed3-layout">
+          {/* Left: Image */}
+          <div className="ed3-image-section">
+            <div className="ed3-image-card">
+              <img
+                src={event.image_url || "https://via.placeholder.com/600x400"}
+                alt={event.name}
+              />
+              <div className="ed3-image-glow" />
+            </div>
           </div>
 
-          {/* META CARDS — single column on mobile, 2-col on desktop */}
-          <div className="event-meta-grid mb-4">
-
-            <div className="event-detail-meta-card">
-              <div className="icon-box-purple"><Calendar size={20} /></div>
-              <div>
-                <small className="meta-label">Date & Time</small>
-                <span className="meta-value">{formatDateTime(event.date)}</span>
-              </div>
+          {/* Right: Details */}
+          <div className="ed3-details-section">
+            <div className="ed3-org-pill">
+              <Sparkles size={14} />
+              {orgDisplayName(event.organization?.name)}
             </div>
 
-            <div className="event-detail-meta-card">
-              <div className="icon-box-purple"><MapPin size={20} /></div>
-              <div>
-                <small className="meta-label">Venue</small>
-                <span className="meta-value">{event.venue}</span>
-              </div>
+            <div className="ed3-title-row">
+              <h1 className="ed3-title">{capitalize(event.name)}</h1>
+              <button
+                className="ed3-share-btn"
+                onClick={() => setShowSharePopup(true)}
+                title="Share event"
+              >
+                <Share2 size={18} />
+              </button>
             </div>
 
-            {hasDeadline && (
-              <div className="event-detail-meta-card">
-                <div className="icon-box-purple"><Clock size={20} /></div>
-                <div>
-                  <small className="meta-label">Registration Deadline</small>
-                  <span className="meta-value">{formatDateTime(event.registration_deadline)}</span>
+            {/* Meta Cards */}
+            <div className="ed3-meta-grid">
+              <div className="ed3-meta-card">
+                <div className="ed3-meta-icon">
+                  <Calendar size={20} />
+                </div>
+                <div className="ed3-meta-text">
+                  <span className="ed3-meta-label">Date & Time</span>
+                  <span className="ed3-meta-value">{formatDateTime(event.date)}</span>
                 </div>
               </div>
-            )}
 
+              <div className="ed3-meta-card">
+                <div className="ed3-meta-icon">
+                  <MapPin size={20} />
+                </div>
+                <div className="ed3-meta-text">
+                  <span className="ed3-meta-label">Venue</span>
+                  <span className="ed3-meta-value">{event.venue}</span>
+                </div>
+              </div>
+
+              {hasDeadline && (
+                <div className="ed3-meta-card">
+                  <div className="ed3-meta-icon">
+                    <Clock size={20} />
+                  </div>
+                  <div className="ed3-meta-text">
+                    <span className="ed3-meta-label">Registration Deadline</span>
+                    <span className="ed3-meta-value">{formatDateTime(event.registration_deadline)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* About */}
+            <div className="ed3-about">
+              <div className="ed3-about-header">
+                <Info size={18} />
+                <span>About This Event</span>
+              </div>
+              <div className="ed3-description">
+                {event.description}
+              </div>
+            </div>
+
+            {/* Register Button */}
+            <button
+              className={`ed3-register-btn ${
+                eventPassed || deadlinePassed
+                  ? 'disabled'
+                  : event.is_registered
+                    ? 'registered'
+                    : ''
+              }`}
+              disabled={eventPassed || deadlinePassed}
+              onClick={handleRegisterClick}
+            >
+              <span>
+                {eventPassed
+                  ? "Event Over"
+                  : event.is_registered
+                    ? "Deregister"
+                    : deadlinePassed
+                      ? "Registration Closed"
+                      : "Register Now"}
+              </span>
+              <div className="ed3-btn-shimmer" />
+            </button>
           </div>
-
-          {/* ABOUT */}
-          <div className="section-title mb-3 d-flex align-items-center gap-2"
-            style={{ color: 'var(--text-primary)' }}>
-            <Info size={18} className="text-purple" /> About Event
-          </div>
-
-          <div className="event-detail-desc-block mb-4">
-            {event.description}
-          </div>
-
-          {/* ACTION */}
-          <button
-            className={`btn btn-register-lg w-100 ${
-              eventPassed || deadlinePassed || event.is_registered
-                ? "btn-registered"
-                : "btn-purple"
-            }`}
-            disabled={eventPassed || deadlinePassed}
-            onClick={handleRegisterClick}
-          >
-            {eventPassed
-              ? "Event Over"
-              : event.is_registered
-                ? "Deregister"
-                : deadlinePassed
-                  ? "Registration Closed"
-                  : "Register Now"}
-          </button>
-
         </div>
       </div>
 
@@ -407,6 +419,12 @@ const EventDetail = () => {
         onClose={() => setIsRegisterModalOpen(false)}
         eventId={eventId}
         onSuccess={handleRegistrationSuccess}
+      />
+
+      <SharePopup
+        event={event}
+        isOpen={showSharePopup}
+        onClose={() => setShowSharePopup(false)}
       />
     </div>
   );

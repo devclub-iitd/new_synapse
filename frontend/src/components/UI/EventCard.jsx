@@ -9,6 +9,7 @@ import EventBanner, { useImageFallback } from './EventBanner';
 import OrgLogo from './OrgLogo';
 
 const EventCard = ({ event, onRegisterClick, onRequestClick, index = 0 }) => {
+  const navigate = useNavigate();
 
   const isRegistered = event.is_registered;
   const eventPassed = isPast(event.date);

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
@@ -66,7 +66,7 @@ def get_shared_calendar_ics(token: str, db: Session = Depends(deps.get_db)):
             continue
             
         dtstart = event.date
-        dtend = event.date  # Assuming events are 1 hour if no end time exists (based on current model)
+        dtend = event.date + timedelta(hours=2)  # Default duration: 2 hours
         
         # Convert to YYYYMMDDTHHMMSSZ
         try:
@@ -76,7 +76,10 @@ def get_shared_calendar_ics(token: str, db: Session = Depends(deps.get_db)):
             continue
             
         summary = (event.name or "").replace(',', '\\,').replace(';', '\\;')
-        description = (event.description or "").replace('\n', '\\n').replace(',', '\\,').replace(';', '\\;')
+        desc_parts = [event.description or ""]
+        if event.organization and event.organization.name:
+            desc_parts.append(f"Organized by: {event.organization.name}")
+        description = "\\n\\n".join(p for p in desc_parts if p).replace(',', '\\,').replace(';', '\\;')
         location = (event.venue or "").replace(',', '\\,').replace(';', '\\;')
         uid = f"Synapse-EVENT-{event.id}-{share.user_id}@synapse.iitd.ac.in"
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")

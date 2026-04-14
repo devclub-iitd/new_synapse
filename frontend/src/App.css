@@ -4748,6 +4748,14 @@ body {
   transform: none;
 }
 
+.ec3-action-btn.request-mode {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+}
+
+.ec3-action-btn.request-mode:hover {
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.35);
+}
+
 @keyframes cardFadeIn {
   from {
     opacity: 0;

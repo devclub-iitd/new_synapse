@@ -480,10 +480,13 @@ const StudentDashboard = () => {
                   className="alert alert-info py-2 px-3 mt-3 mb-0 border-0"
                   style={{ fontSize:'0.8rem', backgroundColor:'rgba(13,110,253,0.1)', color:'#8bb4f3' }}
                 >
-                  <strong>How to use:</strong><br />
-                  1. Open Google / Apple Calendar.<br />
-                  2. Select "Add calendar from URL".<br />
-                  3. Paste this link.
+                  <strong>How to use (Google Calendar):</strong><br />
+                  1. Copy the link above.<br />
+                  2. Open <b>calendar.google.com</b> in your browser (use "Desktop site" on mobile).<br />
+                  3. In the left sidebar, tap the <b>+</b> next to "Other calendars."<br />
+                  4. Select <b>"From URL"</b> and paste the link.<br />
+                  5. Tap <b>"Add calendar"</b> — events will auto-sync!<br /><br />
+                  <strong>Apple Calendar:</strong> Go to Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar → paste the link.
                 </div>
               </div>
             )}

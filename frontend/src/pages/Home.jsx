@@ -234,9 +234,10 @@ import FilterDrawer from "../components/UI/FilterDrawer";
 import Loader from "../components/UI/Loader";
 import LoginModal from "../components/UI/LoginModal";
 import AnimatedBackground from "../components/UI/AnimatedBackground";
-import { Filter, Search, ArrowUpDown } from "lucide-react";
+import { Filter, Search, ArrowUpDown, Inbox, X, Check } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { isLhVenue, LH_ROOMS } from "../utils/constants";
+import toast from "react-hot-toast";
 
 import EventRegistrationModal from "../components/Forms/EventRegistrationModal";
 
@@ -263,6 +264,11 @@ const Home = () => {
 
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState(null);
+
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [requestEvent, setRequestEvent] = useState(null);
+  const [requestText, setRequestText] = useState('');
+  const [submittingRequest, setSubmittingRequest] = useState(false);
 
   const [orgType, setOrgType] = useState("");
   const [selectedBoard, setSelectedBoard] = useState("");
@@ -364,6 +370,34 @@ const Home = () => {
     fetchEvents(true);
   };
 
+  const handleRequestClick = (event) => {
+    if (!user) {
+      setIsLoginOpen(true);
+      return;
+    }
+    setRequestEvent(event);
+    setIsRequestModalOpen(true);
+  };
+
+  const handleRequestSubmit = async () => {
+    setSubmittingRequest(true);
+    try {
+      await api.post(`/events/${requestEvent.id}/request`, { form_response: requestText });
+      toast.success("Request submitted! Awaiting approval.");
+      setIsRequestModalOpen(false);
+      setRequestText('');
+      setRequestEvent(null);
+      setSkip(0);
+      setEvents([]);
+      setHasMore(true);
+      fetchEvents(true);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to submit request");
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
+
   return (
     <div className="home-page-v3">
       <AnimatedBackground />
@@ -428,6 +462,7 @@ const Home = () => {
                     key={event.id}
                     event={event}
                     onRegisterClick={handleRegisterClick}
+                    onRequestClick={handleRequestClick}
                     index={idx}
                   />
                 ))
@@ -487,6 +522,61 @@ const Home = () => {
         eventId={selectedEventId}
         onSuccess={handleRegistrationSuccess}
       />
+
+      {/* Request to Join Modal */}
+      {isRequestModalOpen && (
+        <div className="modal-overlay-v3">
+          <div className="modal-card-v3">
+            <div className="modal-header-v3">
+              <div className="modal-header-left">
+                <div className="modal-icon-v3">
+                  <Inbox size={20} />
+                </div>
+                <div>
+                  <h3>Request to Join</h3>
+                  <p>{requestEvent?.request_only ? 'This event requires approval to join' : 'Event is full — submit a request'}</p>
+                </div>
+              </div>
+              <button className="modal-close-v3" onClick={() => { setIsRequestModalOpen(false); setRequestText(''); setRequestEvent(null); }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-divider-v3" />
+            <div className="modal-body-v3">
+              <div className="form-field-v3">
+                <label className="form-label-v3">
+                  <span className="field-number">1</span>
+                  Why do you want to join? <span style={{ color:'var(--text-muted)',fontSize:'0.8rem' }}>(optional)</span>
+                </label>
+                <div className="input-wrapper-v3">
+                  <textarea
+                    className="form-input-v3"
+                    rows="5"
+                    placeholder="Write your message here..."
+                    value={requestText}
+                    onChange={e => setRequestText(e.target.value)}
+                    style={{ resize: 'vertical', minHeight: '100px' }}
+                  />
+                  <div className="input-focus-ring" />
+                </div>
+              </div>
+              <button
+                className="submit-btn-v3"
+                onClick={handleRequestSubmit}
+                disabled={submittingRequest}
+              >
+                {submittingRequest ? 'Submitting...' : (
+                  <>
+                    <Check size={18} />
+                    <span>Submit Request</span>
+                  </>
+                )}
+                <div className="btn-shimmer" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

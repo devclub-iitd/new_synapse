@@ -217,7 +217,7 @@ const HomePage = () => {
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2 className="homepage-section-title">
               <Building2 size={20} className="text-purple" />
-              Lecture Hall Complex
+              LHC
             </h2>
             <button className="btn-view-more" onClick={() => navigate("/events?lh=true")}>
               View All <ArrowRight size={16} />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, ExternalLink, Share2, Clock, ArrowRight, Radio } from 'lucide-react';
+import { Calendar, MapPin, ExternalLink, Share2, Clock, ArrowRight, Radio, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDate, isPast } from '../../utils/dateUtils';
 import { capitalize, orgDisplayName } from '../../utils/capitalize';
@@ -8,14 +8,20 @@ import SharePopup from './SharePopup';
 import EventBanner, { useImageFallback } from './EventBanner';
 import OrgLogo from './OrgLogo';
 
-const EventCard = ({ event, onRegisterClick, index = 0 }) => {
-  const navigate = useNavigate();
+const EventCard = ({ event, onRegisterClick, onRequestClick, index = 0 }) => {
 
   const isRegistered = event.is_registered;
   const eventPassed = isPast(event.date);
 
   const hasDeadline = !!event.registration_deadline;
   const deadlinePassed = hasDeadline ? isPast(event.registration_deadline) : false;
+
+  const hasCapacity = event.capacity !== null && event.capacity !== undefined;
+  const regCount = event.registration_count || 0;
+  const slotsLeft = hasCapacity ? Math.max(0, event.capacity - regCount) : null;
+  const isFull = hasCapacity && slotsLeft === 0;
+  const needsRequest = event.request_only || isFull;
+  const userRequestStatus = event.user_request_status;
 
   const [showSharePopup, setShowSharePopup] = useState(false);
   const { hasImage, onError } = useImageFallback(event.image_url);
@@ -86,12 +92,19 @@ const EventCard = ({ event, onRegisterClick, index = 0 }) => {
         {/* Action */}
         <button
           className={`ec3-action-btn ${
-            eventPassed || isRegistered || deadlinePassed ? 'disabled' : ''
+            eventPassed || isRegistered || deadlinePassed || userRequestStatus === 0
+              ? 'disabled'
+              : needsRequest && !isRegistered
+                ? 'request-mode'
+                : ''
           }`}
-          disabled={eventPassed || isRegistered || deadlinePassed}
+          disabled={eventPassed || isRegistered || deadlinePassed || userRequestStatus === 0}
           onClick={(e) => {
             e.stopPropagation();
-            if (!eventPassed && !isRegistered && !deadlinePassed) {
+            if (eventPassed || isRegistered || deadlinePassed || userRequestStatus === 0) return;
+            if (needsRequest) {
+              onRequestClick(event);
+            } else {
               onRegisterClick(event);
             }
           }}
@@ -101,11 +114,15 @@ const EventCard = ({ event, onRegisterClick, index = 0 }) => {
               ? "Event Over"
               : isRegistered
                 ? "Registered"
-                : deadlinePassed
-                  ? "Registration Closed"
-                  : "Register Now"}
+                : userRequestStatus === 0
+                  ? "Request Pending"
+                  : deadlinePassed
+                    ? "Registration Closed"
+                    : needsRequest
+                      ? "Request to Join"
+                      : "Register Now"}
           </span>
-          {!eventPassed && !isRegistered && !deadlinePassed && (
+          {!eventPassed && !isRegistered && !deadlinePassed && userRequestStatus !== 0 && (
             <ArrowRight size={16} />
           )}
         </button>

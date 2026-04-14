@@ -602,6 +602,21 @@ def upload_org_banner(
     return {"banner_url": result["secure_url"]}
 
 
+@router.delete("/{org_id}/banner")
+def delete_org_banner(
+    org_id: int,
+    db: Session = Depends(deps.get_db),
+    role: Role = Depends(get_org_role)
+):
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    org.banner_url = None
+    db.commit()
+    return {"msg": "Banner removed"}
+
+
 @router.patch("/{org_id}/genres")
 def update_org_genres(
     org_id: int,

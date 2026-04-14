@@ -157,11 +157,21 @@ export default function OrgBanner({ orgId, orgName, bannerUrl }) {
     handleUpload(file);
   };
 
-  const handleRemove = (e) => {
+  const [removing, setRemoving] = useState(false);
+
+  const handleRemove = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setPreview(null);
-    setImgError(false);
+    setRemoving(true);
+    try {
+      await api.delete(`/org/${orgId}/banner`);
+      setPreview(null);
+      setImgError(false);
+      toast.success("Profile photo removed");
+    } catch (err) {
+      toast.error("Failed to remove photo");
+    }
+    setRemoving(false);
   };
 
   // Show image only if preview exists and no load error
@@ -187,7 +197,7 @@ export default function OrgBanner({ orgId, orgName, bannerUrl }) {
             position: "relative"
           }}
         >
-          {loading ? (
+          {loading || removing ? (
             <div
               style={{
                 width: "30px",
@@ -223,7 +233,7 @@ export default function OrgBanner({ orgId, orgName, bannerUrl }) {
       </label>
 
       {/* Remove button — outside the label so it doesn't trigger file picker */}
-      {showImage && !loading && (
+      {showImage && !loading && !removing && (
         <button
           onClick={handleRemove}
           title="Remove photo"

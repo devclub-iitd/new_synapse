@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+boto3
+firebase-admin
+psycopg2-binary
+python-dotenv

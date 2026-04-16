@@ -34,6 +34,12 @@ def get_current_user(
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    if token_data.type != "access":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     user = db.query(User).filter(User.id == int(token_data.sub)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -56,6 +62,9 @@ def get_current_user_optional(
         token_data = TokenPayload(**payload)
     except (JWTError, ValueError):
         return None # Return None instead of Error if token is bad
+    
+    if token_data.type != "access":
+        return None
     
     user = db.query(User).filter(User.id == int(token_data.sub)).first()
     return user

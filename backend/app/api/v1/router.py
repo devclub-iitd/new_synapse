@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, events, user, orgs, admin, calendar, caic, external
+from app.api.v1.endpoints import auth, events, user, orgs, admin, calendar, caic, external, notifications
 
 api_router = APIRouter()
 
@@ -11,3 +11,4 @@ api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
 api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
 api_router.include_router(caic.router, prefix="/caic", tags=["caic"])
 api_router.include_router(external.router, prefix="/external", tags=["external"])
+api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])

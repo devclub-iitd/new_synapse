@@ -14,6 +14,12 @@ from datetime import datetime, timedelta, timezone
 from app.core.timezone import now_utc
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from app.models.role import Role
+from app.models.notification import Notification
+from app.services.sqs import send_event, SQSEvent, EventType
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
@@ -109,6 +115,7 @@ def get_events(
     skip: int = 0,
     limit: int = 20
 ):
+    limit = min(limit, 100)
     now = now_utc()
 
     query = db.query(Event).options(joinedload(Event.organization))
@@ -479,5 +486,34 @@ def submit_event_request(
     )
     db.add(new_req)
     db.commit()
+
+    # Notify all org members
+    try:
+        org_member_ids = [
+            r.user_id for r in
+            db.query(Role.user_id).filter(Role.org_id == event.org_id).all()
+        ]
+        if org_member_ids:
+            kerberos = current_user.entry_number or current_user.email.split('@')[0]
+            event_date_str = event.date.strftime('%d %b %Y, %I:%M %p') if event.date else ''
+            title = f"New request to join {event.name}"
+            body = f"{current_user.name} ({kerberos}) has requested to join {event.name} on {event_date_str} at {event.venue}."
+            redirect = f"/org/{event.org_id}/dashboard?tab=requests"
+
+            # Persist in-app notifications
+            for uid in org_member_ids:
+                db.add(Notification(user_id=uid, title=title, body=body, redirect=redirect))
+            db.commit()
+
+            # Push to SQS
+            send_event(SQSEvent(
+                type=EventType.NOTIFICATION,
+                to=[str(uid) for uid in org_member_ids],
+                title=title,
+                body=body,
+                redirect=redirect,
+            ))
+    except Exception as e:
+        logger.warning(f"Failed to send request notification: {e}")
 
     return {"status": "success", "msg": "Request submitted successfully"}

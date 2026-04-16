@@ -24,7 +24,7 @@ async def validate_microsoft_code(code: str):
         
         r = await client.post(token_url, data=token_data)
         if r.status_code != 200:
-            raise HTTPException(status_code=400, detail=f"Microsoft Token Error: {r.text}")
+            raise HTTPException(status_code=400, detail="Microsoft authentication failed")
         
         tokens = r.json()
         access_token = tokens.get("access_token")

@@ -6,3 +6,5 @@ from .event_request import EventRequest
 from .role import Role
 from .calendar_share import CalendarShare
 from .api_key import ApiKey
+from .user_device import UserDevice
+from .notification import Notification

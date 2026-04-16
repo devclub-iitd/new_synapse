@@ -22,6 +22,11 @@ from app.core.timezone import now_utc
 from app.services.cloudinary import cloudinary
 import cloudinary.uploader
 import uuid
+from app.services.sqs import send_event, SQSEvent, EventType
+from app.models.notification import Notification
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -481,6 +486,21 @@ def handle_event_request(
             if current_count >= event.capacity:
                 db.delete(req)
                 db.commit()
+                # Still notify the user their request was approved (but full)
+                try:
+                    event_date_str = event.date.strftime('%d %b %Y, %I:%M %p') if event.date else ''
+                    full_title = f"Request approved for {event.name}"
+                    full_body = f"Your request to join {event.name} on {event_date_str} at {event.venue} has been approved, but the event is currently full."
+                    db.add(Notification(user_id=req_user_id, title=full_title, body=full_body))
+                    db.commit()
+                    send_event(SQSEvent(
+                        type=EventType.NOTIFICATION,
+                        to=[str(req_user_id)],
+                        title=full_title,
+                        body=full_body,
+                    ))
+                except Exception as e:
+                    logger.warning(f"Failed to send request action notification: {e}")
                 return {"status": "accepted", "msg": "Request accepted but event is full. User was not auto-registered."}
 
         existing = db.query(Registration).filter(
@@ -493,6 +513,29 @@ def handle_event_request(
     # Delete the request entry
     db.delete(req)
     db.commit()
+
+    # Notify the requester
+    try:
+        event = db.query(Event).filter(Event.id == req_event_id).first() if new_status != 1 else event
+        if event:
+            event_date_str = event.date.strftime('%d %b %Y, %I:%M %p') if event.date else ''
+            action_word = "approved" if new_status == 1 else "declined"
+            title = f"Request {action_word} for {event.name}"
+            body = f"Your request to join {event.name} on {event_date_str} at {event.venue} has been {action_word}."
+
+            # Persist in-app notification
+            db.add(Notification(user_id=req_user_id, title=title, body=body))
+            db.commit()
+
+            # Push to SQS
+            send_event(SQSEvent(
+                type=EventType.NOTIFICATION,
+                to=[str(req_user_id)],
+                title=title,
+                body=body,
+            ))
+    except Exception as e:
+        logger.warning(f"Failed to send request action notification: {e}")
 
     return {"status": "success", "msg": f"Request {msg}"}
 

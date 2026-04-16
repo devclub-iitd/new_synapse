@@ -514,9 +514,9 @@
 // export default OrgDashboard;
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
-import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck, Tag, Upload, Save, Check, ChevronDown, Search, Radio, Building2, Inbox, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { Calendar, Users, BarChart3, Plus, Download, Eye, Lock, Globe, Trash2, UserPlus, X, Edit, UserCheck, Tag, Upload, Save, Check, ChevronDown, Search, Radio, Building2, Inbox, CheckCircle, XCircle, FileText, ExternalLink } from 'lucide-react';
 import DynamicFormBuilder from '../components/Forms/DynamicFormBuilder';
 import DemographicsChart from '../components/Charts/DemographicsChart';
 import Loader from '../components/UI/Loader';
@@ -810,7 +810,9 @@ const RegistrationsModal = ({ event, orgId, onClose }) => {
 
 const OrgDashboard = () => {
   const { orgId } = useParams();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'dashboard';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [stats, setStats] = useState(null);
   const [events, setEvents] = useState([]);
   const [team, setTeam] = useState([]);
@@ -1342,11 +1344,22 @@ const OrgDashboard = () => {
                                   <div className="fw-semibold" style={{ fontSize:'0.88rem' }}>{req.user_name}</div>
                                   <div className="small" style={{ color:'var(--text-muted)',fontSize:'0.72rem' }}>{req.user_email}</div>
                                   {req.user_entry_number && <div className="small" style={{ color:'var(--text-muted)',fontSize:'0.68rem' }}>{req.user_entry_number}</div>}
+                                  <div className="d-block d-md-none mt-1">
+                                    <a href={`/events/${req.event_id}`} target="_blank" rel="noopener noreferrer"
+                                      style={{ fontSize:'0.78rem', color:'var(--brand-primary)', textDecoration:'none', fontWeight:600 }}
+                                      onClick={e => e.stopPropagation()}>
+                                      {req.event_name} <ExternalLink size={12} style={{ marginLeft: 3, verticalAlign: 'middle' }} />
+                                    </a>
+                                  </div>
                                 </div>
                               </div>
                             </td>
                             <td className="d-none d-md-table-cell">
-                              <div className="fw-semibold" style={{ fontSize:'0.85rem' }}>{req.event_name}</div>
+                              <a href={`/events/${req.event_id}`} target="_blank" rel="noopener noreferrer"
+                                className="fw-semibold" style={{ fontSize:'0.85rem', color:'var(--brand-primary)', textDecoration:'none' }}
+                                onClick={e => e.stopPropagation()}>
+                                {req.event_name} <ExternalLink size={13} style={{ marginLeft: 3, verticalAlign: 'middle' }} />
+                              </a>
                             </td>
                             <td className="d-none d-lg-table-cell" style={{ color:'var(--text-secondary)', fontSize:'0.82rem' }}>
                               {formatDate(req.created_at)}
